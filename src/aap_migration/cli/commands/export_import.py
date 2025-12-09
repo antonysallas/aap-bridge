@@ -1406,6 +1406,7 @@ def import_cmd(
                         method_map = {
                             # Foundation resources
                             "organizations": "import_organizations",
+                            "instances": "import_instances",
                             "instance_groups": "import_instance_groups",
                             "labels": "import_labels",
                             # Identity and access
