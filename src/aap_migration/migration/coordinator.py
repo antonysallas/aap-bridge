@@ -778,14 +778,15 @@ class MigrationCoordinator:
                 if self.progress_tracker:
                     self.progress_tracker.update_resource(failed=1)
 
-            # Update Rich progress display live during transform
-            if self.progress_display and self._current_phase_id:
-                self.progress_display.update_phase(
-                    self._current_phase_id,
-                    completed=stats["transformed"] + stats["skipped"] + stats["failed"],
-                    failed=stats["failed"],
-                    skipped=stats["skipped"],
-                )
+        # Update Rich progress display with actual total after export/transform
+        if self.progress_display and self._current_phase_id and stats["exported"] > 0:
+            # Set actual total items based on what was exported
+            if self._current_phase_id in self.progress_display.phase_states:
+                self.progress_display.phase_states[self._current_phase_id].total_items = stats["exported"]
+            # Also update the Rich Progress task's total
+            if self._current_phase_id in self.progress_display.phase_tasks:
+                task_id = self.progress_display.phase_tasks[self._current_phase_id]
+                self.progress_display.phase_progress.update(task_id, total=stats["exported"])
 
         # Bulk import hosts by inventory
         if not self.config.dry_run:

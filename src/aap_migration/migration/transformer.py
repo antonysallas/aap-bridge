@@ -1210,6 +1210,9 @@ class CredentialTransformer(DataTransformer):
                     message="Temporary values generated for encrypted fields - update after migration",
                 )
 
+        # Remove the 'inputs' field entirely after processing
+        data.pop("inputs", None)
+
         # Set null organization to Default (ID=1) for API compatibility
         # Testing if organization is required by the API
         if "organization" in data and data["organization"] is None:
@@ -1524,12 +1527,14 @@ class InstanceGroupTransformer(DataTransformer):
     DEPENDENCIES = {}  # No dependencies - instance_groups reference instances by hostname
     REQUIRED_DEPENDENCIES: set[str] = set()
 
-    def transform(self, data: dict[str, Any]) -> dict[str, Any]:
-        """Transform instance_group data.
+    def _apply_specific_transformations(
+        self, data: dict[str, Any], resource_type: str
+    ) -> dict[str, Any]:
+        """Apply instance_group data-specific transformations.
 
         Maps hostnames in policy_instance_list using config/mappings.yaml.
         """
-        data = super().transform(data)
+        # No super() call here, as this is a specific transformation hook.
 
         # Get instance hostname mappings from config
         instance_mappings: dict[str, str] = {}
