@@ -36,6 +36,7 @@ class ResourceImporter:
         client: AAPTargetClient,
         state: MigrationState,
         performance_config: PerformanceConfig,
+        resource_mappings: dict[str, dict[str, str]] | None = None,
     ):
         """Initialize resource importer.
 
@@ -43,10 +44,12 @@ class ResourceImporter:
             client: AAP target client instance
             state: Migration state manager
             performance_config: Performance configuration
+            resource_mappings: Optional resource name mappings from config/mappings.yaml
         """
         self.client = client
         self.state = state
         self.performance_config = performance_config
+        self.resource_mappings = resource_mappings or {}
         self.stats = {
             "imported_count": 0,
             "error_count": 0,
@@ -90,7 +93,7 @@ class ResourceImporter:
         self.state.mark_in_progress(
             resource_type=resource_type,
             source_id=source_id,
-            source_name=data.get("name", "unknown"),
+            source_name=data.get(self.IDENTIFIER_FIELD, data.get("name", "unknown")),
             phase="import",
         )
 
@@ -121,7 +124,7 @@ class ResourceImporter:
                 resource_type=resource_type,
                 source_id=source_id,
                 target_id=result["id"],
-                target_name=result.get("name"),
+                target_name=result.get(self.IDENTIFIER_FIELD) or result.get("name"),
             )
 
             self.stats["imported_count"] += 1
@@ -1065,28 +1068,129 @@ class OrganizationImporter(ResourceImporter):
 class InstanceImporter(ResourceImporter):
     """Importer for instance (AAP controller node) resources.
 
-    Instances must be imported before instance_groups since groups
-    can reference specific instances.
+    Instances are infrastructure nodes that cannot be created via API.
+    Instead, we match source instances to existing target instances by hostname
+    and create ID mappings for instance_group references.
+
+    Uses config/mappings.yaml to map different hostnames between environments.
     """
 
     DEPENDENCIES = {}  # No dependencies - instances are foundational
+    IDENTIFIER_FIELD = "hostname"  # Instances use 'hostname' instead of 'name'
 
     async def import_instances(
         self,
         instances: list[dict[str, Any]],
         progress_callback: Callable[[int, int, int], None] | None = None,
     ) -> list[dict[str, Any]]:
-        """Import multiple instances concurrently with live progress updates.
+        """Map source instances to existing target instances via configuration.
+
+        Instances cannot be created via API - they're infrastructure nodes.
+        This method finds matching instances on target and creates ID mappings.
+
+        Uses mappings from config/mappings.yaml to resolve different hostnames.
+        Falls back to exact hostname match if no explicit mapping exists.
 
         Args:
-            instances: List of instance data
+            instances: List of instance data from source
             progress_callback: Optional callback for progress updates.
-                Called after each instance with (success_count, failed_count).
+                Called after each instance with (success_count, failed_count, skipped_count).
 
         Returns:
-            List of created instance data
+            List of matched target instance data
         """
-        return await self._import_parallel("instances", instances, progress_callback)
+        results = []
+        success_count = 0
+        failed_count = 0
+        skipped_count = 0
+
+        # Get instance hostname mappings from config/mappings.yaml
+        instance_mappings = self.resource_mappings.get("instances", {})
+
+        # Fetch all target instances once
+        target_instances = await self.client.list_resources("instances")
+        target_by_hostname = {inst["hostname"]: inst for inst in target_instances}
+
+        logger.info(
+            "instance_mapping_started",
+            source_count=len(instances),
+            target_count=len(target_instances),
+            configured_mappings=len(instance_mappings),
+        )
+
+        for instance in instances:
+            source_id = instance.get("_source_id") or instance.get("id")
+            source_hostname = instance.get("hostname", "unknown")
+
+            # Check if already mapped
+            if self.state.is_migrated("instances", source_id):
+                skipped_count += 1
+                if progress_callback:
+                    progress_callback(success_count, failed_count, skipped_count)
+                continue
+
+            # Mark in progress
+            self.state.mark_in_progress(
+                resource_type="instances",
+                source_id=source_id,
+                source_name=source_hostname,
+                phase="import",
+            )
+
+            # Resolve target hostname (from mapping or exact match)
+            target_hostname = instance_mappings.get(source_hostname, source_hostname)
+            target_instance = target_by_hostname.get(target_hostname)
+
+            if target_instance:
+                # Found match - save ID mapping
+                self.state.mark_completed(
+                    resource_type="instances",
+                    source_id=source_id,
+                    target_id=target_instance["id"],
+                    target_name=target_instance["hostname"],
+                )
+                results.append(target_instance)
+                success_count += 1
+                self.stats["imported_count"] += 1
+                logger.info(
+                    "instance_mapped",
+                    source_id=source_id,
+                    target_id=target_instance["id"],
+                    source_hostname=source_hostname,
+                    target_hostname=target_hostname,
+                )
+            else:
+                # No match found - log warning with hint
+                error_msg = (
+                    f"No target instance for '{source_hostname}'. "
+                    f"Add mapping to config/mappings.yaml"
+                )
+                self.state.mark_failed(
+                    resource_type="instances",
+                    source_id=source_id,
+                    error=error_msg,
+                )
+                failed_count += 1
+                self.stats["error_count"] += 1
+                logger.warning(
+                    "instance_not_found_on_target",
+                    source_id=source_id,
+                    source_hostname=source_hostname,
+                    target_hostname=target_hostname,
+                    hint="Add to config/mappings.yaml: instances: { source: target }",
+                )
+
+            if progress_callback:
+                progress_callback(success_count, failed_count, skipped_count)
+
+        logger.info(
+            "instance_mapping_completed",
+            mapped=success_count,
+            failed=failed_count,
+            skipped=skipped_count,
+        )
+
+        return results
 
 
 class InstanceGroupImporter(ResourceImporter):
@@ -1780,6 +1884,7 @@ class HostImporter(ResourceImporter):
         client: AAPTargetClient,
         state: MigrationState,
         performance_config: PerformanceConfig,
+        resource_mappings: dict[str, dict[str, str]] | None = None,
     ):
         """Initialize host importer with bulk operations.
 
@@ -1787,8 +1892,9 @@ class HostImporter(ResourceImporter):
             client: AAP target client instance
             state: Migration state manager
             performance_config: Performance configuration
+            resource_mappings: Optional resource name mappings from config/mappings.yaml
         """
-        super().__init__(client, state, performance_config)
+        super().__init__(client, state, performance_config, resource_mappings)
         self.bulk_ops = BulkOperations(client)
 
     async def import_hosts_bulk(
@@ -3041,6 +3147,7 @@ def create_importer(
     client: AAPTargetClient,
     state: MigrationState,
     performance_config: PerformanceConfig,
+    resource_mappings: dict[str, dict[str, str]] | None = None,
 ) -> ResourceImporter:
     """Create appropriate importer for resource type.
 
@@ -3049,6 +3156,7 @@ def create_importer(
         client: AAP target client instance
         state: Migration state manager
         performance_config: Performance configuration
+        resource_mappings: Optional resource name mappings from config/mappings.yaml
 
     Returns:
         Appropriate ResourceImporter subclass instance
@@ -3096,4 +3204,4 @@ def create_importer(
             f"Available importers: {', '.join(sorted(importers.keys()))}"
         )
 
-    return importer_class(client, state, performance_config)
+    return importer_class(client, state, performance_config, resource_mappings)

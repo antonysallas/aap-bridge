@@ -6,3 +6,11 @@
 credential_types:
   "CyberArk AIM Central Credential Provider Lookup": "CyberArk Central Credential Provider Lookup"
   "CyberArk Conjur Secret Lookup": "CyberArk Conjur Secrets Manager Lookup"
+
+# Instance hostname mappings (source → target)
+# Instances are infrastructure nodes that cannot be created via API.
+# Map source hostnames to target hostnames for ID mapping.
+instances:
+  "aap23.lab.local": "aap26.lab.local"
+  # Add more mappings as needed:
+  # "source-controller.example.com": "target-controller.example.com"

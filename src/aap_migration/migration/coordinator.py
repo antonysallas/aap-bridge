@@ -469,6 +469,7 @@ class MigrationCoordinator:
                 client=self.target_client,
                 state=self.state,
                 performance_config=self.config.performance,
+                resource_mappings=self.config.resource_mappings,
             )
 
             # Special handling for hosts (bulk operations)
