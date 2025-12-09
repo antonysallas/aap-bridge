@@ -68,7 +68,7 @@ source .venv/bin/activate
 # Install with dev dependencies
 make setup
 
-```markdown
+```
 
 ### Running Tests
 
@@ -85,7 +85,7 @@ make test-cov
 # Specific test file
 uv run pytest tests/unit/test_exporter.py -v
 
-```markdown
+```
 
 ### Code Quality
 
@@ -104,7 +104,7 @@ make typecheck
 # All checks
 make check
 
-```markdown
+```
 
 ## Code Style
 
@@ -149,7 +149,7 @@ async def import_resources(
     """
     ...
 
-```markdown
+```
 
 ## Git Commit Messages
 
@@ -160,7 +160,7 @@ async def import_resources(
 
 ### Good Examples
 
-```dockerfile
+```text
 Add bulk import support for hosts
 
 Implement bulk host creation using AAP's /bulk/host_create endpoint.
@@ -168,16 +168,12 @@ This improves import performance by ~10x for large inventories.
 
 Fixes #45
 
-```text
-
-```text
 Fix rate limiting during export
 
 - Add exponential backoff on 429 responses
 - Respect Retry-After header
 - Add configurable rate limit settings
-
-```python
+```
 
 ## Adding New Features
 
@@ -217,7 +213,7 @@ make test-cov
 # View HTML report
 open htmlcov/index.html
 
-```markdown
+```
 
 ## Release Process
 
