@@ -206,7 +206,7 @@ scripts/
 
 # Documentation PDFs (API references, etc.)
 docs/*.pdf
-
+archive/
 *.bak
 
 # AI Instructions
