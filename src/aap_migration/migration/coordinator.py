@@ -36,12 +36,6 @@ class MigrationCoordinator:
     # Migration phases in dependency order
     MIGRATION_PHASES = [
         {
-            "name": "instance_groups",
-            "description": "Instance Groups",
-            "resource_types": ["instance_groups"],
-            "batch_size": 50,
-        },
-        {
             "name": "organizations",
             "description": "Organizations (foundation for most resources)",
             "resource_types": ["organizations"],
@@ -83,6 +77,12 @@ class MigrationCoordinator:
             "resource_types": ["hosts"],
             "batch_size": 200,
             "use_bulk": True,
+        },
+        {
+            "name": "instance_groups",
+            "description": "Instance Groups",
+            "resource_types": ["instance_groups"],
+            "batch_size": 50,
         },
         {
             "name": "projects",
