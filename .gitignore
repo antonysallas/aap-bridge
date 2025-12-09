@@ -215,3 +215,5 @@ docs/*.pdf
 CLAUDE.md
 GEMINI.md
 bak/
+# MkDocs build output
+site/

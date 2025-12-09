@@ -60,6 +60,10 @@ dev = [
     "mypy>=1.7.1",
     "pre-commit>=3.6.0",
 ]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.0",
+]
 
 [project.scripts]
 aap-migrate = "aap_migration.cli.main:main"
