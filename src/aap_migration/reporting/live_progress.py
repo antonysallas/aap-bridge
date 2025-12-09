@@ -52,9 +52,6 @@ class StatusIconColumn(ProgressColumn):
 
         if status == "complete_with_issues":
             return Text("⚠", style=MigrationColors.WARNING)
-        elif status == "complete_with_skips":
-            # Treat skips as success (green checkmark) per user requirement
-            return Text("✓", style=MigrationColors.COMPLETE)
         elif "complete" in status:
             return Text("✓", style=MigrationColors.COMPLETE)
         elif "running" in status:
@@ -104,8 +101,8 @@ class PhaseProgressState:
         time_delta = now - self.last_update
 
         if time_delta > 0:
-            # Calculate items processed since last update
-            items_delta = completed - self.completed
+            # Calculate items processed since last update (includes skipped)
+            items_delta = (completed - self.completed) + (skipped - self.skipped)
             rate = items_delta / time_delta
             self.rate_history.append(rate)
 
@@ -117,7 +114,7 @@ class PhaseProgressState:
     @property
     def success_count(self) -> int:
         """Number of successfully migrated items."""
-        return self.completed - self.failed - self.skipped
+        return self.completed - self.failed
 
     @property
     def average_rate(self) -> float:
@@ -142,12 +139,12 @@ class PhaseProgressState:
     @property
     def status_text(self) -> str:
         """Status description for display."""
-        total_processed = self.completed
+        # Total processed includes completed + skipped for progress calculation
+        total_processed = self.completed + self.skipped
         if total_processed >= self.total_items:
             if self.failed > 0:
                 return "complete_with_issues"
-            elif self.skipped > 0:
-                return "complete_with_skips"
+            # Skips without errors are considered complete (green checkmark)
             return "complete"
         elif self.completed == 0 and self.skipped == 0:
             return "pending"
@@ -157,13 +154,12 @@ class PhaseProgressState:
     @property
     def status_color(self) -> str:
         """Color for status based on current state."""
-        total_processed = self.completed
+        # Total processed includes completed + skipped for progress calculation
+        total_processed = self.completed + self.skipped
         if total_processed >= self.total_items:
             if self.failed > 0:
                 return MigrationColors.ERROR
-            elif self.skipped > 0:
-                # Skips are considered success/complete visually
-                return MigrationColors.COMPLETE
+            # Skips without errors are considered complete (green)
             return MigrationColors.COMPLETE
         elif self.completed == 0 and self.skipped == 0:
             return MigrationColors.PENDING
@@ -178,14 +174,15 @@ class PhaseProgressState:
 
         Returns:
             Formatted string with color-coded metrics (compact for single-line display)
-            Always includes Err:X for consistent column alignment (Skip count hidden per user request)
+            Always includes Err:X and Skip:X for consistent column alignment
         """
-        # Always show error counts for consistent column width alignment
-        # Format: "XXX.X/s Err:XXX XXX.Xs" (fixed width)
+        # Always show error and skip counts for consistent column width alignment
+        # Format: "XXX.X/s Err:XXX Skip:XXX XXX.Xs" (fixed width)
         return (
-                        f" [{MigrationColors.RATE}]{self.average_rate:>5.1f}/s[/{MigrationColors.RATE}]"
-                        f" [{MigrationColors.ERROR}]Err:{self.failed:<3}[/{MigrationColors.ERROR}]"
-                        f" [{MigrationColors.TIME}]{self.elapsed_time:>5.1f}s[/{MigrationColors.TIME}]"
+            f"[{MigrationColors.RATE}]{self.average_rate:>5.1f}/s[/{MigrationColors.RATE}]"
+            f" [{MigrationColors.ERROR}]Err:{self.failed:<3}[/{MigrationColors.ERROR}]"
+            f" [{MigrationColors.WARNING}]Skip:{self.skipped:<3}[/{MigrationColors.WARNING}]"
+            f" [{MigrationColors.TIME}]{self.elapsed_time:>5.1f}s[/{MigrationColors.TIME}]"
         )
 
 
@@ -507,8 +504,8 @@ class MigrationProgressDisplay:
         state.update(completed, failed, skipped)
 
         # Update the specific phase's task
-        # Use total processed (completed) for progress bar to show 100% when done
-        total_processed = completed
+        # Use total processed (completed + skipped) for progress bar to show 100% when done
+        total_processed = completed + skipped
         self.phase_progress.update(
             task_id,
             completed=total_processed,
@@ -531,13 +528,13 @@ class MigrationProgressDisplay:
             task_id = self.phase_tasks[phase_id]
 
             # Mark the specific phase's task as complete
-            # Use total processed (completed) for progress bar to show 100% when done
+            # Use total processed (completed + skipped) for progress bar to show 100% when done
             # Also use state's status_text which handles "complete_with_issues"
-            total_processed = state.completed
+            total_processed = state.completed + state.skipped
             self.phase_progress.update(
                 task_id,
                 completed=total_processed if total_processed > 0 else state.total_items,
-                status_text=state.status_text,  # Uses "complete_with_issues" if errors/skips
+                status_text=state.status_text,  # Uses "complete_with_issues" if errors
                 status=f"[{state.status_color}]{state.status_text}[/{state.status_color}]",
                 metrics=state.formatted_metrics,
             )
