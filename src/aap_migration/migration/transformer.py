@@ -1514,6 +1514,45 @@ class OrganizationTransformer(DataTransformer):
     REQUIRED_DEPENDENCIES = set()
 
 
+class InstanceGroupTransformer(DataTransformer):
+    """Transformer for instance_group resources.
+
+    Transforms instance hostnames in policy_instance_list using mappings
+    from config/mappings.yaml to handle different hostnames between environments.
+    """
+
+    DEPENDENCIES = {}  # No dependencies - instance_groups reference instances by hostname
+    REQUIRED_DEPENDENCIES: set[str] = set()
+
+    def transform(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Transform instance_group data.
+
+        Maps hostnames in policy_instance_list using config/mappings.yaml.
+        """
+        data = super().transform(data)
+
+        # Get instance hostname mappings from config
+        instance_mappings: dict[str, str] = {}
+        if self.config and hasattr(self.config, "resource_mappings"):
+            instance_mappings = self.config.resource_mappings.get("instances", {})
+
+        # Transform policy_instance_list hostnames
+        if "policy_instance_list" in data and data["policy_instance_list"]:
+            original_list = data["policy_instance_list"]
+            data["policy_instance_list"] = [
+                instance_mappings.get(hostname, hostname)
+                for hostname in original_list
+            ]
+            if original_list != data["policy_instance_list"]:
+                logger.info(
+                    "instance_group_hostnames_mapped",
+                    original=original_list,
+                    mapped=data["policy_instance_list"],
+                )
+
+        return data
+
+
 class HostTransformer(DataTransformer):
     """Transformer for host resources with inventory validation."""
 
@@ -2021,7 +2060,7 @@ class CredentialInputSourceTransformer(DataTransformer):
 TRANSFORMER_CLASSES: dict[str, type[DataTransformer]] = {
     "organizations": OrganizationTransformer,
     "instances": DataTransformer,  # No dependencies - instances are foundational
-    "instance_groups": DataTransformer,  # No dependencies
+    "instance_groups": InstanceGroupTransformer,
     "labels": LabelTransformer,
     "users": DataTransformer,  # No dependencies
     "teams": TeamTransformer,
