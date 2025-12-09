@@ -2,7 +2,9 @@
 
 First off, thanks for taking the time to contribute!
 
-The following is a set of guidelines for contributing to AAP Bridge. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
+The following is a set of guidelines for contributing to AAP Bridge. These are
+mostly guidelines, not rules. Use your best judgment, and feel free to propose
+changes to this document in a pull request.
 
 ## Code of Conduct
 
@@ -12,10 +14,13 @@ This project and everyone participating in it is governed by the [AAP Bridge Cod
 
 ### Reporting Bugs
 
-This section guides you through submitting a bug report for AAP Bridge. Following these guidelines helps maintainers and the community understand your report, reproduce the behavior, and find related reports.
+This section guides you through submitting a bug report for AAP Bridge.
+Following these guidelines helps maintainers and the community understand your
+report, reproduce the behavior, and find related reports.
 
 - **Use the Issue Search** to see if the problem has already been reported.
-- **Check if the issue has been fixed** by trying to reproduce it using the latest `main` branch.
+- **Check if the issue has been fixed** by trying to reproduce it using the
+  latest `main` branch.
 - **Open a new Issue** and provide as much detail as possible:
   - **Use a clear and descriptive title.**
   - **Describe the exact steps which reproduce the problem.**
@@ -39,13 +44,13 @@ This section guides you through submitting a bug report for AAP Bridge. Followin
     ```bash
     uv venv --seed --python 3.12
     source .venv/bin/activate
-    ```
+    ```text
 
 2. **Install dependencies:**
 
     ```bash
     make install-dev
-    ```
+    ```markdown
 
 ## Styleguides
 
@@ -66,4 +71,5 @@ Run `make check` before submitting your PR to run all these tools.
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under its MIT License.
+By contributing, you agree that your contributions will be licensed under its
+MIT License.

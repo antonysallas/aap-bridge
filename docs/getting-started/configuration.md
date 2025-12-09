@@ -1,6 +1,7 @@
 # Configuration
 
-AAP Bridge uses a combination of environment variables and YAML configuration files.
+AAP Bridge uses a combination of environment variables and YAML configuration
+files.
 
 ## Environment Variables
 
@@ -8,7 +9,7 @@ Create a `.env` file from the example:
 
 ```bash
 cp .env.example .env
-```
+```markdown
 
 ### Required Variables
 
@@ -23,7 +24,7 @@ TARGET__TOKEN=your_target_api_token
 
 # PostgreSQL state database
 MIGRATION_STATE_DB_PATH=postgresql://user:password@localhost:5432/aap_migration
-```
+```markdown
 
 ### Optional Variables
 
@@ -36,7 +37,7 @@ VAULT__SECRET_ID=your_secret_id
 # Logging overrides
 AAP_BRIDGE__LOGGING__CONSOLE_LEVEL=WARNING
 AAP_BRIDGE__LOGGING__DISABLE_PROGRESS=false
-```
+```markdown
 
 ## Configuration File
 
@@ -51,7 +52,7 @@ paths:
   transform_dir: ./transformed
   log_dir: ./logs
   checkpoint_dir: ./checkpoints
-```
+```markdown
 
 ### Performance Tuning
 
@@ -66,7 +67,7 @@ performance:
   rate_limit:
     requests_per_second: 50
     burst_size: 100
-```
+```markdown
 
 ### Cleanup Settings
 
@@ -75,7 +76,7 @@ cleanup:
   skip_default_resources: true  # Skip Default org, admin user
   batch_size: 100
   max_concurrent: 5
-```
+```markdown
 
 ### Logging Configuration
 
@@ -84,7 +85,7 @@ logging:
   console_level: WARNING        # Console output level
   file_level: DEBUG            # File log level
   log_file: ./logs/aap-bridge.log
-```
+```markdown
 
 ## Resource Mappings
 
@@ -95,7 +96,7 @@ credential_types:
   source_to_target:
     "Amazon Web Services": "Amazon Web Services"
     "VMware vCenter": "VMware vCenter"
-```
+```markdown
 
 ## Ignored Endpoints
 
@@ -109,7 +110,7 @@ ignored_endpoints:
     - dashboard
   source: []
   target: []
-```
+```markdown
 
 ## Validating Configuration
 
@@ -121,7 +122,7 @@ aap-bridge config validate
 
 # Show current configuration
 aap-bridge config show
-```
+```markdown
 
 ## Environment-Specific Settings
 
@@ -131,7 +132,7 @@ aap-bridge config show
 export AAP_BRIDGE__LOGGING__DISABLE_PROGRESS=true
 export AAP_BRIDGE__LOGGING__CONSOLE_LEVEL=INFO
 aap-bridge migrate full
-```
+```markdown
 
 ### Large Migrations
 
@@ -143,7 +144,7 @@ performance:
   batch_sizes:
     hosts: 200
     inventories: 200
-```
+```markdown
 
 ### Limited Network Bandwidth
 
@@ -154,4 +155,4 @@ performance:
   max_concurrent: 5
   rate_limit:
     requests_per_second: 20
-```
+```text

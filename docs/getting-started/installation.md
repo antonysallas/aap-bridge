@@ -12,7 +12,7 @@ Before installing AAP Bridge, ensure you have:
 ### Hardware Requirements
 
 | Migration Size | RAM | Notes |
-|---------------|-----|-------|
+| --- | --- | --- |
 | < 10,000 hosts | 4GB | Minimal setup |
 | 10,000 - 50,000 hosts | 8GB | Recommended |
 | 50,000+ hosts | 16GB+ | Large-scale migrations |
@@ -32,7 +32,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
 uv sync
-```
+```markdown
 
 ### Using pip
 
@@ -47,7 +47,7 @@ source .venv/bin/activate
 
 # Install in editable mode
 pip install -e .
-```
+```markdown
 
 ### Development Installation
 
@@ -60,7 +60,7 @@ cd aap-bridge
 
 # Use make for complete setup
 make setup
-```
+```markdown
 
 This installs all development dependencies including testing and linting tools.
 
@@ -76,7 +76,7 @@ psql -c "GRANT ALL PRIVILEGES ON DATABASE aap_migration TO aap_migration_user;"
 
 # For PostgreSQL 15+, grant schema permissions
 psql -d aap_migration -c "GRANT ALL ON SCHEMA public TO aap_migration_user;"
-```
+```markdown
 
 !!! note
     The tool automatically creates the necessary tables on first run.
@@ -92,7 +92,7 @@ aap-bridge --help
 
 # Validate configuration
 aap-bridge config validate
-```
+```markdown
 
 ## Next Steps
 

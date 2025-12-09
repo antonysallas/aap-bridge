@@ -8,14 +8,15 @@ Common issues and solutions for AAP Bridge.
 
 **Symptoms:**
 
-```
+```text
 Error: Connection refused to https://source-aap.example.com
-```
+```markdown
 
 **Solutions:**
 
 1. Verify the URL is correct in `.env`
-2. Check network connectivity: `curl -I https://source-aap.example.com/api/v2/ping/`
+2. Check network connectivity: `curl -I
+   https://source-aap.example.com/api/v2/ping/`
 3. Verify the API token is valid
 4. Check firewall rules
 
@@ -23,9 +24,9 @@ Error: Connection refused to https://source-aap.example.com
 
 **Symptoms:**
 
-```
+```text
 Error: 404 Not Found at /api/v2/organizations/
-```
+```text
 
 **Solution:**
 
@@ -37,15 +38,15 @@ TARGET__URL=https://target-aap.example.com/api/v2
 
 # Correct
 TARGET__URL=https://target-aap.example.com/api/controller/v2
-```
+```markdown
 
 ### Authentication errors
 
 **Symptoms:**
 
-```
+```text
 Error: 401 Unauthorized
-```
+```markdown
 
 **Solutions:**
 
@@ -59,29 +60,34 @@ Error: 401 Unauthorized
 
 **Symptoms:**
 
-```
+```text
 Error: connection refused to localhost:5432
-```
+```text
 
 **Solutions:**
 
 1. Verify PostgreSQL is running: `systemctl status postgresql`
 2. Check connection string format:
-   ```
+
+   ```text
+
    postgresql://user:password@host:port/database
-   ```
+
+   ```text
+
 3. Verify user permissions:
+
    ```sql
    GRANT ALL ON DATABASE aap_migration TO your_user;
-   ```
+   ```markdown
 
 ### State database corruption
 
 **Symptoms:**
 
-```
+```text
 Error: IntegrityError or inconsistent state
-```
+```text
 
 **Solution:**
 
@@ -89,7 +95,7 @@ Reset the state database:
 
 ```bash
 aap-bridge state clear --confirm
-```
+```markdown
 
 !!! warning
     This will require re-running the full migration.
@@ -100,38 +106,42 @@ aap-bridge state clear --confirm
 
 **Symptoms:**
 
-```
+```text
 Error: MemoryError or process killed
-```
+```yaml
 
 **Solutions:**
 
 1. Reduce batch sizes in `config/config.yaml`:
+
    ```yaml
    performance:
      batch_sizes:
        hosts: 100  # Reduce from 200
-   ```
+   ```text
 
-2. Enable file splitting:
+1. Enable file splitting:
+
    ```bash
    aap-bridge export --records-per-file 500
-   ```
+   ```markdown
 
 ### Export takes too long
 
 **Solutions:**
 
 1. Export specific resource types:
+
    ```bash
    aap-bridge export organizations inventories
-   ```
+   ```yaml
 
 2. Increase concurrency (if AAP can handle it):
+
    ```yaml
    performance:
      max_concurrent: 20
-   ```
+   ```markdown
 
 ## Import Issues
 
@@ -139,21 +149,23 @@ Error: MemoryError or process killed
 
 **Symptoms:**
 
-```
+```text
 Instances: 1 resources (⚠️ SKIPPED - no importer)
-```
+```python
 
 **Cause:** Missing entry in `export_import.py` method_map.
 
-**Solution:** This is a code issue. Check `docs/developer-guide/adding-resource-types.md` for how to add new resource types.
+**Solution:** This is a code issue. Check
+ `docs/developer-guide/adding-resource-types.md` for how to add new resource
+ types.
 
 ### Resource already exists
 
 **Symptoms:**
 
-```
+```text
 Warning: Conflict - organization 'MyOrg' already exists
-```
+```markdown
 
 **Behavior:** AAP Bridge handles this automatically by:
 
@@ -167,9 +179,9 @@ This is **not an error** - it's idempotent behavior.
 
 **Symptoms:**
 
-```
+```text
 Warning: Unresolved dependency - organization ID 5 not found
-```
+```text
 
 **Causes:**
 
@@ -187,20 +199,22 @@ Warning: Unresolved dependency - organization ID 5 not found
 
 **Symptoms:**
 
-```
+```text
 Error: Bulk host create failed: 400 Bad Request
-```
+```yaml
 
 **Solutions:**
 
 1. Check for invalid host data (duplicate names, invalid characters)
 2. Reduce batch size:
+
    ```yaml
    performance:
      batch_sizes:
        hosts: 100
-   ```
-3. Check target AAP logs for details
+   ```markdown
+
+1. Check target AAP logs for details
 
 ## Validation Issues
 
@@ -208,9 +222,9 @@ Error: Bulk host create failed: 400 Bad Request
 
 **Symptoms:**
 
-```
+```text
 Validation failed: Source has 1000 hosts, target has 998
-```
+```text
 
 **Causes:**
 
@@ -231,37 +245,40 @@ Validation failed: Source has 1000 hosts, target has 998
 **Solutions:**
 
 1. Increase concurrency:
+
    ```yaml
    performance:
      max_concurrent: 15
-   ```
+   ```markdown
 
-2. Use bulk APIs (enabled by default for hosts)
+1. Use bulk APIs (enabled by default for hosts)
 
-3. Check AAP instance capacity - it may be the bottleneck
+2. Check AAP instance capacity - it may be the bottleneck
 
 ### Rate limiting errors
 
 **Symptoms:**
 
-```
+```text
 Error: 429 Too Many Requests
-```
+```yaml
 
 **Solutions:**
 
 1. Reduce rate limit:
+
    ```yaml
    performance:
      rate_limit:
        requests_per_second: 20
-   ```
+   ```yaml
 
-2. Reduce concurrency:
+1. Reduce concurrency:
+
    ```yaml
    performance:
      max_concurrent: 5
-   ```
+   ```markdown
 
 ## Logging and Debugging
 
@@ -269,13 +286,13 @@ Error: 429 Too Many Requests
 
 ```bash
 aap-bridge --log-level DEBUG migrate full
-```
+```markdown
 
 ### Check log files
 
 ```bash
 tail -f logs/aap-bridge.log
-```
+```markdown
 
 ### Enable payload logging
 
@@ -285,7 +302,7 @@ In `config/config.yaml`:
 logging:
   log_payloads: true
   file_level: DEBUG
-```
+```markdown
 
 !!! warning
     Payload logging may contain sensitive data. Use only for debugging.

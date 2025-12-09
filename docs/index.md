@@ -1,15 +1,21 @@
 # AAP Bridge
 
-A production-grade Python tool for migrating Ansible Automation Platform (AAP) installations from one version to another, designed to handle large-scale migrations (e.g., 80,000+ hosts).
+A production-grade Python tool for migrating Ansible Automation Platform (AAP)
+installations from one version to another, designed to handle large-scale
+migrations (e.g., 80,000+ hosts).
 
 ## Key Features
 
 - **Bulk Operations** - Leverages AAP bulk APIs for high-performance migrations
-- **State Management** - PostgreSQL-backed state tracking with checkpoint/resume capability
-- **Idempotency** - Safely resume interrupted migrations without creating duplicates
-- **Professional Progress Display** - Rich-based live progress with real-time metrics
+- **State Management** - PostgreSQL-backed state tracking with checkpoint/resume
+  capability
+- **Idempotency** - Safely resume interrupted migrations without creating
+  duplicates
+- **Professional Progress Display** - Rich-based live progress with real-time
+  metrics
 - **Flexible Output Modes** - Normal, quiet, CI/CD, and detailed modes
-- **Comprehensive Logging** - Structured logging with separate console and file levels
+- **Comprehensive Logging** - Structured logging with separate console and file
+  levels
 - **Split-File Export/Import** - Automatic file splitting for large datasets
 
 ## Quick Links
@@ -38,7 +44,7 @@ A production-grade Python tool for migrating Ansible Automation Platform (AAP) i
 
 AAP Bridge follows an ETL (Export, Transform, Load) architecture:
 
-```
+```text
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │   Source AAP    │────▶│   AAP Bridge    │────▶│   Target AAP    │
 │    (2.3/2.4)    │     │   (ETL Engine)  │     │     (2.6+)      │
@@ -48,11 +54,12 @@ AAP Bridge follows an ETL (Export, Transform, Load) architecture:
                         │   PostgreSQL    │
                         │  State Database │
                         └─────────────────┘
-```
+```markdown
 
 **Components:**
 
-- **Client Layer** - HTTP clients for source AAP, target AAP, and HashiCorp Vault
+- **Client Layer** - HTTP clients for source AAP, target AAP, and HashiCorp
+  Vault
 - **Migration Layer** - ETL pipeline with exporters, transformers, and importers
 - **State Management** - Database-backed progress tracking and ID mapping
 - **CLI** - User-friendly command-line interface

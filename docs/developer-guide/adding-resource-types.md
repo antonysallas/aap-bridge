@@ -1,6 +1,8 @@
 # Guide: Adding a New Resource Type to AAP Bridge
 
-This document provides a comprehensive guide for adding export/import support for a new AAP resource type. Use this as a reference checklist when implementing support for any new resource.
+This document provides a comprehensive guide for adding export/import support
+for a new AAP resource type. Use this as a reference checklist when implementing
+support for any new resource.
 
 ---
 
@@ -9,7 +11,7 @@ This document provides a comprehensive guide for adding export/import support fo
 Adding a new resource type requires modifications to **8 files**:
 
 | File | Purpose |
-|------|---------|
+| --- | --- |
 | `resources.py` | Central registry - migration order, cleanup order, metadata |
 | `exporter.py` | Export class + factory registration |
 | `importer.py` | Import class + factory registration |
@@ -35,7 +37,7 @@ READ_ONLY_ENDPOINTS = {
     "config",
     # ... remove your resource type from here
 }
-```
+```dockerfile
 
 #### B. Add to RESOURCE_REGISTRY
 
@@ -54,14 +56,16 @@ Add the new resource type with appropriate migration/cleanup order:
     batch_size=50,          # Adjust based on resource size
     use_bulk_api=False,     # True only for hosts
 ),
-```
+```yaml
 
 **Migration Order Guidelines:**
+
 - Lower numbers = migrated earlier (dependencies first)
 - Organizations: 20, Users: 40, Credentials: 70, Inventories: 100, Hosts: 115
 - Place your resource after its dependencies
 
 **Cleanup Order Guidelines:**
+
 - Lower numbers = deleted earlier (dependents first)
 - Reverse of migration order conceptually
 - Resources that reference others should be deleted first
@@ -98,7 +102,7 @@ class YourResourceExporter(ResourceExporter):
             filters=filters,
         ):
             yield resource
-```
+```dockerfile
 
 #### B. Register in Factory
 
@@ -109,7 +113,7 @@ exporters = {
     # ... existing exporters
     "your_resource": YourResourceExporter,
 }
-```
+```python
 
 ---
 
@@ -142,9 +146,10 @@ class YourResourceImporter(ResourceImporter):
             List of created resource data
         """
         return await self._import_parallel("your_resource", resources, progress_callback)
-```
+```dockerfile
 
-**Important:** The method name MUST follow the pattern `import_{resource_type}` (e.g., `import_instances`, `import_organizations`).
+**Important:** The method name MUST follow the pattern `import_{resource_type}`
+ (e.g., `import_instances`, `import_organizations`).
 
 #### B. Register in Factory
 
@@ -155,7 +160,7 @@ importers = {
     # ... existing importers
     "your_resource": YourResourceImporter,
 }
-```
+```python
 
 ---
 
@@ -170,7 +175,7 @@ TRANSFORMER_CLASSES: dict[str, type[DataTransformer]] = {
     # OR create a custom transformer class if needed:
     # "your_resource": YourResourceTransformer,
 }
-```
+```text
 
 If custom transformation is needed, create a transformer class:
 
@@ -182,7 +187,7 @@ class YourResourceTransformer(DataTransformer):
         "organization": "organizations",
     }
     REQUIRED_DEPENDENCIES = {"organization"}  # Dependencies that must exist
-```
+```python
 
 ---
 
@@ -201,7 +206,7 @@ MIGRATION_PHASES = [
     },
     # ... later phases
 ]
-```
+```python
 
 ---
 
@@ -220,13 +225,14 @@ PHASE1_RESOURCE_TYPES = [
 PHASE3_RESOURCE_TYPES = [
     # ... existing types
 ]
-```
+```python
 
 ---
 
 ### Step 7: `src/aap_migration/cli/commands/export_import.py` ⚠️ CRITICAL
 
-**This step is often missed!** Add to the `method_map` dict inside the import function:
+**This step is often missed!** Add to the `method_map` dict inside the import
+ function:
 
 ```python
 method_map = {
@@ -235,14 +241,16 @@ method_map = {
     "your_resource": "import_your_resource",  # ADD THIS
     # ... other mappings
 }
-```
+```text
 
-**The method name must match exactly** the method you defined in the importer class (Step 3A).
+**The method name must match exactly** the method you defined in the importer
+ class (Step 3A).
 
 Without this mapping, the resource will be skipped during import with:
-```
+
+```text
 ⚠️ SKIPPED - no importer
-```
+```python
 
 ---
 
@@ -259,7 +267,7 @@ elif resource_type == "your_resource" and (
 ):
     skip_resource = True
     skip_reason = "managed/system resource"
-```
+```python
 
 ---
 
@@ -268,7 +276,8 @@ elif resource_type == "your_resource" and (
 Use this checklist when adding a new resource type:
 
 - [ ] `resources.py`: Remove from READ_ONLY_ENDPOINTS (if present)
-- [ ] `resources.py`: Add to RESOURCE_REGISTRY with correct migration/cleanup order
+- [ ] `resources.py`: Add to RESOURCE_REGISTRY with correct migration/cleanup
+  order
 - [ ] `exporter.py`: Add Exporter class
 - [ ] `exporter.py`: Register in create_exporter factory
 - [ ] `importer.py`: Add Importer class with `import_{resource_type}` method
@@ -285,24 +294,27 @@ Use this checklist when adding a new resource type:
 
 ## Example: Adding "instances" Resource Type
 
-Below is the complete implementation for the "instances" resource type as a reference.
+Below is the complete implementation for the "instances" resource type as a
+reference.
 
 ### Background
 
-Instances are AAP controller nodes in the deployment topology. They must be migrated BEFORE instance_groups since groups can reference instances.
+Instances are AAP controller nodes in the deployment topology. They must be
+migrated BEFORE instance_groups since groups can reference instances.
 
 ### Migration Order
 
-| Resource        | migration_order | cleanup_order |
-|-----------------|-----------------|---------------|
-| hosts           | 115             | 40            |
-| **instances**   | **116**         | **88**        |
-| instance_groups | 117             | 87            |
-| projects        | 120             | 80            |
+| Resource | migration_order | cleanup_order |
+| --- | --- | --- |
+| hosts | 115 | 40 |
+| **instances** | **116** | **88** |
+| instance_groups | 117 | 87 |
+| projects | 120 | 80 |
 
 ### Implementation Details
 
 #### resources.py
+
 ```python
 "instances": ResourceTypeInfo(
     name="instances",
@@ -315,9 +327,10 @@ Instances are AAP controller nodes in the deployment topology. They must be migr
     has_transformer=False,
     batch_size=50,
 ),
-```
+```python
 
 #### exporter.py
+
 ```python
 class InstanceExporter(ResourceExporter):
     """Exporter for instance (AAP controller node) resources."""
@@ -336,9 +349,10 @@ class InstanceExporter(ResourceExporter):
 
 # In create_exporter():
 "instances": InstanceExporter,
-```
+```python
 
 #### importer.py
+
 ```python
 class InstanceImporter(ResourceImporter):
     """Importer for instance (AAP controller node) resources."""
@@ -354,14 +368,16 @@ class InstanceImporter(ResourceImporter):
 
 # In create_importer():
 "instances": InstanceImporter,
-```
+```python
 
 #### transformer.py
+
 ```python
 "instances": DataTransformer,  # No special transformation needed
-```
+```python
 
 #### coordinator.py
+
 ```python
 {
     "name": "instances",
@@ -369,9 +385,10 @@ class InstanceImporter(ResourceImporter):
     "resource_types": ["instances"],
     "batch_size": 50,
 },
-```
+```python
 
 #### migrate.py
+
 ```python
 PHASE1_RESOURCE_TYPES = [
     # ...
@@ -380,9 +397,10 @@ PHASE1_RESOURCE_TYPES = [
     "instance_groups",
     "projects",
 ]
-```
+```python
 
 #### export_import.py
+
 ```python
 method_map = {
     # Foundation resources
@@ -391,9 +409,10 @@ method_map = {
     "instance_groups": "import_instance_groups",
     # ...
 }
-```
+```python
 
 #### cleanup.py
+
 ```python
 elif resource_type == "instances" and (
     is_managed
@@ -402,7 +421,7 @@ elif resource_type == "instances" and (
 ):
     skip_resource = True
     skip_reason = "managed/system instance"
-```
+```markdown
 
 ---
 

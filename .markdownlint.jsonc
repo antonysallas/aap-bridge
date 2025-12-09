@@ -1,0 +1,16 @@
+{
+  // MD013: Line length
+  // Tables can't be auto-wrapped, so we exclude them and code blocks
+  "MD013": {
+    "line_length": 80,
+    "heading_line_length": 80,
+    "code_block_line_length": 120,
+    "code_blocks": false,
+    "tables": false
+  },
+
+  // MD033: Allow specific HTML elements (commonly used in mkdocs)
+  "MD033": {
+    "allowed_elements": ["div", "span", "br", "details", "summary"]
+  }
+}
