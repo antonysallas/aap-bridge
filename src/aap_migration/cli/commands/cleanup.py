@@ -1180,6 +1180,15 @@ async def delete_resources(
                     skip_resource = True
                     skip_reason = "managed/system instance group"
 
+                # Skip managed/system instances (like localhost, controlplane nodes)
+                elif resource_type == "instances" and (
+                    is_managed
+                    or resource_name in ("localhost", "controlplane")
+                    or resource_id == 1
+                ):
+                    skip_resource = True
+                    skip_reason = "managed/system instance"
+
             if skip_resource:
                 logger.debug(f"Skipping {skip_reason}: {resource_name} (id={resource_id})")
                 skipped_count += 1

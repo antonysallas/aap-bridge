@@ -1635,6 +1635,34 @@ class TeamExporter(ResourceExporter):
             yield team
 
 
+class InstanceExporter(ResourceExporter):
+    """Exporter for instance (AAP controller node) resources.
+
+    Instances are individual nodes in the AAP deployment topology.
+    They must be exported before instance_groups since groups can reference instances.
+    """
+
+    async def export(
+        self, filters: dict[str, Any] | None = None
+    ) -> AsyncGenerator[dict[str, Any], None]:
+        """Export instances.
+
+        Args:
+            filters: Optional query parameters for filtering
+
+        Yields:
+            Instance dictionaries
+        """
+        logger.info("exporting_instances")
+        async for instance in self.export_resources(
+            resource_type="instances",
+            endpoint="instances/",
+            page_size=self.performance_config.batch_sizes.get("instances", 50),
+            filters=filters,
+        ):
+            yield instance
+
+
 class InstanceGroupExporter(ResourceExporter):
     """Exporter for instance group resources.
 
@@ -1736,6 +1764,7 @@ def create_exporter(
         "execution_environments": ExecutionEnvironmentExporter,
         "users": UserExporter,
         "teams": TeamExporter,
+        "instances": InstanceExporter,
         "instance_groups": InstanceGroupExporter,
         "notification_templates": NotificationTemplateExporter,
         "system_job_templates": SystemJobTemplateExporter,

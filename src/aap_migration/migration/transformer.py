@@ -2020,6 +2020,7 @@ class CredentialInputSourceTransformer(DataTransformer):
 # Registry of all transformer classes
 TRANSFORMER_CLASSES: dict[str, type[DataTransformer]] = {
     "organizations": OrganizationTransformer,
+    "instances": DataTransformer,  # No dependencies - instances are foundational
     "instance_groups": DataTransformer,  # No dependencies
     "labels": LabelTransformer,
     "users": DataTransformer,  # No dependencies

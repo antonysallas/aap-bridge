@@ -1062,6 +1062,33 @@ class OrganizationImporter(ResourceImporter):
         return await self._import_parallel("organizations", organizations, progress_callback)
 
 
+class InstanceImporter(ResourceImporter):
+    """Importer for instance (AAP controller node) resources.
+
+    Instances must be imported before instance_groups since groups
+    can reference specific instances.
+    """
+
+    DEPENDENCIES = {}  # No dependencies - instances are foundational
+
+    async def import_instances(
+        self,
+        instances: list[dict[str, Any]],
+        progress_callback: Callable[[int, int, int], None] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Import multiple instances concurrently with live progress updates.
+
+        Args:
+            instances: List of instance data
+            progress_callback: Optional callback for progress updates.
+                Called after each instance with (success_count, failed_count).
+
+        Returns:
+            List of created instance data
+        """
+        return await self._import_parallel("instances", instances, progress_callback)
+
+
 class InstanceGroupImporter(ResourceImporter):
     """Importer for instance group resources."""
 
@@ -3033,6 +3060,7 @@ def create_importer(
         # Foundation resources
         "organizations": OrganizationImporter,
         "labels": LabelImporter,
+        "instances": InstanceImporter,
         "instance_groups": InstanceGroupImporter,
         # Identity and access
         "users": UserImporter,

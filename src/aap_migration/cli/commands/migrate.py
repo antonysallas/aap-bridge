@@ -52,7 +52,8 @@ PHASE1_RESOURCE_TYPES = [
     "inventory_sources",
     "inventory_groups",
     "hosts",
-    "instance_groups",     # After hosts, before projects
+    "instances",           # After hosts, before instance_groups
+    "instance_groups",     # After instances, before projects
     "projects",
 ]
 
