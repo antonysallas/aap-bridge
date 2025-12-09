@@ -1260,9 +1260,10 @@ def import_cmd(
                 # Resource does NOT exist - needs to be imported
                 to_import.append(resource_data)
 
-        # Step 5: Update progress for pre-existing resources
+        # Step 5: Update progress for pre-existing resources (they are skipped, not imported)
         if found_count > 0:
-            progress.update_phase(phase_id, found_count, 0)
+            # Pre-existing resources count as skipped (completed=0, failed=0, skipped=found_count)
+            progress.update_phase(phase_id, 0, 0, found_count)
             logger.info(
                 "pre_existing_resources_found",
                 resource_type=resource_type,
@@ -1402,8 +1403,8 @@ def import_cmd(
                                 message=f"No importer available for {rtype}",
                             )
                             skipped_no_importer.append(rtype)
-                            # Mark phase as complete (all skipped)
-                            progress.update_phase(phase_id, total_count, 0)
+                            # Mark phase as complete (all skipped - pass 0 completed, 0 failed, total_count skipped)
+                            progress.update_phase(phase_id, 0, 0, total_count)
                             progress.complete_phase(phase_id)
                             continue
 
@@ -1549,8 +1550,14 @@ def import_cmd(
                                         host_count=len(inv_hosts),
                                         message="Skipping hosts - inventory not in id_mappings",
                                     )
-                                    total_failed += len(inv_hosts)
-                                    progress.update_phase(phase_id, total_created, total_failed)
+                                    # These are skipped (not failed) since inventory wasn't migrated
+                                    total_skipped_hosts_bulk += len(inv_hosts)
+                                    progress.update_phase(
+                                        phase_id,
+                                        total_created + total_failed,
+                                        total_failed,
+                                        total_skipped_hosts_bulk,
+                                    )
                                     continue
 
                                 # Create progress callback that captures current totals
@@ -1564,9 +1571,11 @@ def import_cmd(
                                     base_failed: int = total_failed,
                                     base_skipped: int = total_skipped_hosts_bulk,  # Pass base skipped
                                 ) -> None:
+                                    # completed = created + failed (NOT skipped - it's passed separately)
+                                    # Progress bar will calculate: completed + skipped = total processed
                                     progress.update_phase(
                                         _phase_id,
-                                        completed=base_created + created + base_skipped + skipped,
+                                        completed=base_created + created + base_failed + failed,
                                         failed=base_failed + failed,
                                         skipped=base_skipped + skipped,
                                     )
@@ -1599,8 +1608,8 @@ def import_cmd(
                                 message=f"No import method available for {rtype}",
                             )
                             skipped_no_importer.append(rtype)
-                            # Mark as complete (all skipped)
-                            progress.update_phase(phase_id, total_count, 0)
+                            # Mark as complete (all skipped - pass 0 completed, 0 failed, total_count skipped)
+                            progress.update_phase(phase_id, 0, 0, total_count)
                             progress.complete_phase(phase_id)
                             continue
 
