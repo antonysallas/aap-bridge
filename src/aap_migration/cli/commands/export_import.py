@@ -530,7 +530,7 @@ def export(
                                 exporter.set_skip_dynamic_hosts(True)
                                 logger.info(
                                     "filtering_hosts",
-                                    message="Skipping hosts from dynamic inventory sources"
+                                    message="Skipping hosts from dynamic inventory sources",
                                 )
 
                         # Apply skip_smart_inventories filter for inventories
@@ -539,7 +539,7 @@ def export(
                                 exporter.set_skip_smart_inventories(True)
                                 logger.info(
                                     "filtering_inventories",
-                                    message="Skipping smart inventories (only exporting static inventories)"
+                                    message="Skipping smart inventories (only exporting static inventories)",
                                 )
 
                         # Set resume checkpoint if resume mode is enabled
@@ -693,7 +693,9 @@ def export(
             echo_info("Export Summary:")
             click.echo(f"  Resources exported: {format_count(total_resources)}")
             click.echo(f"  Resource types: {len(exported_successfully)}")
-            click.echo(f"  Skipped (read-only/runtime): {len(skipped_readonly) + len(skipped_runtime)}")
+            click.echo(
+                f"  Skipped (read-only/runtime): {len(skipped_readonly) + len(skipped_runtime)}"
+            )
             if skipped_manual:
                 click.echo(f"  Requires manual migration: {len(skipped_manual)}")
             if skipped_no_exporter:
@@ -906,8 +908,10 @@ def import_cmd(
     if phase == "phase2":
         echo_info("Executing Phase 2: Patching Projects with SCM details...")
         if not dry_run:
+
             async def run_patch():
                 await patch_project_scm_details(ctx, input_dir)
+
             try:
                 asyncio.run(run_patch())
             except RuntimeError:
@@ -1052,7 +1056,9 @@ def import_cmd(
     # Confirmation check (unless --force, --yes, or --dry-run)
     if not force and not yes and not dry_run:
         click.echo()
-        echo_info(f"Importing {len(types_to_import)} resource types ({format_count(total_resources_to_import)} resources)")
+        echo_info(
+            f"Importing {len(types_to_import)} resource types ({format_count(total_resources_to_import)} resources)"
+        )
         if not click.confirm("Proceed with import?"):
             echo_info("Import cancelled")
             raise click.exceptions.Exit(0)
@@ -1462,12 +1468,23 @@ def import_cmd(
                                 )
 
                                 # Calculate actual imported, failed, and skipped from results
-                                imported_count = len([r for r in results if r and not r.get("_skipped")])
-                                skipped_in_import = len([r for r in results if r and r.get("_skipped")])
-                                failed_count = len(resources_to_import) - imported_count - skipped_in_import
+                                imported_count = len(
+                                    [r for r in results if r and not r.get("_skipped")]
+                                )
+                                skipped_in_import = len(
+                                    [r for r in results if r and r.get("_skipped")]
+                                )
+                                failed_count = (
+                                    len(resources_to_import) - imported_count - skipped_in_import
+                                )
 
                                 # Final progress update
-                                progress.update_phase(phase_id, imported_count, failed_count, skipped_in_import)
+                                progress.update_phase(
+                                    phase_id,
+                                    completed=imported_count + failed_count + skipped_in_import,
+                                    failed=failed_count,
+                                    skipped=skipped_in_import,
+                                )
 
                                 # Aggregate this phase's skips into total_skipped
                                 total_skipped += skipped_in_import
@@ -1541,14 +1558,17 @@ def import_cmd(
                                 def bulk_progress(
                                     created: int,
                                     failed: int,
-                                    skipped: int, # Accept skipped from bulk importer
+                                    skipped: int,  # Accept skipped from bulk importer
                                     _phase_id: str = phase_id,
                                     base_created: int = total_created,
                                     base_failed: int = total_failed,
-                                    base_skipped: int = total_skipped_hosts_bulk, # Pass base skipped
+                                    base_skipped: int = total_skipped_hosts_bulk,  # Pass base skipped
                                 ) -> None:
                                     progress.update_phase(
-                                        _phase_id, base_created + created, base_failed + failed, base_skipped + skipped
+                                        _phase_id,
+                                        completed=base_created + created + base_skipped + skipped,
+                                        failed=base_failed + failed,
+                                        skipped=base_skipped + skipped,
                                     )
 
                                 result = await importer.import_hosts_bulk(
@@ -1559,14 +1579,18 @@ def import_cmd(
 
                                 batch_created = result.get("total_created", 0)
                                 batch_failed = result.get("total_failed", 0)
-                                batch_skipped = result.get("total_skipped", 0) # Get skipped from bulk import
+                                batch_skipped = result.get(
+                                    "total_skipped", 0
+                                )  # Get skipped from bulk import
                                 total_created += batch_created
                                 total_failed += batch_failed
                                 total_skipped_hosts_bulk += batch_skipped
 
                             imported_count = total_created
                             failed_count = total_failed
-                            skipped_in_import = total_skipped_hosts_bulk # Update skipped count for this phase
+                            skipped_in_import = (
+                                total_skipped_hosts_bulk  # Update skipped count for this phase
+                            )
                         else:
                             # No import method available for this resource type
                             logger.info(
@@ -1581,9 +1605,13 @@ def import_cmd(
                             continue
 
                         total_imported += imported_count
-                        final_skipped_for_phase = skipped_in_import + skipped_count  # Combine skips from importer and pre-check
+                        final_skipped_for_phase = (
+                            skipped_in_import + skipped_count
+                        )  # Combine skips from importer and pre-check
                         total_skipped += final_skipped_for_phase
-                        final_failed_for_phase = len(resources) - imported_count - final_skipped_for_phase
+                        final_failed_for_phase = (
+                            len(resources) - imported_count - final_skipped_for_phase
+                        )
                         total_failed += final_failed_for_phase
 
                         # Store stats for summary
@@ -1591,11 +1619,16 @@ def import_cmd(
                             "imported": imported_count,
                             "skipped": final_skipped_for_phase,
                             "failed": final_failed_for_phase,
-                            "total": len(resources)
+                            "total": len(resources),
                         }
 
                         # Update final progress
-                        progress.update_phase(phase_id, imported_count, final_failed_for_phase, final_skipped_for_phase)
+                        progress.update_phase(
+                            phase_id,
+                            imported_count,
+                            final_failed_for_phase,
+                            final_skipped_for_phase,
+                        )
                         logger.info(
                             "imported_resources",
                             resource_type=rtype,
@@ -1650,7 +1683,9 @@ def import_cmd(
 
                 if rtype in skipped_no_importer:
                     # Fetch total count from metadata for skipped items
-                    total_in_export = metadata.get("resource_types", {}).get(rtype, {}).get("count", 0)
+                    total_in_export = (
+                        metadata.get("resource_types", {}).get(rtype, {}).get("count", 0)
+                    )
                     click.echo(
                         f"  {description}: {format_count(total_in_export)} resources (⚠️  SKIPPED - no importer)"
                     )
