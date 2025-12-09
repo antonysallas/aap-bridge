@@ -1,0 +1,8 @@
+# Resource Renaming Rules
+# Structure:
+# resource_type:
+#   old_name: new_name
+
+credential_types:
+  "CyberArk AIM Central Credential Provider Lookup": "CyberArk Central Credential Provider Lookup"
+  "CyberArk Conjur Secret Lookup": "CyberArk Conjur Secrets Manager Lookup"
