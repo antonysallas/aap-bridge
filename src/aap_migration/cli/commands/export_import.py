@@ -1387,6 +1387,7 @@ def import_cmd(
                                 ctx.target_client,
                                 ctx.migration_state,
                                 ctx.config.performance,
+                                ctx.config.resource_mappings,
                             )
                         except NotImplementedError:
                             logger.info(
