@@ -1810,7 +1810,6 @@ class HostImporter(ResourceImporter):
 
             for host in batch:
                 source_id = host.pop("_source_id", host.get("id"))
-                source_ids.append(source_id)
                 # Track source name for error handling (bulk imports don't pre-create mappings)
                 source_name_by_id[source_id] = host.get("name", f"host_{source_id}")
 
@@ -1819,6 +1818,9 @@ class HostImporter(ResourceImporter):
                     self.stats["skipped_count"] += 1
                     total_skipped += 1
                     continue
+
+                # Only add non-skipped hosts to source_ids (for accurate error counting)
+                source_ids.append(source_id)
 
                 # Track source info for batch ID mapping (no per-host DB calls!)
                 source_info.append({
