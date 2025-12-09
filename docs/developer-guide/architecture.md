@@ -43,6 +43,7 @@ management for checkpointing and idempotency.
 │                   │ PostgreSQL│                                │
 │                   └───────────┘                                │
 └───────────────────────────────────────────────────────────────┘
+
 ```markdown
 
 ## Directory Structure
@@ -81,6 +82,7 @@ src/aap_migration/
 └── utils/                 # Utilities
     ├── logging.py
     └── idempotency.py
+
 ```markdown
 
 ## Key Components
@@ -120,6 +122,7 @@ class ResourceExporter:
     ) -> AsyncGenerator[dict, None]:
         """Paginate through all resources."""
         ...
+
 ```markdown
 
 Resource-specific exporters inherit from `ResourceExporter`:
@@ -144,6 +147,7 @@ class DataTransformer:
     ) -> dict[str, Any]:
         """Apply transformations."""
         ...
+
 ```markdown
 
 Transformations include:
@@ -167,6 +171,7 @@ class ResourceImporter:
     ) -> dict[str, Any] | None:
         """Import single resource."""
         ...
+
 ```markdown
 
 Special handling for:
@@ -201,6 +206,7 @@ class MigrationState:
         resource_type: str,
         source_id: int,
     ) -> bool: ...
+
 ```markdown
 
 #### Database Schema
@@ -223,6 +229,7 @@ CREATE TABLE migration_progress (
     error_message TEXT,
     updated_at TIMESTAMP
 );
+
 ```markdown
 
 ### Resource Registry
@@ -241,6 +248,7 @@ RESOURCE_REGISTRY = {
     ),
     ...
 }
+
 ```yaml
 
 Controls:
@@ -268,6 +276,7 @@ File Writer (split by records-per-file)
     │
     ▼
 exports/{resource_type}/{resource_type}_XXXX.json
+
 ```markdown
 
 ### Transform Flow
@@ -285,6 +294,7 @@ DataTransformer.transform()
     │
     ▼
 transformed/{resource_type}/*.json
+
 ```markdown
 
 ### Import Flow
@@ -302,6 +312,7 @@ ResourceImporter.import_resource()
     │
     ▼
 Target AAP (via AAPTargetClient)
+
 ```sql
 
 ## Extension Points
@@ -327,6 +338,7 @@ class CustomTransformer(DataTransformer):
         data = await super().transform(data, state)
         # Custom logic here
         return data
+
 ```markdown
 
 ### Custom Importers
@@ -344,6 +356,7 @@ class CustomImporter(ResourceImporter):
         # Custom pre-processing
         ...
         return await super().import_resource(resource_type, source_id, data)
+
 ```yaml
 
 ## Performance Considerations

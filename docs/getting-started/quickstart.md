@@ -8,6 +8,7 @@ Copy the example environment file:
 
 ```bash
 cp .env.example .env
+
 ```text
 
 Edit `.env` with your AAP credentials:
@@ -23,6 +24,7 @@ TARGET__TOKEN=your_target_token
 
 # PostgreSQL state database
 MIGRATION_STATE_DB_PATH=postgresql://user:password@localhost:5432/aap_migration
+
 ```markdown
 
 !!! warning "Platform Gateway URL"
@@ -33,6 +35,7 @@ MIGRATION_STATE_DB_PATH=postgresql://user:password@localhost:5432/aap_migration
 
 ```bash
 aap-bridge config validate
+
 ```markdown
 
 This checks connectivity to both AAP instances and the database.
@@ -41,6 +44,7 @@ This checks connectivity to both AAP instances and the database.
 
 ```bash
 aap-bridge prep
+
 ```yaml
 
 This:
@@ -53,6 +57,7 @@ This:
 
 ```bash
 aap-bridge export
+
 ```markdown
 
 Exports all resources from the source AAP to the `exports/` directory.
@@ -61,6 +66,7 @@ Exports all resources from the source AAP to the `exports/` directory.
 
 ```bash
 aap-bridge transform
+
 ```markdown
 
 Applies schema transformations for the target AAP version.
@@ -69,6 +75,7 @@ Applies schema transformations for the target AAP version.
 
 ```bash
 aap-bridge import
+
 ```markdown
 
 Imports transformed data to the target AAP.
@@ -77,6 +84,7 @@ Imports transformed data to the target AAP.
 
 ```bash
 aap-bridge validate
+
 ```markdown
 
 Compares source and target to verify migration success.
@@ -87,6 +95,7 @@ For a complete migration in one command:
 
 ```bash
 aap-bridge migrate full
+
 ```dockerfile
 
 This runs all phases sequentially with progress tracking.
@@ -97,10 +106,13 @@ Run without arguments for an interactive menu:
 
 ```bash
 aap-bridge
+
 ```markdown
 
 ## Next Steps
 
 - [Configuration](configuration.md) - Fine-tune settings for your environment
-- [CLI Reference](../user-guide/cli-reference.md) - Explore all available commands
-- [Migration Workflow](../user-guide/migration-workflow.md) - Understand the full process
+- [CLI Reference](../user-guide/cli-reference.md) - Explore all available
+  commands
+- [Migration Workflow](../user-guide/migration-workflow.md) - Understand the
+  full process

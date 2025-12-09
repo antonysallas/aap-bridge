@@ -72,12 +72,14 @@ The project includes configuration files with recommended default values. You ne
 The tool requires a PostgreSQL database to track migration state. You must create this database before running the tool. The tool will automatically create the necessary tables on first run.
 
 ```bash
+
 # Example: Create database and user locally
 psql -c "CREATE DATABASE aap_migration;"
 psql -c "CREATE USER aap_migration_user WITH PASSWORD 'your_secure_password';"
 psql -c "GRANT ALL PRIVILEGES ON DATABASE aap_migration TO aap_migration_user;"
 # Ensure the user owns the schema/tables (Postgres 15+)
 psql -d aap_migration -c "GRANT ALL ON SCHEMA public TO aap_migration_user;"
+
 ```dockerfile
 
 #### 2. Environment Setup
@@ -85,7 +87,9 @@ psql -d aap_migration -c "GRANT ALL ON SCHEMA public TO aap_migration_user;"
 Copy the example environment file and configure your credentials:
 
 ```bash
+
 cp .env.example .env
+
 ```text
 
 Edit `.env` with your AAP instance details and database connection string.
@@ -93,6 +97,7 @@ Edit `.env` with your AAP instance details and database connection string.
 **Critical AAP 2.6 Note:** The Target URL must point to the **Platform Gateway** (`/api/controller/v2`), not the direct controller API.
 
 ```bash
+
 # Source AAP instance
 SOURCE__URL=https://source-aap.example.com/api/v2
 SOURCE__TOKEN=your_source_token
@@ -110,6 +115,7 @@ be manually recreated.
 VAULT__URL=https://vault.example.com
 VAULT__ROLE_ID=xxxxx
 VAULT__SECRET_ID=xxxxx
+
 ```markdown
 
 #### 3. Application Configuration
@@ -127,6 +133,7 @@ Review and adjust `config/config.yaml` for your environment:
 #### Basic Commands
 
 ```bash
+
 # Menu Based CLI
 aap-bridge
 
@@ -144,6 +151,7 @@ aap-bridge validate all --sample-size 4000
 
 # View migration report
 aap-bridge report summary
+
 ```markdown
 
 #### Output Control
@@ -151,6 +159,7 @@ aap-bridge report summary
 The tool provides flexible output modes for different environments:
 
 ```bash
+
 # Default: Live progress display with clean console output
 aap-bridge migrate full --config config/config.yaml
 
@@ -165,6 +174,7 @@ aap-bridge migrate full --config config/config.yaml --show-stats
 
 # Combination: Quiet + no progress for automation
 aap-bridge migrate full --config config/config.yaml --quiet --disable-progress
+
 ```text
 
 **Output Modes:**
@@ -177,10 +187,12 @@ aap-bridge migrate full --config config/config.yaml --quiet --disable-progress
 **Environment Variables:**
 
 ```bash
+
 # Configure via environment
 export AAP_BRIDGE__LOGGING__CONSOLE_LEVEL=WARNING
 export AAP_BRIDGE__LOGGING__DISABLE_PROGRESS=true
 aap-bridge migrate full --config config/config.yaml
+
 ```markdown
 
 #### Split-File Export/Import
@@ -188,16 +200,19 @@ aap-bridge migrate full --config config/config.yaml
 For large datasets, the tool automatically splits exports into multiple files:
 
 ```bash
+
 # Export with custom split size (default: 1000 records/file)
 aap-bridge export --output exports/ --records-per-file 500
 
 # Import handles multiple files automatically
 aap-bridge import --input exports/
+
 ```text
 
 **Export Structure:**
 
 ```text
+
 exports/
 ├── metadata.json           # Export metadata
 ├── organizations/
@@ -209,6 +224,7 @@ exports/
 └── hosts/
     ├── hosts_0001.json
     └── hosts_0002.json
+
 ```markdown
 
 ## Performance Targets (TBD)
@@ -233,11 +249,13 @@ The tool uses AAP's bulk operations API to dramatically improve performance:
 All migrations are checkpoint-based, allowing safe resumption:
 
 ```bash
+
 # Resume from last checkpoint
 aap-bridge migrate resume
 
 # Resume from specific checkpoint
 aap-bridge migrate resume --checkpoint inventories_batch_50
+
 ```markdown
 
 ### Idempotency
@@ -261,6 +279,7 @@ The tool migrates resources in the correct dependency order:
 ### Running Tests
 
 ```bash
+
 # Run all tests
 pytest
 
@@ -278,11 +297,13 @@ pytest tests/performance/
 
 # Disable progress display for CI
 pytest tests/unit/ --disable-progress
+
 ```markdown
 
 ### Code Quality
 
 ```bash
+
 # Format code
 make format
 
@@ -294,6 +315,7 @@ make typecheck
 
 # Run all checks
 make check
+
 ```markdown
 
 ## Critical Constraints

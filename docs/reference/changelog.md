@@ -2,7 +2,9 @@
 
 All notable changes to AAP Bridge are documented here.
 
-For the complete changelog, see [CHANGELOG.md](https://github.com/antonysallas/aap-bridge/blob/main/CHANGELOG.md) in the repository.
+For the complete changelog, see
+[CHANGELOG.md](https://github.com/antonysallas/aap-bridge/blob/main/CHANGELOG.md)
+in the repository.
 
 ## Version History
 
