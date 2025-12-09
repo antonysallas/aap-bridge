@@ -102,7 +102,7 @@ class PhaseProgressState:
 
         if time_delta > 0:
             # Calculate items processed since last update
-            items_delta = (completed - self.completed) + (failed - self.failed) + (skipped - self.skipped)
+            items_delta = completed - self.completed
             rate = items_delta / time_delta
             self.rate_history.append(rate)
 
@@ -114,7 +114,7 @@ class PhaseProgressState:
     @property
     def success_count(self) -> int:
         """Number of successfully migrated items."""
-        return self.completed - self.failed
+        return self.completed - self.failed - self.skipped
 
     @property
     def average_rate(self) -> float:
@@ -139,7 +139,7 @@ class PhaseProgressState:
     @property
     def status_text(self) -> str:
         """Status description for display."""
-        total_processed = self.completed + self.skipped
+        total_processed = self.completed
         if total_processed >= self.total_items:
             if self.skipped > 0 or self.failed > 0:
                 return "complete_with_issues"
@@ -152,7 +152,7 @@ class PhaseProgressState:
     @property
     def status_color(self) -> str:
         """Color for status based on current state."""
-        total_processed = self.completed + self.skipped
+        total_processed = self.completed
         if total_processed >= self.total_items:
             if self.failed > 0:
                 return MigrationColors.ERROR
@@ -502,8 +502,8 @@ class MigrationProgressDisplay:
         state.update(completed, failed, skipped)
 
         # Update the specific phase's task
-        # Use total processed (completed + skipped) for progress bar to show 100% when done
-        total_processed = completed + skipped
+        # Use total processed (completed) for progress bar to show 100% when done
+        total_processed = completed
         self.phase_progress.update(
             task_id,
             completed=total_processed,
@@ -526,9 +526,9 @@ class MigrationProgressDisplay:
             task_id = self.phase_tasks[phase_id]
 
             # Mark the specific phase's task as complete
-            # Use total processed (completed + skipped) for progress bar to show 100% when done
+            # Use total processed (completed) for progress bar to show 100% when done
             # Also use state's status_text which handles "complete_with_issues"
-            total_processed = state.completed + state.skipped
+            total_processed = state.completed
             self.phase_progress.update(
                 task_id,
                 completed=total_processed if total_processed > 0 else state.total_items,
