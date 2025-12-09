@@ -54,7 +54,7 @@ def compare_schemas(
         # Handle case where target schema is unavailable (e.g., server error)
         # Use source schema as fallback
         if source_fields and not target_fields:
-            logger.warning(
+            logger.info(
                 "using_source_schema_fallback",
                 resource_type=resource_type,
                 reason="Target schema unavailable (likely server error during prep)",

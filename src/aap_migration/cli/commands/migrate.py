@@ -41,7 +41,6 @@ MIGRATION_PHASES = ALL_RESOURCE_TYPES
 # Phase 1: Infrastructure & Projects
 # credential_types and credentials are PATCHed (not POSTed) - they're pre-created in target
 PHASE1_RESOURCE_TYPES = [
-    "instance_groups",
     "organizations",
     "labels",
     "users",
@@ -53,6 +52,7 @@ PHASE1_RESOURCE_TYPES = [
     "inventory_sources",
     "inventory_groups",
     "hosts",
+    "instance_groups",     # After hosts, before projects
     "projects",
 ]
 

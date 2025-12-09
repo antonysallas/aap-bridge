@@ -106,7 +106,7 @@ def configure_logging(
 
     # Configure standard library logging with Rich integration
     # Create a shared Console instance for consistent rendering
-    console = Console(stderr=True, force_terminal=True)
+    console = Console(stderr=True)  # Auto-detect terminal capabilities
 
     # Use RichHandler for console output - integrates properly with Rich's Live display
     # This prevents logging from interfering with progress bars
@@ -147,7 +147,7 @@ def configure_logging(
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
-        structlog.dev.ConsoleRenderer(colors=enable_colors),
+        structlog.dev.ConsoleRenderer(colors=False),  # RichHandler handles coloring
     ]
 
     # Configure structlog with console level
@@ -225,7 +225,7 @@ def log_api_request(
     elif 400 <= status_code < 500:
         logger.warning("api_request_client_error", **log_data)
     elif 500 <= status_code < 600:
-        logger.error("api_request_server_error", **log_data)
+        logger.info("api_request_server_error", **log_data)
     else:
         logger.info("api_request_completed", **log_data)
 
