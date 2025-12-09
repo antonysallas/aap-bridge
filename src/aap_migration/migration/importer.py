@@ -1897,188 +1897,189 @@ class HostImporter(ResourceImporter):
         super().__init__(client, state, performance_config, resource_mappings)
         self.bulk_ops = BulkOperations(client)
 
-    async def import_hosts_bulk(
-        self,
-        inventory_id: int,
-        hosts: list[dict[str, Any]],
-        progress_callback: Callable[[int, int, int], None] | None = None,
-    ) -> dict[str, Any]:
-        """Import hosts using bulk API for performance.
-
-        Args:
-            inventory_id: Target inventory ID
-            hosts: List of host data
-            progress_callback: Optional callback for progress updates.
-                Called after each batch with (total_created, total_failed).
-
-        Returns:
-            Bulk operation result
-        """
-        batch_size = self.performance_config.batch_sizes.get("hosts", 200)
-
-        logger.info(
-            "bulk_import_hosts_starting",
-            inventory_id=inventory_id,
-            host_count=len(hosts),
-            batch_size=batch_size,
-        )
-
-        all_results = []
-        total_created = 0
-        total_failed = 0
-        total_skipped = 0
-
-        # Process in batches
-        for i in range(0, len(hosts), batch_size):
-            batch = hosts[i : i + batch_size]
-
-            # Prepare host data for bulk API
-            prepared_hosts = []
-            source_ids = []
-
-            # Track source info for batch mapping after bulk API call
-            source_info: list[dict] = []
-            # Dict mapping source_id -> source_name for error handling
-            source_name_by_id: dict[int, str] = {}
-
-            for host in batch:
-                source_id = host.pop("_source_id", host.get("id"))
-                # Track source name for error handling (bulk imports don't pre-create mappings)
-                source_name_by_id[source_id] = host.get("name", f"host_{source_id}")
-
-                # Skip if already migrated
-                if self.state.is_migrated("hosts", source_id):
-                    self.stats["skipped_count"] += 1
-                    total_skipped += 1
-                    continue
-
-                # Only add non-skipped hosts to source_ids (for accurate error counting)
-                source_ids.append(source_id)
-
-                # Track source info for batch ID mapping (no per-host DB calls!)
-                source_info.append({
-                    "source_id": source_id,
-                    "source_name": host.get("name", "unknown"),
-                })
-
-                prepared_hosts.append(
-                    {
-                        "name": host["name"],
-                        "description": host.get("description", ""),
-                        "enabled": host.get("enabled", True),
-                        "variables": host.get("variables", {}),
-                        "inventory": inventory_id,
-                    }
-                )
-
-            if not prepared_hosts:
-                continue
-
-            try:
-                # Bulk create hosts
-                result = await self.bulk_ops.bulk_create_hosts(
-                    inventory_id=inventory_id,
-                    hosts=prepared_hosts,
-                    batch_size=batch_size,
-                )
-
-                created_hosts = result.get("hosts", [])
-                failed_hosts = result.get("failed", [])
-
-                # Batch save ID mappings for all created hosts (single DB transaction!)
-                if created_hosts and source_info:
-                    mappings = []
-                    for idx, created_host in enumerate(created_hosts):
-                        if idx < len(source_info):
-                            mappings.append({
-                                "resource_type": "hosts",
-                                "source_id": source_info[idx]["source_id"],
-                                "target_id": created_host["id"],
-                                "source_name": source_info[idx]["source_name"],
-                                "target_name": created_host.get("name"),
-                            })
-
-                    # Single batch commit instead of per-host commits
-                    self.state.batch_create_mappings(mappings)
-
-                total_created += len(created_hosts)
-                total_failed += len(failed_hosts)
-                all_results.append(result)
-
-                self.stats["imported_count"] += len(created_hosts)
-                self.stats["error_count"] += len(failed_hosts)
-
-                # Call progress callback after each batch
-                if progress_callback:
-                    progress_callback(self.stats["imported_count"], self.stats["error_count"], self.stats["skipped_count"])
-
-            except Exception as e:
-                logger.error(
-                    "bulk_import_batch_failed",
-                    resource_type="hosts",
-                    inventory_id=inventory_id,
-                    batch_start=i,
-                    batch_size=len(batch),
-                    source_ids=source_ids[:5] if source_ids else [],  # Sample of IDs
-                    source_ids_count=len(source_ids),
-                    error=str(e),
-                )
-
-                # Mark all hosts in batch as failed
-                # Note: Bulk imports don't pre-create mappings, so we must create them first
-                for source_id in source_ids:
-                    source_name = source_name_by_id.get(source_id, f"host_{source_id}")
-
-                    # Create mapping if it doesn't exist (required for mark_failed)
-                    if not self.state.has_source_mapping("hosts", source_id):
-                        self.state.create_source_mapping(
-                            resource_type="hosts",
-                            source_id=source_id,
-                            source_name=source_name,
+        async def import_hosts_bulk(
+            self,
+            inventory_id: int,
+            hosts: list[dict[str, Any]],
+            progress_callback: Callable[[int, int, int], None] | None = None,
+        ) -> dict[str, Any]:
+            """Import hosts using bulk API for performance.
+    
+            Args:
+                inventory_id: Target inventory ID
+                hosts: List of host data
+                progress_callback: Optional callback for progress updates.
+                    Called after each batch with (total_created, total_failed, total_skipped).
+    
+            Returns:
+                Bulk operation result
+            """
+            batch_size = self.performance_config.batch_sizes.get("hosts", 200)
+            # Default to 5 if not set in config
+            concurrency = getattr(self.performance_config, "host_import_concurrent_batches", 5)
+    
+            logger.info(
+                "bulk_import_hosts_starting",
+                inventory_id=inventory_id,
+                host_count=len(hosts),
+                batch_size=batch_size,
+                concurrency=concurrency,
+            )
+    
+            all_results = []
+            total_created = 0
+            total_failed = 0
+            total_skipped = 0
+    
+            # Split into chunks
+            chunks = [hosts[i : i + batch_size] for i in range(0, len(hosts), batch_size)]
+            
+            semaphore = asyncio.Semaphore(concurrency)
+    
+            async def process_batch(batch_idx: int, batch: list[dict[str, Any]]) -> dict[str, Any] | None:
+                nonlocal total_created, total_failed, total_skipped
+                
+                async with semaphore:
+                    # Prepare host data for bulk API
+                    prepared_hosts = []
+                    source_ids = []
+                    source_info: list[dict] = []
+                    source_name_by_id: dict[int, str] = {}
+                    batch_skipped = 0
+    
+                    for host in batch:
+                        source_id = host.pop("_source_id", host.get("id"))
+                        source_name = host.get("name", f"host_{source_id}")
+                        source_name_by_id[source_id] = source_name
+    
+                        # Skip if already migrated
+                        if self.state.is_migrated("hosts", source_id):
+                            self.stats["skipped_count"] += 1
+                            batch_skipped += 1
+                            continue
+    
+                        source_ids.append(source_id)
+                        source_info.append({
+                            "source_id": source_id,
+                            "source_name": source_name,
+                        })
+    
+                        prepared_hosts.append(
+                            {
+                                "name": host["name"],
+                                "description": host.get("description", ""),
+                                "enabled": host.get("enabled", True),
+                                "variables": host.get("variables", {}),
+                                "inventory": inventory_id,
+                            }
                         )
-
-                    self.state.mark_failed(
-                        resource_type="hosts",
-                        source_id=source_id,
-                        error_message=str(e),
-                    )
-
-                self.stats["error_count"] += len(source_ids)
-
-                # Track batch error for reporting
-                self.import_errors.append({
-                    "resource_type": "hosts",
-                    "source_id": f"batch_{i}",
-                    "name": f"batch of {len(source_ids)} hosts for inventory {inventory_id}",
-                    "error": str(e),
-                    "error_type": type(e).__name__,
-                    "affected_count": len(source_ids),
-                    "sample_source_ids": source_ids[:5],
-                })
-
-                # Update total_failed for this batch
-                total_failed += len(source_ids)
-
-                # Call progress callback even on error
-                if progress_callback:
-                    progress_callback(self.stats["imported_count"], self.stats["error_count"], self.stats["skipped_count"])
-
-        logger.info(
-            "bulk_import_hosts_completed",
-            inventory_id=inventory_id,
-            total_hosts=len(hosts),
-            created=total_created,
-            failed=total_failed,
-        )
-
-        return {
-            "total_requested": len(hosts),
-            "total_created": total_created,
-            "total_failed": total_failed,
-            "total_skipped": total_skipped,
-            "results": all_results,
-        }
-
+    
+                    if batch_skipped > 0:
+                        total_skipped += batch_skipped
+                        # Callback with current cumulative stats
+                        if progress_callback:
+                            progress_callback(self.stats["imported_count"], self.stats["error_count"], self.stats["skipped_count"])
+    
+                    if not prepared_hosts:
+                        return None
+    
+                    try:
+                        result = await self.bulk_ops.bulk_create_hosts(
+                            inventory_id=inventory_id,
+                            hosts=prepared_hosts,
+                            batch_size=batch_size,
+                        )
+    
+                        created_hosts = result.get("hosts", [])
+                        failed_hosts = result.get("failed", [])
+    
+                        # Batch save ID mappings for all created hosts
+                        if created_hosts and source_info:
+                            mappings = []
+                            for idx, created_host in enumerate(created_hosts):
+                                if idx < len(source_info):
+                                    mappings.append({
+                                        "resource_type": "hosts",
+                                        "source_id": source_info[idx]["source_id"],
+                                        "target_id": created_host["id"],
+                                        "source_name": source_info[idx]["source_name"],
+                                        "target_name": created_host.get("name"),
+                                    })
+                            
+                            self.state.batch_create_mappings(mappings)
+    
+                        created_count = len(created_hosts)
+                        failed_count = len(failed_hosts)
+                        
+                        total_created += created_count
+                        total_failed += failed_count
+                        
+                        self.stats["imported_count"] += created_count
+                        self.stats["error_count"] += failed_count
+    
+                        if progress_callback:
+                            progress_callback(self.stats["imported_count"], self.stats["error_count"], self.stats["skipped_count"])
+                            
+                        return result
+    
+                    except Exception as e:
+                        logger.error(
+                            "bulk_import_batch_failed",
+                            resource_type="hosts",
+                            inventory_id=inventory_id,
+                            batch_idx=batch_idx,
+                            error=str(e),
+                        )
+                        
+                        # Mark failed in state
+                        for source_id in source_ids:
+                            source_name = source_name_by_id.get(source_id, f"host_{source_id}")
+                            if not self.state.has_source_mapping("hosts", source_id):
+                                self.state.create_source_mapping("hosts", source_id, source_name=source_name)
+                            self.state.mark_failed("hosts", source_id, str(e))
+                            
+                        self.stats["error_count"] += len(source_ids)
+                        total_failed += len(source_ids)
+                        
+                        self.import_errors.append({
+                            "resource_type": "hosts",
+                            "source_id": f"batch_{batch_idx}",
+                            "name": f"batch {batch_idx} of {len(source_ids)} hosts",
+                            "error": str(e),
+                            "error_type": type(e).__name__,
+                        })
+                        
+                        if progress_callback:
+                            progress_callback(self.stats["imported_count"], self.stats["error_count"], self.stats["skipped_count"])
+                            
+                        return None
+    
+            # Execute chunks in parallel
+            tasks = [process_batch(i, chunk) for i, chunk in enumerate(chunks)]
+            if tasks:
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+                for r in results:
+                    if isinstance(r, dict):
+                        all_results.append(r)
+                    # Note: exceptions in process_batch are caught and handled, 
+                    # but asyncio.gather might return exceptions if something unexpected happens
+    
+            logger.info(
+                "bulk_import_hosts_completed",
+                inventory_id=inventory_id,
+                total_hosts=len(hosts),
+                created=total_created,
+                failed=total_failed,
+                skipped=total_skipped,
+            )
+    
+            return {
+                "total_requested": len(hosts),
+                "total_created": total_created,
+                "total_failed": total_failed,
+                "total_skipped": total_skipped,
+                "results": all_results,
+            }
 
 class CredentialImporter(ResourceImporter):
     """Importer for credential resources.

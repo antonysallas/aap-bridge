@@ -262,6 +262,12 @@ class PerformanceConfig(BaseModel):
         le=3600.0,
         description="Timeout for bulk operations in seconds",
     )
+    host_import_concurrent_batches: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Number of concurrent batches for host import (speed vs load)",
+    )
     export_batch_size: int = Field(
         default=20,
         ge=1,

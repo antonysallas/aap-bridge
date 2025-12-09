@@ -609,13 +609,11 @@ class MigrationCoordinator:
                     # completed = successful imports + transform skips + import skips
                     # Transform-skipped resources are "done" (processed, just not imported)
                     if self.progress_display and self._current_phase_id:
-                        completed = import_succeeded + import_skipped + transform_skipped
-                        total_skipped = transform_skipped + import_skipped
                         self.progress_display.update_phase(
                             self._current_phase_id,
-                            completed=completed,
-                            failed=import_failed,
-                            skipped=total_skipped,
+                            completed=stats["imported"] + stats["failed"] + stats["skipped"],
+                            failed=stats["failed"],
+                            skipped=stats["skipped"],
                         )
 
                 # Report any import errors
@@ -790,11 +788,31 @@ class MigrationCoordinator:
 
         # Bulk import hosts by inventory
         if not self.config.dry_run:
+            # Capture transform-phase stats for progress display
+            transform_skipped = stats["skipped"]
+            transform_failed = stats["failed"]
+
+            def progress_callback(imported: int, failed: int, skipped: int) -> None:
+                """Update progress display with cumulative stats."""
+                if self.progress_display and self._current_phase_id:
+                    # Calculate totals including transform phase results
+                    # completed = successful imports + all failures + all skips
+                    # Note: "completed" in progress bar means "processed", not just success
+                    total_completed = imported + failed + skipped + transform_skipped + transform_failed
+                    
+                    self.progress_display.update_phase(
+                        self._current_phase_id,
+                        completed=total_completed,
+                        failed=failed + transform_failed,
+                        skipped=skipped + transform_skipped,
+                    )
+
             for target_inventory_id, hosts in hosts_by_inventory.items():
                 try:
                     result = await importer.import_hosts_bulk(
                         inventory_id=target_inventory_id,
                         hosts=hosts,
+                        progress_callback=progress_callback,
                     )
                     created = result.get("total_created", 0)
                     failed = result.get("total_failed", 0)
@@ -804,7 +822,7 @@ class MigrationCoordinator:
                     stats["failed"] += failed
                     stats["skipped"] += skipped
 
-                    # Update progress for imported hosts
+                    # Update progress for imported hosts (legacy tracker)
                     if self.progress_tracker:
                         for _ in range(created):
                             self.progress_tracker.update_resource(imported=1)
@@ -812,18 +830,6 @@ class MigrationCoordinator:
                             self.progress_tracker.update_resource(failed=1)
                         for _ in range(skipped):
                             self.progress_tracker.update_resource(skipped=1)
-
-                    # Update Rich progress display
-                    if self.progress_display and self._current_phase_id:
-                        # In bulk import, completed = imported + failed + skipped
-                        # Note: stats["skipped"] includes both transform-time and import-time skips
-                        completed = stats["imported"] + stats["failed"] + stats["skipped"]
-                        self.progress_display.update_phase(
-                            self._current_phase_id,
-                            completed=completed,
-                            failed=stats["failed"],
-                            skipped=stats["skipped"],
-                        )
 
                 except Exception as e:
                     # Extract sample source_ids for troubleshooting
