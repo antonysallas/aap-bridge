@@ -1,0 +1,179 @@
+# AAP Migration Tool - Configuration File
+# Use environment variables for sensitive data (SOURCE__*, TARGET__*, VAULT__*)
+
+# ============================================================================
+# Path Configuration
+# ============================================================================
+
+# ============================================================================
+# Performance Tuning
+# ============================================================================
+performance:
+  batch_sizes:
+    organizations: 100
+    users: 100
+    teams: 50
+    credentials: 50
+    credential_types: 50
+    execution_environments: 50
+    projects: 100
+    job_templates: 100
+    workflow_job_templates: 50
+    inventories: 200 # Maximum API page size for optimal performance
+    inventory_groups: 100
+    inventory_sources: 50
+    hosts: 200 # Maximum API page size (required for bulk operations)
+    workflow_nodes: 100
+    schedules: 100
+    rbac_assignments: 100
+
+  # Concurrency settings - optimized for large-scale export
+  max_concurrent: 20 # Higher concurrency for faster export
+  rate_limit: 25 # Increased for better throughput
+  max_concurrent_pages: 10 # Parallel page fetching (Phase 2 optimization)
+
+  # Parallel resource type export (Phase 3 optimization - EXPERIMENTAL)
+  # Enable to export multiple resource types concurrently
+  parallel_resource_types: true # Set to true to enable parallel export
+  max_concurrent_types: 5 # Number of resource types to export in parallel (1-10)
+
+  # Cleanup operation settings (Platform Gateway safe limits)
+  cleanup_max_concurrent: 50 # Maximum concurrent deletions
+  cleanup_job_cancel_concurrency: 10 # Maximum concurrent job cancellations (≤25 to prevent gateway overload)
+  cleanup_page_fetch_concurrency: 10 # Maximum concurrent page fetches during resource discovery
+  cleanup_job_finish_timeout: 300
+  cleanup_job_poll_interval: 5
+
+  # User Import
+  user_import_max_concurrent: 25
+
+  # Gateway error retry settings (502/503/504 errors)
+  gateway_error_retry_attempts: 3 # Number of retry attempts for gateway errors
+  gateway_error_backoff_base: 2.0 # Exponential backoff base multiplier (delay = base^attempt)
+
+  # Project Sync
+  project_sync_timeout: 600
+  project_sync_poll_interval: 10
+
+  # Database write optimization
+  mapping_batch_size: 100 # Batch size for ID mapping commits
+
+  # Memory management
+  memory_limit_mb: 8192
+
+  # Connection pooling
+  http_max_connections: 50
+  http_max_keepalive_connections: 20
+
+  # Operation timeouts and limits
+  default_page_size: 100
+  bulk_operation_timeout: 300.0
+  export_batch_size: 20
+
+  # Retry configuration
+  retry_attempts: 3
+  retry_backoff_min: 2
+  retry_backoff_max: 60
+
+# ============================================================================
+# State Management (PostgreSQL)
+# ============================================================================
+state:
+  # PostgreSQL connection string from .env
+  db_path: ${MIGRATION_STATE_DB_PATH}
+  checkpoint_frequency: 100
+  backup_enabled: true
+
+  # Database connection pooling
+  db_pool_size: 5
+  db_max_overflow: 10
+  db_pool_timeout: 30
+  db_pool_recycle: 3600
+
+# ============================================================================
+# Logging Configuration
+# ============================================================================
+logging:
+  level: INFO
+  format: json
+  file: logs/migration.log
+  rotation: daily
+  retention_days: 30
+
+  # Progress display
+  disable_progress: false
+  show_stats: false
+
+  # Payload logging
+  log_payloads: false
+  max_payload_size: 10000
+
+# ============================================================================
+# Validation Configuration
+# ============================================================================
+validation:
+  statistical_sample_size: 4000
+  confidence_level: 0.99
+  margin_of_error: 0.02
+  validate_after_each_phase: true
+
+# ============================================================================
+# Migration Options
+# ============================================================================
+dry_run: false
+resume: false
+skip_validation: false
+
+# ============================================================================
+# Migration Phases
+# ============================================================================
+phases:
+  # Phase 1: Foundation Layer
+  organizations: true
+  users: true
+  teams: true
+  labels: true
+  credential_types: true
+
+  # Phase 2: Credentials and Execution Environments
+  credentials: true
+  execution_environments: true
+
+  # Phase 3: Projects
+  projects: true
+
+  # Phase 4: Inventories
+  inventories: true
+  inventory_groups: true
+  inventory_sources: true
+  hosts: true
+
+  # Phase 5: Templates
+  job_templates: true
+  workflow_job_templates: true
+  workflow_nodes: true
+
+  # Phase 6: Schedules
+  schedules: true
+
+  # Phase 7: RBAC
+  rbac_assignments: true
+
+# ============================================================================
+# Advanced Options
+# ============================================================================
+advanced:
+  skip_existing: true
+  force_update: false
+  experimental_features: false
+
+# ============================================================================
+# Export Configuration
+# ============================================================================
+export:
+  skip_dynamic_hosts: true # DEFAULT: Skip hosts with inventory sources (filter: inventory_sources__isnull=true)
+  skip_smart_inventories: true # DEFAULT: Skip inventories with sources or pending deletion (filter: inventory_sources__isnull=true&not__pending_deletion=true)
+  skip_inventory_sources: []
+  skip_pending_deletion_inventories: true
+  skip_hosts_with_inventory_sources: true
+  records_per_file: 1000

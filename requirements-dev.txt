@@ -1,0 +1,42 @@
+# AAP Bridge - Development Dependencies
+
+# Include production dependencies
+-r requirements.txt
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+pytest-xdist==3.5.0
+pytest-timeout==2.2.0
+
+# Code Formatting
+black==23.12.0
+isort==5.13.2
+
+# Linting
+ruff==0.1.8
+pylint==3.0.3
+
+# Type Checking
+mypy==1.7.1
+types-PyYAML==6.0.12.12
+types-requests==2.31.0.10
+types-python-dateutil==2.8.19.14
+
+# Pre-commit Hooks
+pre-commit==3.6.0
+
+# Documentation
+mkdocs==1.5.3
+mkdocs-material==9.5.3
+mkdocstrings==0.24.0
+mkdocstrings-python==1.7.5
+
+# Performance Testing
+memory-profiler==0.61.0
+
+# Debugging
+ipdb==0.13.13
+ipython==8.19.0

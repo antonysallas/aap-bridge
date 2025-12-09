@@ -1,0 +1,70 @@
+# Git
+.git/
+.gitignore
+.gitleaksignore
+
+# Virtual environments
+.venv/
+venv/
+env/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Testing
+tests/
+htmlcov/
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Development files
+.env
+.env.*
+!.env.example
+Makefile
+uv.lock
+
+# Documentation (not needed in container)
+docs/
+*.md
+!config/*.yaml
+
+# Runtime directories (created at runtime)
+logs/
+exports/
+xformed/
+reports/
+schemas/
+backups/
+
+# Build artifacts
+dist/
+build/
+*.egg
+
+# Scripts (development only)
+scripts/
+
+# AI config
+.claude/
+.gemini/
+CLAUDE.md
+GEMINI.md
+
+# Documentation PDFs (API references, etc.)
+docs/*.pdf
+
+*.bak

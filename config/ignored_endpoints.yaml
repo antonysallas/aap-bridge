@@ -1,0 +1,23 @@
+# Ignored Endpoints Configuration
+# These endpoints are skipped during the prep phase (discovery + schema generation)
+
+ignored_endpoints:
+  # Common: Ignored for both source and target AAP instances
+  common:
+    - ping
+    - config
+    - me
+    - dashboard
+    - metrics
+    - analytics
+    - mesh_visualizer
+    - bulk
+    - settings
+    - activity_stream
+    - service_index
+
+  # Source-only: Ignored only for source AAP
+  source: []
+
+  # Target-only: Ignored only for target AAP
+  target: []
