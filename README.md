@@ -274,6 +274,49 @@ The tool migrates resources in the correct dependency order:
 6. Job Templates, Workflows
 7. RBAC role assignments
 
+## Documentation
+
+Full documentation is available via MkDocs with the Material theme.
+
+### Viewing Documentation Locally
+
+```bash
+# Serve docs locally (hot-reload enabled)
+mkdocs serve
+
+# Open in browser: http://127.0.0.1:8000
+```
+
+### Building Static Documentation
+
+```bash
+# Build static HTML site
+mkdocs build
+
+# Output is in site/ directory
+```
+
+### Documentation Structure
+
+```text
+docs/
+├── index.md                           # Home page
+├── getting-started/
+│   ├── installation.md                # Installation guide
+│   ├── quickstart.md                  # Quick start tutorial
+│   └── configuration.md               # Configuration reference
+├── user-guide/
+│   ├── cli-reference.md               # CLI command reference
+│   ├── migration-workflow.md          # Migration workflow guide
+│   └── troubleshooting.md             # Troubleshooting guide
+├── developer-guide/
+│   ├── contributing.md                # Contribution guidelines
+│   ├── adding-resource-types.md       # How to add new resource types
+│   └── architecture.md                # Architecture overview
+└── reference/
+    └── changelog.md                   # Version history
+```
+
 ## Development
 
 ### Running Tests
