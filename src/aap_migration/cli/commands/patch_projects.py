@@ -241,14 +241,14 @@ async def patch_project_scm_details(
 @click.option(
     "--batch-size",
     type=int,
-    default=100,
-    help="Number of projects to patch at once",
+    default=None,
+    help="Number of projects to patch at once (default: from config)",
 )
 @click.option(
     "--interval",
     type=int,
-    default=600,
-    help="Seconds to wait between batches",
+    default=None,
+    help="Seconds to wait between batches (default: from config)",
 )
 @pass_context
 @requires_config
@@ -256,8 +256,8 @@ async def patch_project_scm_details(
 def patch_projects(
     ctx: MigrationContext,
     input_dir: Path | None,
-    batch_size: int,
-    interval: int,
+    batch_size: int | None,
+    interval: int | None,
 ) -> None:
     """Execute Phase 2: Patch projects with SCM details.
 
@@ -268,6 +268,12 @@ def patch_projects(
         input_dir = Path(ctx.config.paths.transform_dir)
     else:
         input_dir = Path(input_dir)
+
+    # Use config values if not specified via CLI
+    if batch_size is None:
+        batch_size = ctx.config.performance.project_patch_batch_size
+    if interval is None:
+        interval = ctx.config.performance.project_patch_batch_interval
 
     async def run():
         await patch_project_scm_details(ctx, input_dir, batch_size, interval)

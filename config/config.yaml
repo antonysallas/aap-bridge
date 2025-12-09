@@ -55,6 +55,10 @@ performance:
   project_sync_timeout: 600
   project_sync_poll_interval: 10
 
+  # Project Patch (Phase 2)
+  project_patch_batch_size: 100
+  project_patch_batch_interval: 180
+
   # Database write optimization
   mapping_batch_size: 100 # Batch size for ID mapping commits
 

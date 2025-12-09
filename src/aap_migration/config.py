@@ -226,6 +226,18 @@ class PerformanceConfig(BaseModel):
         le=60,
         description="Interval (seconds) between project sync status checks",
     )
+    project_patch_batch_size: int = Field(
+        default=100,
+        ge=1,
+        le=500,
+        description="Number of projects to patch per batch in Phase 2",
+    )
+    project_patch_batch_interval: int = Field(
+        default=180,
+        ge=30,
+        le=1800,
+        description="Seconds to wait between project patch batches",
+    )
     http_max_connections: int = Field(
         default=50,
         ge=10,
