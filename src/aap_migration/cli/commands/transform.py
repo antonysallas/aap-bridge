@@ -706,11 +706,11 @@ def transform(
                                     + skipped_from_transformer
                                 )
                                 if progress_enabled:
-                                    # PhaseProgressState expects 'completed' to include successes AND failures AND skips
-                                    # so that the progress bar percentage reaches 100%
+                                    # completed = transformed + failed (NOT skipped)
+                                    # Progress bar calculates: completed + skipped = total processed
                                     progress.update_phase(
                                         phase_id,
-                                        transformed_count + failed_count + total_skipped,
+                                        transformed_count + failed_count,
                                         failed_count,
                                         total_skipped
                                     )

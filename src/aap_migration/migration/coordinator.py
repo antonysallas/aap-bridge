@@ -546,10 +546,12 @@ class MigrationCoordinator:
                         self.progress_tracker.update_resource(failed=1)
 
             # Update Rich progress display live during transform
+            # completed = transformed + failed (NOT skipped - it's passed separately)
+            # Progress bar calculates: completed + skipped = total processed
             if self.progress_display and self._current_phase_id:
                 self.progress_display.update_phase(
                     self._current_phase_id,
-                    completed=stats["transformed"] + stats["skipped"] + stats["failed"],
+                    completed=stats["transformed"] + stats["failed"],
                     failed=stats["failed"],
                     skipped=stats["skipped"],
                 )
@@ -606,12 +608,12 @@ class MigrationCoordinator:
                                 self.progress_tracker.update_resource(failed=1)
 
                     # Update Rich progress display with current import progress
-                    # completed = successful imports + transform skips + import skips
-                    # Transform-skipped resources are "done" (processed, just not imported)
+                    # completed = imported + failed (NOT skipped - it's passed separately)
+                    # Progress bar calculates: completed + skipped = total processed
                     if self.progress_display and self._current_phase_id:
                         self.progress_display.update_phase(
                             self._current_phase_id,
-                            completed=stats["imported"] + stats["failed"] + stats["skipped"],
+                            completed=stats["imported"] + stats["failed"],
                             failed=stats["failed"],
                             skipped=stats["skipped"],
                         )
@@ -795,16 +797,16 @@ class MigrationCoordinator:
             def progress_callback(imported: int, failed: int, skipped: int) -> None:
                 """Update progress display with cumulative stats."""
                 if self.progress_display and self._current_phase_id:
-                    # Calculate totals including transform phase results
-                    # completed = successful imports + all failures + all skips
-                    # Note: "completed" in progress bar means "processed", not just success
-                    total_completed = imported + failed + skipped + transform_skipped + transform_failed
-                    
+                    # completed = imported + failed (NOT skipped - it's passed separately)
+                    # Progress bar calculates: completed + skipped = total processed
+                    total_completed = imported + failed + transform_failed
+                    total_skipped = skipped + transform_skipped
+
                     self.progress_display.update_phase(
                         self._current_phase_id,
                         completed=total_completed,
                         failed=failed + transform_failed,
-                        skipped=skipped + transform_skipped,
+                        skipped=total_skipped,
                     )
 
             for target_inventory_id, hosts in hosts_by_inventory.items():
