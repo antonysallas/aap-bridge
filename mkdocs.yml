@@ -6,6 +6,8 @@ repo_name: antonysallas/aap-bridge
 
 theme:
   name: material
+  icon:
+    repo: fontawesome/brands/github
   features:
     - navigation.tabs
     - navigation.sections
@@ -30,33 +32,46 @@ theme:
 nav:
   - Home: index.md
   - Getting Started:
-    - Installation: getting-started/installation.md
-    - Quick Start: getting-started/quickstart.md
-    - Configuration: getting-started/configuration.md
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+      - Configuration: getting-started/configuration.md
   - User Guide:
-    - CLI Reference: user-guide/cli-reference.md
-    - Migration Workflow: user-guide/migration-workflow.md
-    - Troubleshooting: user-guide/troubleshooting.md
+      - CLI Reference: user-guide/cli-reference.md
+      - Migration Workflow: user-guide/migration-workflow.md
+      - Troubleshooting: user-guide/troubleshooting.md
   - Developer Guide:
-    - Contributing: developer-guide/contributing.md
-    - Adding Resource Types: developer-guide/adding-resource-types.md
-    - Architecture: developer-guide/architecture.md
+      - Contributing: developer-guide/contributing.md
+      - Adding Resource Types: developer-guide/adding-resource-types.md
+      - Architecture: developer-guide/architecture.md
   - Reference:
-    - Changelog: reference/changelog.md
+      - Changelog: reference/changelog.md
 
 markdown_extensions:
   - admonition
+  - attr_list
+  - md_in_html
   - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - toc:
       permalink: true
   - tables
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 plugins:
   - search
+
+extra_javascript:
+  - path: javascripts/mermaid.js
+    type: module
