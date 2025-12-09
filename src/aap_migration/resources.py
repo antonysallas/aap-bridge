@@ -189,13 +189,24 @@ RESOURCE_REGISTRY: dict[str, ResourceTypeInfo] = {
         name="hosts",
         endpoint="hosts/",
         description="Hosts",
-        migration_order=115,  # After inventory_groups (110), before projects
+        migration_order=115,  # After inventory_groups (110), before instances
         cleanup_order=40,
         has_exporter=True,
         has_importer=True,
         has_transformer=False,
         batch_size=200,
         use_bulk_api=True,
+    ),
+    "instances": ResourceTypeInfo(
+        name="instances",
+        endpoint="instances/",
+        description="Instances (AAP Controller Nodes)",
+        migration_order=116,  # After hosts (115), before instance_groups (117)
+        cleanup_order=88,     # After instance_groups (87) - delete dependents first
+        has_exporter=True,
+        has_importer=True,
+        has_transformer=False,
+        batch_size=50,
     ),
     # Job templates and workflows
     "job_templates": ResourceTypeInfo(
@@ -270,7 +281,6 @@ READ_ONLY_ENDPOINTS = {
     "activity_stream",         # Audit log (historical)
     "unified_job_templates",   # Meta-endpoint (virtual)
     "unified_jobs",            # Meta-endpoint (virtual)
-    "instances",               # Instance topology (auto-discovered)
 }
 
 

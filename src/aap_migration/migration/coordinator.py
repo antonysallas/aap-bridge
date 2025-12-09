@@ -79,6 +79,12 @@ class MigrationCoordinator:
             "use_bulk": True,
         },
         {
+            "name": "instances",
+            "description": "Instances (AAP Controller Nodes)",
+            "resource_types": ["instances"],
+            "batch_size": 50,
+        },
+        {
             "name": "instance_groups",
             "description": "Instance Groups",
             "resource_types": ["instance_groups"],
