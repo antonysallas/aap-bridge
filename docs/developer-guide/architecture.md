@@ -7,48 +7,57 @@ This document describes the internal architecture of AAP Bridge.
 AAP Bridge follows an ETL (Export, Transform, Load) architecture with state
 management for checkpointing and idempotency.
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                          CLI Layer                               │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐   │
-│  │  prep   │ │ export  │ │transform│ │ import  │ │ cleanup │   │
-│  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘   │
-└───────┼──────────┼──────────┼──────────┼──────────┼────────────┘
-        │          │          │          │          │
-┌───────┼──────────┼──────────┼──────────┼──────────┼────────────┐
-│       │     Migration Layer │          │          │            │
-│  ┌────▼────┐ ┌────▼────┐ ┌──▼───┐ ┌───▼────┐ ┌───▼────┐       │
-│  │ Schema  │ │Exporter │ │Trans-│ │Importer│ │Cleanup │       │
-│  │Comparator│ │        │ │former│ │        │ │        │       │
-│  └─────────┘ └─────────┘ └──────┘ └────────┘ └────────┘       │
-└───────────────────────────────────────────────────────────────┘
-        │          │                   │          │
-┌───────┼──────────┼───────────────────┼──────────┼──────────────┐
-│       │     Client Layer             │          │              │
-│  ┌────▼─────────▼────┐         ┌─────▼──────────▼────┐        │
-│  │  AAPSourceClient  │         │  AAPTargetClient    │        │
-│  └───────────────────┘         └────────────────────┘         │
-└───────────────────────────────────────────────────────────────┘
-        │                              │
-┌───────┼──────────────────────────────┼─────────────────────────┐
-│       │     State Management         │                         │
-│  ┌────▼──────────────────────────────▼────┐                   │
-│  │           MigrationState               │                   │
-│  │  ┌──────────────┐ ┌──────────────┐    │                   │
-│  │  │ IDMapping    │ │ Progress     │    │                   │
-│  │  └──────────────┘ └──────────────┘    │                   │
-│  └────────────────────────────────────────┘                   │
-│                         │                                      │
-│                   ┌─────▼─────┐                                │
-│                   │ PostgreSQL│                                │
-│                   └───────────┘                                │
-└───────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph CLI["CLI Layer"]
+        prep[prep]
+        export[export]
+        transform[transform]
+        import_cmd[import]
+        cleanup_cli[cleanup]
+    end
 
-```markdown
+    subgraph Migration["Migration Layer"]
+        SchemaComparator[Schema Comparator]
+        Exporter[Exporter]
+        Transformer[Transformer]
+        Importer[Importer]
+        Cleanup[Cleanup]
+    end
+
+    subgraph Client["Client Layer"]
+        AAPSource[AAPSourceClient]
+        AAPTarget[AAPTargetClient]
+    end
+
+    subgraph State["State Management"]
+        MigrationState[MigrationState]
+        IDMapping[IDMapping]
+        Progress[Progress]
+        PostgreSQL[(PostgreSQL)]
+    end
+
+    prep --> SchemaComparator
+    export --> Exporter
+    transform --> Transformer
+    import_cmd --> Importer
+    cleanup_cli --> Cleanup
+
+    SchemaComparator --> AAPSource
+    Exporter --> AAPSource
+    Importer --> AAPTarget
+    Cleanup --> AAPTarget
+
+    AAPSource --> MigrationState
+    AAPTarget --> MigrationState
+    MigrationState --> IDMapping
+    MigrationState --> Progress
+    MigrationState --> PostgreSQL
+```
 
 ## Directory Structure
 
-```python
+```text
 src/aap_migration/
 ├── cli/                    # Command-line interface
 │   ├── main.py            # Entry point, command groups
@@ -83,7 +92,7 @@ src/aap_migration/
     ├── logging.py
     └── idempotency.py
 
-```markdown
+```
 
 ## Key Components
 
@@ -122,8 +131,7 @@ class ResourceExporter:
     ) -> AsyncGenerator[dict, None]:
         """Paginate through all resources."""
         ...
-
-```markdown
+```
 
 Resource-specific exporters inherit from `ResourceExporter`:
 
@@ -148,7 +156,7 @@ class DataTransformer:
         """Apply transformations."""
         ...
 
-```markdown
+```
 
 Transformations include:
 
@@ -172,7 +180,7 @@ class ResourceImporter:
         """Import single resource."""
         ...
 
-```markdown
+```
 
 Special handling for:
 
@@ -207,7 +215,7 @@ class MigrationState:
         source_id: int,
     ) -> bool: ...
 
-```markdown
+```
 
 #### Database Schema
 
@@ -230,7 +238,7 @@ CREATE TABLE migration_progress (
     updated_at TIMESTAMP
 );
 
-```markdown
+```
 
 ### Resource Registry
 
@@ -248,8 +256,7 @@ RESOURCE_REGISTRY = {
     ),
     ...
 }
-
-```yaml
+```
 
 Controls:
 
@@ -262,7 +269,7 @@ Controls:
 
 ### Export Flow
 
-```bash
+```text
 Source AAP
     │
     ▼
@@ -277,7 +284,7 @@ File Writer (split by records-per-file)
     ▼
 exports/{resource_type}/{resource_type}_XXXX.json
 
-```markdown
+```
 
 ### Transform Flow
 
@@ -295,7 +302,7 @@ DataTransformer.transform()
     ▼
 transformed/{resource_type}/*.json
 
-```markdown
+```
 
 ### Import Flow
 
@@ -313,7 +320,7 @@ ResourceImporter.import_resource()
     ▼
 Target AAP (via AAPTargetClient)
 
-```sql
+```
 
 ## Extension Points
 
@@ -339,7 +346,7 @@ class CustomTransformer(DataTransformer):
         # Custom logic here
         return data
 
-```markdown
+```
 
 ### Custom Importers
 
@@ -357,7 +364,7 @@ class CustomImporter(ResourceImporter):
         ...
         return await super().import_resource(resource_type, source_id, data)
 
-```yaml
+```
 
 ## Performance Considerations
 

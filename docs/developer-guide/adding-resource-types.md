@@ -38,7 +38,7 @@ READ_ONLY_ENDPOINTS = {
     # ... remove your resource type from here
 }
 
-```dockerfile
+```
 
 #### B. Add to RESOURCE_REGISTRY
 
@@ -58,7 +58,7 @@ Add the new resource type with appropriate migration/cleanup order:
     use_bulk_api=False,     # True only for hosts
 ),
 
-```yaml
+```
 
 **Migration Order Guidelines:**
 
@@ -105,7 +105,7 @@ class YourResourceExporter(ResourceExporter):
         ):
             yield resource
 
-```dockerfile
+```
 
 #### B. Register in Factory
 
@@ -117,7 +117,7 @@ exporters = {
     "your_resource": YourResourceExporter,
 }
 
-```python
+```
 
 ---
 
@@ -151,7 +151,7 @@ class YourResourceImporter(ResourceImporter):
         """
         return await self._import_parallel("your_resource", resources, progress_callback)
 
-```dockerfile
+```
 
 **Important:** The method name MUST follow the pattern `import_{resource_type}`
  (e.g., `import_instances`, `import_organizations`).
@@ -166,7 +166,7 @@ importers = {
     "your_resource": YourResourceImporter,
 }
 
-```python
+```
 
 ---
 
@@ -182,7 +182,7 @@ TRANSFORMER_CLASSES: dict[str, type[DataTransformer]] = {
     # "your_resource": YourResourceTransformer,
 }
 
-```text
+```
 
 If custom transformation is needed, create a transformer class:
 
@@ -195,7 +195,7 @@ class YourResourceTransformer(DataTransformer):
     }
     REQUIRED_DEPENDENCIES = {"organization"}  # Dependencies that must exist
 
-```python
+```
 
 ---
 
@@ -215,7 +215,7 @@ MIGRATION_PHASES = [
     # ... later phases
 ]
 
-```python
+```
 
 ---
 
@@ -235,7 +235,7 @@ PHASE3_RESOURCE_TYPES = [
     # ... existing types
 ]
 
-```python
+```
 
 ---
 
@@ -252,7 +252,7 @@ method_map = {
     # ... other mappings
 }
 
-```text
+```
 
 **The method name must match exactly** the method you defined in the importer
  class (Step 3A).
@@ -262,9 +262,7 @@ Without this mapping, the resource will be skipped during import with:
 ```text
 ⚠️ SKIPPED - no importer
 
-```python
-
----
+```
 
 ### Step 8: `src/aap_migration/cli/commands/cleanup.py`
 
@@ -280,7 +278,7 @@ elif resource_type == "your_resource" and (
     skip_resource = True
     skip_reason = "managed/system resource"
 
-```python
+```
 
 ---
 
@@ -341,7 +339,7 @@ migrated BEFORE instance_groups since groups can reference instances.
     batch_size=50,
 ),
 
-```python
+```
 
 #### exporter.py
 
@@ -364,7 +362,7 @@ class InstanceExporter(ResourceExporter):
 # In create_exporter():
 "instances": InstanceExporter,
 
-```python
+```
 
 #### importer.py
 
@@ -384,14 +382,14 @@ class InstanceImporter(ResourceImporter):
 # In create_importer():
 "instances": InstanceImporter,
 
-```python
+```
 
 #### transformer.py
 
 ```python
 "instances": DataTransformer,  # No special transformation needed
 
-```python
+```
 
 #### coordinator.py
 
@@ -403,7 +401,7 @@ class InstanceImporter(ResourceImporter):
     "batch_size": 50,
 },
 
-```python
+```
 
 #### migrate.py
 
@@ -416,7 +414,7 @@ PHASE1_RESOURCE_TYPES = [
     "projects",
 ]
 
-```python
+```
 
 #### export_import.py
 
@@ -429,7 +427,7 @@ method_map = {
     # ...
 }
 
-```python
+```
 
 #### cleanup.py
 
@@ -442,7 +440,7 @@ elif resource_type == "instances" and (
     skip_resource = True
     skip_reason = "managed/system instance"
 
-```markdown
+```
 
 ---
 

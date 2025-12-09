@@ -44,18 +44,17 @@ migrations (e.g., 80,000+ hosts).
 
 AAP Bridge follows an ETL (Export, Transform, Load) architecture:
 
-```text
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Source AAP    │────▶│   AAP Bridge    │────▶│   Target AAP    │
-│    (2.3/2.4)    │     │   (ETL Engine)  │     │     (2.6+)      │
-└─────────────────┘     └────────┬────────┘     └─────────────────┘
-                                 │
-                        ┌────────▼────────┐
-                        │   PostgreSQL    │
-                        │  State Database │
-                        └─────────────────┘
+```mermaid
+graph LR
+    A[Source AAP<br/>2.3/2.4] -->|Export| B[AAP Bridge<br/>ETL Engine]
+    B -->|Load| C[Target AAP<br/>2.6+]
+    B <-->|State<br/>Management| D[(PostgreSQL<br/>State Database)]
 
-```markdown
+    style A fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    style B fill:#fff9c4,stroke:#f57f17,stroke-width:3px
+    style C fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style D fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+```
 
 **Components:**
 
