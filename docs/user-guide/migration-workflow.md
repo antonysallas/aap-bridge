@@ -10,12 +10,14 @@ AAP Bridge follows an ETL (Export, Transform, Load) pattern:
 ┌──────────┐    ┌───────────┐    ┌──────────┐    ┌────────┐    ┌──────────┐
 │   Prep   │───▶│  Export   │───▶│Transform │───▶│ Import │───▶│ Validate │
 └──────────┘    └───────────┘    └──────────┘    └────────┘    └──────────┘
+
 ```markdown
 
 ## Phase 1: Preparation
 
 ```bash
 aap-bridge prep
+
 ```text
 
 **Purpose:** Analyze both AAP instances and prepare for migration.
@@ -38,6 +40,7 @@ aap-bridge prep
 
 ```bash
 aap-bridge export
+
 ```text
 
 **Purpose:** Extract all resources from source AAP.
@@ -81,12 +84,14 @@ exports/
     ├── hosts_0001.json
     ├── hosts_0002.json
     └── hosts_0003.json
+
 ```markdown
 
 ## Phase 3: Transform
 
 ```bash
 aap-bridge transform
+
 ```text
 
 **Purpose:** Apply schema transformations for target AAP version.
@@ -110,6 +115,7 @@ aap-bridge transform
 
 ```bash
 aap-bridge import
+
 ```text
 
 **Purpose:** Load transformed data into target AAP.
@@ -133,6 +139,7 @@ aap-bridge import
 
 ```bash
 aap-bridge validate
+
 ```markdown
 
 **Purpose:** Verify migration success.
@@ -157,6 +164,7 @@ Checkpoints are created automatically during import:
 
 ```bash
 aap-bridge checkpoint list
+
 ```markdown
 
 ### Resuming from Failure
@@ -167,6 +175,7 @@ aap-bridge migrate resume
 
 # Resume from specific checkpoint
 aap-bridge migrate resume --checkpoint inventories_batch_50
+
 ```markdown
 
 ## Resource Dependencies
@@ -194,6 +203,7 @@ Job Templates
     ├── Inventory (uses)
     ├── Credentials (uses)
     └── Execution Environment (uses)
+
 ```markdown
 
 ## Best Practices

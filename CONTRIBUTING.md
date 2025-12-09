@@ -8,7 +8,9 @@ changes to this document in a pull request.
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by the [AAP Bridge Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+This project and everyone participating in it is governed by the [AAP Bridge
+Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to
+uphold this code.
 
 ## How Can I Contribute?
 
@@ -44,12 +46,14 @@ report, reproduce the behavior, and find related reports.
     ```bash
     uv venv --seed --python 3.12
     source .venv/bin/activate
+
     ```text
 
 2. **Install dependencies:**
 
     ```bash
     make install-dev
+
     ```markdown
 
 ## Styleguides

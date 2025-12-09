@@ -6,6 +6,7 @@ AAP Bridge provides a comprehensive CLI for all migration operations.
 
 ```bash
 aap-bridge [OPTIONS] COMMAND [ARGS]
+
 ```markdown
 
 | Option | Description |
@@ -22,6 +23,7 @@ aap-bridge [OPTIONS] COMMAND [ARGS]
 
 ```bash
 aap-bridge
+
 ```dockerfile
 
 Launches an interactive menu for guided operation.
@@ -34,6 +36,7 @@ Run the preparation phase.
 
 ```bash
 aap-bridge prep [OPTIONS]
+
 ```text
 
 **What it does:**
@@ -56,6 +59,7 @@ Export resources from source AAP.
 
 ```bash
 aap-bridge export [OPTIONS] [RESOURCE_TYPES]
+
 ```text
 
 **Examples:**
@@ -72,6 +76,7 @@ aap-bridge export --output ./my-exports/
 
 # Export with file splitting
 aap-bridge export --records-per-file 500
+
 ```text
 
 **Options:**
@@ -90,6 +95,7 @@ Transform exported data for target AAP.
 
 ```bash
 aap-bridge transform [OPTIONS] [RESOURCE_TYPES]
+
 ```text
 
 **Examples:**
@@ -100,6 +106,7 @@ aap-bridge transform
 
 # Transform specific types
 aap-bridge transform inventories hosts
+
 ```markdown
 
 **Options:**
@@ -117,6 +124,7 @@ Import data to target AAP.
 
 ```bash
 aap-bridge import [OPTIONS] [RESOURCE_TYPES]
+
 ```text
 
 **Examples:**
@@ -130,6 +138,7 @@ aap-bridge import organizations inventories
 
 # Import with progress disabled (CI/CD)
 aap-bridge import --disable-progress
+
 ```text
 
 **Options:**
@@ -148,6 +157,7 @@ Remove migrated resources from target AAP.
 
 ```bash
 aap-bridge cleanup [OPTIONS] [RESOURCE_TYPES]
+
 ```text
 
 **Examples:**
@@ -161,6 +171,7 @@ aap-bridge cleanup hosts inventories
 
 # Dry run to see what would be deleted
 aap-bridge cleanup --dry-run
+
 ```text
 
 **Options:**
@@ -179,6 +190,7 @@ Validate migration results.
 
 ```bash
 aap-bridge validate [OPTIONS] [RESOURCE_TYPES]
+
 ```text
 
 **Examples:**
@@ -189,6 +201,7 @@ aap-bridge validate
 
 # Validate with sampling
 aap-bridge validate --sample-size 1000
+
 ```markdown
 
 **Options:**
@@ -206,6 +219,7 @@ Run migration operations.
 
 ```bash
 aap-bridge migrate SUBCOMMAND [OPTIONS]
+
 ```text
 
 **Subcommands:**
@@ -219,6 +233,7 @@ aap-bridge migrate resume
 
 # Resume from specific checkpoint
 aap-bridge migrate resume --checkpoint inventories_batch_50
+
 ```markdown
 
 ---
@@ -229,6 +244,7 @@ Manage checkpoints.
 
 ```bash
 aap-bridge checkpoint SUBCOMMAND
+
 ```text
 
 **Subcommands:**
@@ -245,6 +261,7 @@ aap-bridge checkpoint delete <name>
 
 # Clean old checkpoints
 aap-bridge checkpoint clean --older-than 7d
+
 ```markdown
 
 ---
@@ -255,6 +272,7 @@ Manage migration state.
 
 ```bash
 aap-bridge state SUBCOMMAND
+
 ```text
 
 **Subcommands:**
@@ -268,6 +286,7 @@ aap-bridge state reset hosts
 
 # Clear all state (use with caution!)
 aap-bridge state clear --confirm
+
 ```markdown
 
 ---
@@ -278,6 +297,7 @@ Generate migration reports.
 
 ```bash
 aap-bridge report SUBCOMMAND
+
 ```text
 
 **Subcommands:**
@@ -288,6 +308,7 @@ aap-bridge report summary
 
 # Detailed report
 aap-bridge report detailed --output report.html
+
 ```markdown
 
 ---
@@ -311,6 +332,7 @@ aap-bridge migrate full --show-stats
 
 # Combined: Quiet + no progress
 aap-bridge migrate full --quiet --disable-progress
+
 ```markdown
 
 ## Environment Variables
@@ -321,4 +343,5 @@ Override options via environment:
 export AAP_BRIDGE__LOGGING__CONSOLE_LEVEL=DEBUG
 export AAP_BRIDGE__LOGGING__DISABLE_PROGRESS=true
 aap-bridge migrate full
+
 ```text

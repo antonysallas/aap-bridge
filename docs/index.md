@@ -54,6 +54,7 @@ AAP Bridge follows an ETL (Export, Transform, Load) architecture:
                         │   PostgreSQL    │
                         │  State Database │
                         └─────────────────┘
+
 ```markdown
 
 **Components:**
@@ -85,4 +86,5 @@ This project is licensed under the GNU General Public License v3.0.
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/antonysallas/aap-bridge/issues)
-- **Security**: See [SECURITY.md](https://github.com/antonysallas/aap-bridge/blob/main/SECURITY.md)
+- **Security**: See
+  [SECURITY.md](https://github.com/antonysallas/aap-bridge/blob/main/SECURITY.md)

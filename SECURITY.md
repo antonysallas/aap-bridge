@@ -43,6 +43,7 @@ practices:
    ```bash
    export AAP_23_TOKEN="your_source_token"
    export AAP_26_TOKEN="your_target_token"
+
    ```text
 
 2. **Protect Configuration Files**: Ensure `config/config.yaml` and `.env` have
@@ -52,6 +53,7 @@ practices:
    ```bash
    chmod 600 .env
    chmod 600 config/config.yaml
+
    ```bash
 
 3. **Secure State Database**: The migration state database may contain resource
@@ -63,6 +65,7 @@ practices:
    ```bash
    aap-bridge cleanup exports
    rm -rf logs/*.log
+
    ```markdown
 
 ### Network Security

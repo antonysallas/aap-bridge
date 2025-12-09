@@ -32,6 +32,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
 uv sync
+
 ```markdown
 
 ### Using pip
@@ -47,6 +48,7 @@ source .venv/bin/activate
 
 # Install in editable mode
 pip install -e .
+
 ```markdown
 
 ### Development Installation
@@ -60,6 +62,7 @@ cd aap-bridge
 
 # Use make for complete setup
 make setup
+
 ```markdown
 
 This installs all development dependencies including testing and linting tools.
@@ -76,6 +79,7 @@ psql -c "GRANT ALL PRIVILEGES ON DATABASE aap_migration TO aap_migration_user;"
 
 # For PostgreSQL 15+, grant schema permissions
 psql -d aap_migration -c "GRANT ALL ON SCHEMA public TO aap_migration_user;"
+
 ```markdown
 
 !!! note
@@ -92,6 +96,7 @@ aap-bridge --help
 
 # Validate configuration
 aap-bridge config validate
+
 ```markdown
 
 ## Next Steps
