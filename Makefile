@@ -81,7 +81,7 @@ docs: ## Build documentation
 
 docs-serve: ## Serve documentation locally
 	uv pip install -e ".[docs]"
-	uv run mkdocs serve
+	uv run mkdocs serve -a localhost:8001
 
 run-example: ## Run example migration (requires config)
 	$(PYTHON) -m aap_migration.cli migrate full --config config/config.yaml --dry-run
