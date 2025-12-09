@@ -4,9 +4,10 @@ This document describes the internal architecture of AAP Bridge.
 
 ## Overview
 
-AAP Bridge follows an ETL (Export, Transform, Load) architecture with state management for checkpointing and idempotency.
+AAP Bridge follows an ETL (Export, Transform, Load) architecture with state
+management for checkpointing and idempotency.
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                          CLI Layer                               │
 │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐   │
@@ -42,11 +43,11 @@ AAP Bridge follows an ETL (Export, Transform, Load) architecture with state mana
 │                   │ PostgreSQL│                                │
 │                   └───────────┘                                │
 └───────────────────────────────────────────────────────────────┘
-```
+```markdown
 
 ## Directory Structure
 
-```
+```python
 src/aap_migration/
 ├── cli/                    # Command-line interface
 │   ├── main.py            # Entry point, command groups
@@ -80,7 +81,7 @@ src/aap_migration/
 └── utils/                 # Utilities
     ├── logging.py
     └── idempotency.py
-```
+```markdown
 
 ## Key Components
 
@@ -119,7 +120,7 @@ class ResourceExporter:
     ) -> AsyncGenerator[dict, None]:
         """Paginate through all resources."""
         ...
-```
+```markdown
 
 Resource-specific exporters inherit from `ResourceExporter`:
 
@@ -143,7 +144,7 @@ class DataTransformer:
     ) -> dict[str, Any]:
         """Apply transformations."""
         ...
-```
+```markdown
 
 Transformations include:
 
@@ -166,7 +167,7 @@ class ResourceImporter:
     ) -> dict[str, Any] | None:
         """Import single resource."""
         ...
-```
+```markdown
 
 Special handling for:
 
@@ -200,7 +201,7 @@ class MigrationState:
         resource_type: str,
         source_id: int,
     ) -> bool: ...
-```
+```markdown
 
 #### Database Schema
 
@@ -222,7 +223,7 @@ CREATE TABLE migration_progress (
     error_message TEXT,
     updated_at TIMESTAMP
 );
-```
+```markdown
 
 ### Resource Registry
 
@@ -240,7 +241,7 @@ RESOURCE_REGISTRY = {
     ),
     ...
 }
-```
+```yaml
 
 Controls:
 
@@ -253,7 +254,7 @@ Controls:
 
 ### Export Flow
 
-```
+```bash
 Source AAP
     │
     ▼
@@ -267,11 +268,11 @@ File Writer (split by records-per-file)
     │
     ▼
 exports/{resource_type}/{resource_type}_XXXX.json
-```
+```markdown
 
 ### Transform Flow
 
-```
+```text
 exports/{resource_type}/*.json
     │
     ▼
@@ -284,11 +285,11 @@ DataTransformer.transform()
     │
     ▼
 transformed/{resource_type}/*.json
-```
+```markdown
 
 ### Import Flow
 
-```
+```text
 transformed/{resource_type}/*.json
     │
     ▼
@@ -301,7 +302,7 @@ ResourceImporter.import_resource()
     │
     ▼
 Target AAP (via AAPTargetClient)
-```
+```sql
 
 ## Extension Points
 
@@ -326,7 +327,7 @@ class CustomTransformer(DataTransformer):
         data = await super().transform(data, state)
         # Custom logic here
         return data
-```
+```markdown
 
 ### Custom Importers
 
@@ -343,7 +344,7 @@ class CustomImporter(ResourceImporter):
         # Custom pre-processing
         ...
         return await super().import_resource(resource_type, source_id, data)
-```
+```yaml
 
 ## Performance Considerations
 

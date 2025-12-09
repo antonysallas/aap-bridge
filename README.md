@@ -1,25 +1,37 @@
 # AAP Bridge
 
-A production-grade Python tool for migrating Ansible Automation Platform (AAP) installations from one version to another, designed to handle large-scale migrations (e.g., 80,000+ hosts)
+A production-grade Python tool for migrating Ansible Automation Platform (AAP)
+installations from one version to another, designed to handle large-scale
+migrations (e.g., 80,000+ hosts)
 
 ## Features
 
 - **Bulk Operations**: Leverages AAP bulk APIs for high-performance migrations
-- **State Management**: PostgreSQL-backed state tracking with checkpoint/resume capability
-- **Idempotency**: Safely resume interrupted migrations without creating duplicates
-- **Professional Progress Display**: Rich-based live progress display with real-time metrics (rate, success/fail counts, timing)
-- **Flexible Output Modes**: Normal, quiet, CI/CD, and detailed modes for different environments
-- **Comprehensive Logging**: Structured logging with separate console (WARNING) and file (DEBUG) levels
-- **Split-File Export/Import**: Automatic file splitting for large datasets with metadata tracking
-- **CLI Interface**: Intuitive Click-based CLI with extensive options and environment variable support
+- **State Management**: PostgreSQL-backed state tracking with checkpoint/resume
+  capability
+- **Idempotency**: Safely resume interrupted migrations without creating
+  duplicates
+- **Professional Progress Display**: Rich-based live progress display with
+  real-time metrics (rate, success/fail counts, timing)
+- **Flexible Output Modes**: Normal, quiet, CI/CD, and detailed modes for
+  different environments
+- **Comprehensive Logging**: Structured logging with separate console (WARNING)
+  and file (DEBUG) levels
+- **Split-File Export/Import**: Automatic file splitting for large datasets with
+  metadata tracking
+- **CLI Interface**: Intuitive Click-based CLI with extensive options and
+  environment variable support
 
 ## Architecture
 
 The tool is organized into several key components:
 
-- **Client Layer**: HTTP clients for source AAP, target AAP, and HashiCorp Vault with retry logic and rate limiting
-- **Migration Layer**: ETL pipeline with exporters, transformers, and importers for all AAP resource types
-- **State Management**: Database-backed progress tracking, checkpoint creation, and ID mapping
+- **Client Layer**: HTTP clients for source AAP, target AAP, and HashiCorp Vault
+  with retry logic and rate limiting
+- **Migration Layer**: ETL pipeline with exporters, transformers, and importers
+  for all AAP resource types
+- **State Management**: Database-backed progress tracking, checkpoint creation,
+  and ID mapping
 - **CLI**: User-friendly command-line interface for all operations
 
 ## Quick Start
@@ -29,9 +41,11 @@ The tool is organized into several key components:
 - **Python 3.12** or higher
 - **PostgreSQL** database (Required for state management)
 - **Hardware**: Minimum 8GB RAM recommended for large migrations
-- **Network**: Access to Source AAP, Target AAP, and the state management PostgreSQL database (not AAP)
+- **Network**: Access to Source AAP, Target AAP, and the state management
+  PostgreSQL database (not AAP)
 - **Credentials**: Admin access to both Source and Target AAP instances
-- **HashiCorp Vault** (Optional but recommended): For migrating encrypted credentials securely
+- **HashiCorp Vault** (Optional but recommended): For migrating encrypted
+  credentials securely
 
 ### Installation
 
@@ -64,7 +78,7 @@ psql -c "CREATE USER aap_migration_user WITH PASSWORD 'your_secure_password';"
 psql -c "GRANT ALL PRIVILEGES ON DATABASE aap_migration TO aap_migration_user;"
 # Ensure the user owns the schema/tables (Postgres 15+)
 psql -d aap_migration -c "GRANT ALL ON SCHEMA public TO aap_migration_user;"
-```
+```dockerfile
 
 #### 2. Environment Setup
 
@@ -72,7 +86,7 @@ Copy the example environment file and configure your credentials:
 
 ```bash
 cp .env.example .env
-```
+```text
 
 Edit `.env` with your AAP instance details and database connection string.
 
@@ -91,11 +105,12 @@ TARGET__TOKEN=your_target_token
 MIGRATION_STATE_DB_PATH=postgresql://aap_migration_user:your_secure_password@localhost:5432/aap_migration
 
 # HashiCorp Vault (Optional)
-# If configured, the tool can inject credentials. If skipped, credentials must be manually recreated.
+# If configured, the tool can inject credentials. If skipped, credentials must
+be manually recreated.
 VAULT__URL=https://vault.example.com
 VAULT__ROLE_ID=xxxxx
 VAULT__SECRET_ID=xxxxx
-```
+```markdown
 
 #### 3. Application Configuration
 
@@ -105,7 +120,7 @@ Review and adjust `config/config.yaml` for your environment:
 - **Logging**: Configure log levels and file paths
 - **Migration phases**: Enable/disable specific resource types
 
-3. Update `config/mappings.yaml` if you need to rename resources during migration (e.g., credential types with different names between AAP versions).
+1. Update `config/mappings.yaml` if you need to rename resources during migration (e.g., credential types with different names between AAP versions).
 
 ### Usage
 
@@ -129,7 +144,7 @@ aap-bridge validate all --sample-size 4000
 
 # View migration report
 aap-bridge report summary
-```
+```markdown
 
 #### Output Control
 
@@ -150,7 +165,7 @@ aap-bridge migrate full --config config/config.yaml --show-stats
 
 # Combination: Quiet + no progress for automation
 aap-bridge migrate full --config config/config.yaml --quiet --disable-progress
-```
+```text
 
 **Output Modes:**
 
@@ -166,7 +181,7 @@ aap-bridge migrate full --config config/config.yaml --quiet --disable-progress
 export AAP_BRIDGE__LOGGING__CONSOLE_LEVEL=WARNING
 export AAP_BRIDGE__LOGGING__DISABLE_PROGRESS=true
 aap-bridge migrate full --config config/config.yaml
-```
+```markdown
 
 #### Split-File Export/Import
 
@@ -178,7 +193,7 @@ aap-bridge export --output exports/ --records-per-file 500
 
 # Import handles multiple files automatically
 aap-bridge import --input exports/
-```
+```text
 
 **Export Structure:**
 
@@ -194,7 +209,7 @@ exports/
 └── hosts/
     ├── hosts_0001.json
     └── hosts_0002.json
-```
+```markdown
 
 ## Performance Targets (TBD)
 
@@ -223,7 +238,7 @@ aap-bridge migrate resume
 
 # Resume from specific checkpoint
 aap-bridge migrate resume --checkpoint inventories_batch_50
-```
+```markdown
 
 ### Idempotency
 
@@ -263,7 +278,7 @@ pytest tests/performance/
 
 # Disable progress display for CI
 pytest tests/unit/ --disable-progress
-```
+```markdown
 
 ### Code Quality
 
@@ -279,7 +294,7 @@ make typecheck
 
 # Run all checks
 make check
-```
+```markdown
 
 ## Critical Constraints
 

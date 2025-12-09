@@ -14,7 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release of AAP Bridge
 - **Migration Framework**
   - ETL pipeline for source-to-target AAP migrations
-  - Support for all major AAP resource types: organizations, users, teams, credentials, credential types, execution environments, projects, inventories, hosts, job templates, workflow job templates, and schedules
+  - Support for all major AAP resource types: organizations, users, teams,
+    credentials, credential types, execution environments, projects,
+    inventories, hosts, job templates, workflow job templates, and schedules
   - RBAC role assignment migration
   - Bulk API operations for high-performance host and inventory imports
 - **State Management**
@@ -26,7 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Automatic file discovery and ordered import
   - Metadata tracking for export sessions
 - **Validation**
-  - Statistical sampling validation (configurable confidence level and margin of error)
+  - Statistical sampling validation (configurable confidence level and margin of
+    error)
   - Count reconciliation between source and target
   - Phase-by-phase validation support
 - **CLI Interface**
@@ -48,7 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configurable log levels for console and file
 - **Configuration**
   - YAML-based configuration with environment variable substitution
-  - Resource renaming via mappings.yaml (e.g., credential type name changes between versions)
+  - Resource renaming via mappings.yaml (e.g., credential type name changes
+    between versions)
   - Endpoint filtering via ignored_endpoints.yaml
   - Extensive performance tuning options
 
