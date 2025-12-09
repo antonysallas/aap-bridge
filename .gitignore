@@ -217,3 +217,7 @@ GEMINI.md
 bak/
 # MkDocs build output
 site/
+
+# Configuration files with environment-specific values
+config/mappings.yaml
+

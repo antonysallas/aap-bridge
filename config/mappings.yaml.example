@@ -2,8 +2,11 @@
 # Structure:
 # resource_type:
 #   old_name: new_name
+#
+# Copy this file to mappings.yaml and customize for your environment.
 
 credential_types:
+  # Map credential type names that changed between AAP versions
   "CyberArk AIM Central Credential Provider Lookup": "CyberArk Central Credential Provider Lookup"
   "CyberArk Conjur Secret Lookup": "CyberArk Conjur Secrets Manager Lookup"
 
@@ -11,6 +14,5 @@ credential_types:
 # Instances are infrastructure nodes that cannot be created via API.
 # Map source hostnames to target hostnames for ID mapping.
 instances:
-  "aap23.lab.local": "aap26.lab.local"
-  # Add more mappings as needed:
   # "source-controller.example.com": "target-controller.example.com"
+  # "source-node-1.example.com": "target-node-1.example.com"
