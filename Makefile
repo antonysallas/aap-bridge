@@ -1,4 +1,4 @@
-.PHONY: help install install-dev clean format lint typecheck test test-unit test-integration test-performance test-cov check docs run
+.PHONY: help install install-dev clean format lint typecheck test test-unit test-integration test-performance test-cov check docs docs-serve run
 
 # Default target
 .DEFAULT_GOAL := help
@@ -76,7 +76,12 @@ pre-commit: ## Run pre-commit hooks on all files
 	$(PYTHON) -m pre_commit run --all-files
 
 docs: ## Build documentation
-	@echo "Documentation building not yet configured"
+	uv pip install -e ".[docs]"
+	uv run mkdocs build
+
+docs-serve: ## Serve documentation locally
+	uv pip install -e ".[docs]"
+	uv run mkdocs serve
 
 run-example: ## Run example migration (requires config)
 	$(PYTHON) -m aap_migration.cli migrate full --config config/config.yaml --dry-run
