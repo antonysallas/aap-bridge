@@ -107,10 +107,7 @@ class ResourceImporter:
             # EXCEPTION: Preserve None for credential ownership fields (organization/user/team)
             # Credentials require at least one ownership field, even if None
             ownership_fields = {"user", "team"}
-            data = {
-                k: v for k, v in data.items()
-                if v is not None or k in ownership_fields
-            }
+            data = {k: v for k, v in data.items() if v is not None or k in ownership_fields}
 
             # Create resource
             result = await self.client.create_resource(
@@ -214,13 +211,15 @@ class ResourceImporter:
             )
 
             # Track error for reporting
-            self.import_errors.append({
-                "resource_type": resource_type,
-                "source_id": source_id,
-                "name": data.get("name", "unknown"),
-                "error": str(e),
-                "error_type": type(e).__name__,
-            })
+            self.import_errors.append(
+                {
+                    "resource_type": resource_type,
+                    "source_id": source_id,
+                    "name": data.get("name", "unknown"),
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                }
+            )
 
             return None
 
@@ -246,7 +245,7 @@ class ResourceImporter:
             source_id=resource_source_id,
             source_name=data.get("name"),
             dependencies=dependencies,
-            data_fields=list(data.keys())
+            data_fields=list(data.keys()),
         )
 
         for field, dep_resource_type in dependencies.items():
@@ -259,7 +258,7 @@ class ResourceImporter:
                     source_id=resource_source_id,
                     field=field,
                     dep_source_id=dep_source_id,
-                    dep_resource_type=dep_resource_type
+                    dep_resource_type=dep_resource_type,
                 )
 
                 # Get mapped target ID
@@ -273,7 +272,7 @@ class ResourceImporter:
                     dep_resource_type=dep_resource_type,
                     dep_source_id=dep_source_id,
                     target_id=target_id,
-                    found=target_id is not None
+                    found=target_id is not None,
                 )
 
                 if target_id:
@@ -493,13 +492,15 @@ class ResourceImporter:
                     )
 
                     # Track error for reporting
-                    self.import_errors.append({
-                        "resource_type": resource_type,
-                        "source_id": source_id,
-                        "name": resource.get("name", "unknown"),
-                        "error": str(e),
-                        "error_type": type(e).__name__,
-                    })
+                    self.import_errors.append(
+                        {
+                            "resource_type": resource_type,
+                            "source_id": source_id,
+                            "name": resource.get("name", "unknown"),
+                            "error": str(e),
+                            "error_type": type(e).__name__,
+                        }
+                    )
 
                     return None
 
@@ -634,10 +635,7 @@ class CredentialTypeImporter(ResourceImporter):
 
         try:
             # Find existing credential_type in target by name
-            results = await self.client.get(
-                "credential_types/",
-                params={"name": name}
-            )
+            results = await self.client.get("credential_types/", params={"name": name})
             resources = results.get("results", [])
 
             if resources:
@@ -684,9 +682,7 @@ class CredentialTypeImporter(ResourceImporter):
 
                 # PATCH the credential_type if there's data to update
                 if patch_data:
-                    await self.client.update_resource(
-                        "credential_types", target_id, patch_data
-                    )
+                    await self.client.update_resource("credential_types", target_id, patch_data)
                     logger.info(
                         "credential_type_patched",
                         name=name,
@@ -770,13 +766,15 @@ class CredentialTypeImporter(ResourceImporter):
                 error=str(e),
             )
             self.stats["error_count"] += 1
-            self.import_errors.append({
-                "resource_type": resource_type,
-                "source_id": source_id,
-                "name": name,
-                "error": str(e),
-                "error_type": type(e).__name__,
-            })
+            self.import_errors.append(
+                {
+                    "resource_type": resource_type,
+                    "source_id": source_id,
+                    "name": name,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                }
+            )
             return None
 
     async def import_credential_types(
@@ -1197,7 +1195,7 @@ class InstanceGroupImporter(ResourceImporter):
     """Importer for instance group resources."""
 
     DEPENDENCIES = {
-        "credential": "credentials", # For container instance groups
+        "credential": "credentials",  # For container instance groups
     }
 
     async def import_instance_groups(
@@ -1324,13 +1322,15 @@ class InventoryGroupImporter(ResourceImporter):
             self.stats["error_count"] += 1
 
             # Track error for reporting
-            self.import_errors.append({
-                "resource_type": resource_type,
-                "source_id": source_id,
-                "name": data.get("name", "unknown"),
-                "error": str(e),
-                "error_type": type(e).__name__,
-            })
+            self.import_errors.append(
+                {
+                    "resource_type": resource_type,
+                    "source_id": source_id,
+                    "name": data.get("name", "unknown"),
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                }
+            )
 
             raise
 
@@ -1412,9 +1412,7 @@ class InventoryGroupImporter(ResourceImporter):
 
         return all_results
 
-    def _topological_sort_tiers(
-        self, groups: list[dict[str, Any]]
-    ) -> list[list[dict[str, Any]]]:
+    def _topological_sort_tiers(self, groups: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
         """Sort groups into dependency tiers for parallel import.
 
         Optimized O(N) algorithm.
@@ -1693,19 +1691,25 @@ class WorkflowNodeImporter(ResourceImporter):
                 )
 
                 # Track error for reporting
-                self.import_errors.append({
-                    "resource_type": "workflow_nodes",
-                    "source_id": source_id,
-                    "name": node.get("identifier", "unknown"),
-                    "error": str(e),
-                    "error_type": type(e).__name__,
-                })
+                self.import_errors.append(
+                    {
+                        "resource_type": "workflow_nodes",
+                        "source_id": source_id,
+                        "name": node.get("identifier", "unknown"),
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                    }
+                )
 
                 raise
             finally:
                 # Update progress after each node
                 if progress_callback:
-                    progress_callback(self.stats["imported_count"], self.stats["error_count"], self.stats["skipped_count"])
+                    progress_callback(
+                        self.stats["imported_count"],
+                        self.stats["error_count"],
+                        self.stats["skipped_count"],
+                    )
 
         return results
 
@@ -1858,14 +1862,16 @@ class RBACImporter(ResourceImporter):
                 self.stats["error_count"] += 1
 
                 # Track error for reporting
-                self.import_errors.append({
-                    "resource_type": "rbac_assignments",
-                    "source_id": source_resource_id,
-                    "name": f"{resource_type}/{role_name}",
-                    "error": str(e),
-                    "error_type": type(e).__name__,
-                    "details": assignment,
-                })
+                self.import_errors.append(
+                    {
+                        "resource_type": "rbac_assignments",
+                        "source_id": source_resource_id,
+                        "name": f"{resource_type}/{role_name}",
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                        "details": assignment,
+                    }
+                )
 
                 continue
 
@@ -1897,189 +1903,212 @@ class HostImporter(ResourceImporter):
         super().__init__(client, state, performance_config, resource_mappings)
         self.bulk_ops = BulkOperations(client)
 
-        async def import_hosts_bulk(
-            self,
-            inventory_id: int,
-            hosts: list[dict[str, Any]],
-            progress_callback: Callable[[int, int, int], None] | None = None,
-        ) -> dict[str, Any]:
-            """Import hosts using bulk API for performance.
-    
-            Args:
-                inventory_id: Target inventory ID
-                hosts: List of host data
-                progress_callback: Optional callback for progress updates.
-                    Called after each batch with (total_created, total_failed, total_skipped).
-    
-            Returns:
-                Bulk operation result
-            """
-            batch_size = self.performance_config.batch_sizes.get("hosts", 200)
-            # Default to 5 if not set in config
-            concurrency = getattr(self.performance_config, "host_import_concurrent_batches", 5)
-    
-            logger.info(
-                "bulk_import_hosts_starting",
-                inventory_id=inventory_id,
-                host_count=len(hosts),
-                batch_size=batch_size,
-                concurrency=concurrency,
-            )
-    
-            all_results = []
-            total_created = 0
-            total_failed = 0
-            total_skipped = 0
-    
-            # Split into chunks
-            chunks = [hosts[i : i + batch_size] for i in range(0, len(hosts), batch_size)]
-            
-            semaphore = asyncio.Semaphore(concurrency)
-    
-            async def process_batch(batch_idx: int, batch: list[dict[str, Any]]) -> dict[str, Any] | None:
-                nonlocal total_created, total_failed, total_skipped
-                
-                async with semaphore:
-                    # Prepare host data for bulk API
-                    prepared_hosts = []
-                    source_ids = []
-                    source_info: list[dict] = []
-                    source_name_by_id: dict[int, str] = {}
-                    batch_skipped = 0
-    
-                    for host in batch:
-                        source_id = host.pop("_source_id", host.get("id"))
-                        source_name = host.get("name", f"host_{source_id}")
-                        source_name_by_id[source_id] = source_name
-    
-                        # Skip if already migrated
-                        if self.state.is_migrated("hosts", source_id):
-                            self.stats["skipped_count"] += 1
-                            batch_skipped += 1
-                            continue
-    
-                        source_ids.append(source_id)
-                        source_info.append({
+    async def import_hosts_bulk(
+        self,
+        inventory_id: int,
+        hosts: list[dict[str, Any]],
+        progress_callback: Callable[[int, int, int], None] | None = None,
+    ) -> dict[str, Any]:
+        """Import hosts using bulk API for performance.
+
+        Args:
+            inventory_id: Target inventory ID
+            hosts: List of host data
+            progress_callback: Optional callback for progress updates.
+                Called after each batch with (total_created, total_failed, total_skipped).
+
+        Returns:
+            Bulk operation result
+        """
+        batch_size = self.performance_config.batch_sizes.get("hosts", 200)
+        # Default to 5 if not set in config
+        concurrency = getattr(self.performance_config, "host_import_concurrent_batches", 5)
+
+        logger.info(
+            "bulk_import_hosts_starting",
+            inventory_id=inventory_id,
+            host_count=len(hosts),
+            batch_size=batch_size,
+            concurrency=concurrency,
+        )
+
+        all_results = []
+        total_created = 0
+        total_failed = 0
+        total_skipped = 0
+
+        # Split into chunks
+        chunks = [hosts[i : i + batch_size] for i in range(0, len(hosts), batch_size)]
+
+        semaphore = asyncio.Semaphore(concurrency)
+
+        async def process_batch(
+            batch_idx: int, batch: list[dict[str, Any]]
+        ) -> dict[str, Any] | None:
+            nonlocal total_created, total_failed, total_skipped
+
+            async with semaphore:
+                # Prepare host data for bulk API
+                prepared_hosts = []
+                source_ids = []
+                source_info: list[dict] = []
+                source_name_by_id: dict[int, str] = {}
+                batch_skipped = 0
+
+                for host in batch:
+                    source_id = host.pop("_source_id", host.get("id"))
+                    source_name = host.get("name", f"host_{source_id}")
+                    source_name_by_id[source_id] = source_name
+
+                    # Skip if already migrated
+                    if self.state.is_migrated("hosts", source_id):
+                        self.stats["skipped_count"] += 1
+                        batch_skipped += 1
+                        continue
+
+                    source_ids.append(source_id)
+                    source_info.append(
+                        {
                             "source_id": source_id,
                             "source_name": source_name,
-                        })
-    
-                        prepared_hosts.append(
-                            {
-                                "name": host["name"],
-                                "description": host.get("description", ""),
-                                "enabled": host.get("enabled", True),
-                                "variables": host.get("variables", {}),
-                                "inventory": inventory_id,
-                            }
+                        }
+                    )
+
+                    prepared_hosts.append(
+                        {
+                            "name": host["name"],
+                            "description": host.get("description", ""),
+                            "enabled": host.get("enabled", True),
+                            "variables": host.get("variables", {}),
+                            "inventory": inventory_id,
+                        }
+                    )
+
+                if batch_skipped > 0:
+                    total_skipped += batch_skipped
+                    # Callback with current cumulative stats
+                    if progress_callback:
+                        progress_callback(
+                            self.stats["imported_count"],
+                            self.stats["error_count"],
+                            self.stats["skipped_count"],
                         )
-    
-                    if batch_skipped > 0:
-                        total_skipped += batch_skipped
-                        # Callback with current cumulative stats
-                        if progress_callback:
-                            progress_callback(self.stats["imported_count"], self.stats["error_count"], self.stats["skipped_count"])
-    
-                    if not prepared_hosts:
-                        return None
-    
-                    try:
-                        result = await self.bulk_ops.bulk_create_hosts(
-                            inventory_id=inventory_id,
-                            hosts=prepared_hosts,
-                            batch_size=batch_size,
-                        )
-    
-                        created_hosts = result.get("hosts", [])
-                        failed_hosts = result.get("failed", [])
-    
-                        # Batch save ID mappings for all created hosts
-                        if created_hosts and source_info:
-                            mappings = []
-                            for idx, created_host in enumerate(created_hosts):
-                                if idx < len(source_info):
-                                    mappings.append({
+
+                if not prepared_hosts:
+                    return None
+
+                try:
+                    result = await self.bulk_ops.bulk_create_hosts(
+                        inventory_id=inventory_id,
+                        hosts=prepared_hosts,
+                        batch_size=batch_size,
+                    )
+
+                    created_hosts = result.get("hosts", [])
+                    failed_hosts = result.get("failed", [])
+
+                    # Batch save ID mappings for all created hosts
+                    if created_hosts and source_info:
+                        mappings = []
+                        for idx, created_host in enumerate(created_hosts):
+                            if idx < len(source_info):
+                                mappings.append(
+                                    {
                                         "resource_type": "hosts",
                                         "source_id": source_info[idx]["source_id"],
                                         "target_id": created_host["id"],
                                         "source_name": source_info[idx]["source_name"],
                                         "target_name": created_host.get("name"),
-                                    })
-                            
-                            self.state.batch_create_mappings(mappings)
-    
-                        created_count = len(created_hosts)
-                        failed_count = len(failed_hosts)
-                        
-                        total_created += created_count
-                        total_failed += failed_count
-                        
-                        self.stats["imported_count"] += created_count
-                        self.stats["error_count"] += failed_count
-    
-                        if progress_callback:
-                            progress_callback(self.stats["imported_count"], self.stats["error_count"], self.stats["skipped_count"])
-                            
-                        return result
-    
-                    except Exception as e:
-                        logger.error(
-                            "bulk_import_batch_failed",
-                            resource_type="hosts",
-                            inventory_id=inventory_id,
-                            batch_idx=batch_idx,
-                            error=str(e),
+                                    }
+                                )
+
+                        self.state.batch_create_mappings(mappings)
+
+                    created_count = len(created_hosts)
+                    failed_count = len(failed_hosts)
+
+                    total_created += created_count
+                    total_failed += failed_count
+
+                    self.stats["imported_count"] += created_count
+                    self.stats["error_count"] += failed_count
+
+                    if progress_callback:
+                        progress_callback(
+                            self.stats["imported_count"],
+                            self.stats["error_count"],
+                            self.stats["skipped_count"],
                         )
-                        
-                        # Mark failed in state
-                        for source_id in source_ids:
-                            source_name = source_name_by_id.get(source_id, f"host_{source_id}")
-                            if not self.state.has_source_mapping("hosts", source_id):
-                                self.state.create_source_mapping("hosts", source_id, source_name=source_name)
-                            self.state.mark_failed("hosts", source_id, str(e))
-                            
-                        self.stats["error_count"] += len(source_ids)
-                        total_failed += len(source_ids)
-                        
-                        self.import_errors.append({
+
+                    return result
+
+                except Exception as e:
+                    logger.error(
+                        "bulk_import_batch_failed",
+                        resource_type="hosts",
+                        inventory_id=inventory_id,
+                        batch_idx=batch_idx,
+                        error=str(e),
+                    )
+
+                    # Mark failed in state
+                    for source_id in source_ids:
+                        source_name = source_name_by_id.get(source_id, f"host_{source_id}")
+                        if not self.state.has_source_mapping("hosts", source_id):
+                            self.state.create_source_mapping(
+                                "hosts", source_id, source_name=source_name
+                            )
+                        self.state.mark_failed("hosts", source_id, str(e))
+
+                    self.stats["error_count"] += len(source_ids)
+                    total_failed += len(source_ids)
+
+                    self.import_errors.append(
+                        {
                             "resource_type": "hosts",
                             "source_id": f"batch_{batch_idx}",
                             "name": f"batch {batch_idx} of {len(source_ids)} hosts",
                             "error": str(e),
                             "error_type": type(e).__name__,
-                        })
-                        
-                        if progress_callback:
-                            progress_callback(self.stats["imported_count"], self.stats["error_count"], self.stats["skipped_count"])
-                            
-                        return None
-    
-            # Execute chunks in parallel
-            tasks = [process_batch(i, chunk) for i, chunk in enumerate(chunks)]
-            if tasks:
-                results = await asyncio.gather(*tasks, return_exceptions=True)
-                for r in results:
-                    if isinstance(r, dict):
-                        all_results.append(r)
-                    # Note: exceptions in process_batch are caught and handled, 
-                    # but asyncio.gather might return exceptions if something unexpected happens
-    
-            logger.info(
-                "bulk_import_hosts_completed",
-                inventory_id=inventory_id,
-                total_hosts=len(hosts),
-                created=total_created,
-                failed=total_failed,
-                skipped=total_skipped,
-            )
-    
-            return {
-                "total_requested": len(hosts),
-                "total_created": total_created,
-                "total_failed": total_failed,
-                "total_skipped": total_skipped,
-                "results": all_results,
-            }
+                        }
+                    )
+
+                    if progress_callback:
+                        progress_callback(
+                            self.stats["imported_count"],
+                            self.stats["error_count"],
+                            self.stats["skipped_count"],
+                        )
+
+                    return None
+
+        # Execute chunks in parallel
+        tasks = [process_batch(i, chunk) for i, chunk in enumerate(chunks)]
+        if tasks:
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for r in results:
+                if isinstance(r, dict):
+                    all_results.append(r)
+                # Note: exceptions in process_batch are caught and handled,
+                # but asyncio.gather might return exceptions if something unexpected happens
+
+        logger.info(
+            "bulk_import_hosts_completed",
+            inventory_id=inventory_id,
+            total_hosts=len(hosts),
+            created=total_created,
+            failed=total_failed,
+            skipped=total_skipped,
+        )
+
+        return {
+            "total_requested": len(hosts),
+            "total_created": total_created,
+            "total_failed": total_failed,
+            "total_skipped": total_skipped,
+            "results": all_results,
+        }
+
 
 class CredentialImporter(ResourceImporter):
     """Importer for credential resources.
@@ -2154,10 +2183,7 @@ class CredentialImporter(ResourceImporter):
 
         try:
             # Find existing credential in target by name
-            results = await self.client.get(
-                "credentials/",
-                params={"name": name}
-            )
+            results = await self.client.get("credentials/", params={"name": name})
             resources = results.get("results", [])
 
             if resources:
@@ -2205,9 +2231,7 @@ class CredentialImporter(ResourceImporter):
 
                 # PATCH the credential
                 if patch_data:
-                    await self.client.update_resource(
-                        "credentials", target_id, patch_data
-                    )
+                    await self.client.update_resource("credentials", target_id, patch_data)
                     logger.info(
                         "credential_patched",
                         name=name,
@@ -2243,7 +2267,7 @@ class CredentialImporter(ResourceImporter):
                 result = await self.client.create_resource(
                     resource_type="credentials",
                     data=data,
-                    check_exists=False, # We already checked
+                    check_exists=False,  # We already checked
                 )
 
                 target_id = result["id"]
@@ -2272,19 +2296,25 @@ class CredentialImporter(ResourceImporter):
 
             # Track placeholder resources if temp values were used
             if temp_values:
-                self.placeholder_resources.append({
-                    "resource_type": "credentials",
-                    "source_id": source_id,
-                    "name": name,
-                    "target_id": target_id,
-                    "temp_values": temp_values,
-                    "action_required": "Update encrypted values",
-                    "instructions": self._generate_credential_instructions(
-                        {"name": name, "organization": data.get("organization"), "credential_type": data.get("credential_type")},
-                        encrypted_fields,
-                        temp_values
-                    )
-                })
+                self.placeholder_resources.append(
+                    {
+                        "resource_type": "credentials",
+                        "source_id": source_id,
+                        "name": name,
+                        "target_id": target_id,
+                        "temp_values": temp_values,
+                        "action_required": "Update encrypted values",
+                        "instructions": self._generate_credential_instructions(
+                            {
+                                "name": name,
+                                "organization": data.get("organization"),
+                                "credential_type": data.get("credential_type"),
+                            },
+                            encrypted_fields,
+                            temp_values,
+                        ),
+                    }
+                )
 
             return result
 
@@ -2296,13 +2326,15 @@ class CredentialImporter(ResourceImporter):
                 error=str(e),
             )
             self.stats["error_count"] += 1
-            self.import_errors.append({
-                "resource_type": resource_type,
-                "source_id": source_id,
-                "name": name,
-                "error": str(e),
-                "error_type": type(e).__name__,
-            })
+            self.import_errors.append(
+                {
+                    "resource_type": resource_type,
+                    "source_id": source_id,
+                    "name": name,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                }
+            )
             return None
 
     async def _resolve_dependencies(
@@ -2337,7 +2369,7 @@ class CredentialImporter(ResourceImporter):
                     "resolved_custom_credential_type",
                     credential_name=data.get("name"),
                     source_id=source_id,
-                    target_id=target_id
+                    target_id=target_id,
                 )
             else:
                 # No mapping found
@@ -2347,7 +2379,7 @@ class CredentialImporter(ResourceImporter):
                         "using_builtin_credential_type",
                         credential_name=data.get("name"),
                         credential_type_id=source_id,
-                        message="Assuming consistent ID for built-in credential type"
+                        message="Assuming consistent ID for built-in credential type",
                     )
                     # Keep original ID (assumption: built-in types have same IDs)
                     resolved["credential_type"] = source_id
@@ -2357,7 +2389,7 @@ class CredentialImporter(ResourceImporter):
                         "missing_custom_credential_type_mapping",
                         credential_name=data.get("name"),
                         source_id=source_id,
-                        message="Custom credential type not found in ID mappings"
+                        message="Custom credential type not found in ID mappings",
                     )
                     # Remove field to allow partial import (existing behavior)
                     resolved.pop("credential_type", None)
@@ -2377,7 +2409,7 @@ class CredentialImporter(ResourceImporter):
                         f"resolved_{field}_dependency",
                         credential_name=data.get("name"),
                         source_id=source_id,
-                        target_id=target_id
+                        target_id=target_id,
                     )
                 else:
                     logger.warning(
@@ -2385,7 +2417,7 @@ class CredentialImporter(ResourceImporter):
                         resource_name=data.get("name"),
                         field=field,
                         source_id=source_id,
-                        dep_resource_type=dep_resource_type
+                        dep_resource_type=dep_resource_type,
                     )
                     # Remove field to allow partial import
                     resolved.pop(field, None)
@@ -2483,8 +2515,7 @@ class CredentialImporter(ResourceImporter):
         """
         temp_values = temp_values or {}
         fields_list = "\n".join(
-            f"- {field}: `{temp_values.get(field, '<temp_value>')}`"
-            for field in encrypted_fields
+            f"- {field}: `{temp_values.get(field, '<temp_value>')}`" for field in encrypted_fields
         )
 
         return f"""
@@ -2916,7 +2947,9 @@ class NotificationTemplateImporter(ResourceImporter):
         Returns:
             List of created notification template data
         """
-        return await self._import_parallel("notification_templates", notifications, progress_callback)
+        return await self._import_parallel(
+            "notification_templates", notifications, progress_callback
+        )
 
 
 class SystemJobTemplateImporter(ResourceImporter):
@@ -2924,6 +2957,7 @@ class SystemJobTemplateImporter(ResourceImporter):
 
     System job templates are built-in and read-only. We only map them.
     """
+
     DEPENDENCIES = {}
 
     async def import_resource(
@@ -3034,13 +3068,22 @@ class CredentialInputSourceImporter(ResourceImporter):
         for input_source in input_sources:
             source_id = input_source.pop("_source_id", input_source.get("id"))
             # `credential` is the ID of the credential whose input is being sourced.
-            source_target_credential_id = input_source.get("credential") # Renamed for clarity to avoid confusion with the source_credential for the input value.
+            source_target_credential_id = input_source.get(
+                "credential"
+            )  # Renamed for clarity to avoid confusion with the source_credential for the input value.
             source_input_field_name = input_source.get("input_field_name")
             # `source_credential` is the ID of the credential that provides the source (e.g., a HashiCorp Vault credential).
             source_source_credential_id = input_source.get("source_credential")
             source_source_credential_field_name = input_source.get("source_credential_field_name")
 
-            if not all([source_target_credential_id, source_input_field_name, source_source_credential_id, source_source_credential_field_name]):
+            if not all(
+                [
+                    source_target_credential_id,
+                    source_input_field_name,
+                    source_source_credential_id,
+                    source_source_credential_field_name,
+                ]
+            ):
                 logger.warning(
                     "credential_input_source_missing_fields",
                     source_id=source_id,
@@ -3048,11 +3091,17 @@ class CredentialInputSourceImporter(ResourceImporter):
                 )
                 self.stats["error_count"] += 1
                 if progress_callback:
-                    progress_callback(self.stats["imported_count"], self.stats["error_count"], self.stats["skipped_count"])
+                    progress_callback(
+                        self.stats["imported_count"],
+                        self.stats["error_count"],
+                        self.stats["skipped_count"],
+                    )
                 continue
 
             # Check if the credential associated with this input source has already been migrated.
-            target_credential_id = self.state.get_mapped_id("credentials", source_target_credential_id)
+            target_credential_id = self.state.get_mapped_id(
+                "credentials", source_target_credential_id
+            )
             if not target_credential_id:
                 logger.warning(
                     "credential_input_source_target_credential_not_imported",
@@ -3062,11 +3111,17 @@ class CredentialInputSourceImporter(ResourceImporter):
                 )
                 self.stats["error_count"] += 1
                 if progress_callback:
-                    progress_callback(self.stats["imported_count"], self.stats["error_count"], self.stats["skipped_count"])
+                    progress_callback(
+                        self.stats["imported_count"],
+                        self.stats["error_count"],
+                        self.stats["skipped_count"],
+                    )
                 continue
 
             # Resolve the source_credential to its target ID
-            target_source_credential_id = self.state.get_mapped_id("credentials", source_source_credential_id)
+            target_source_credential_id = self.state.get_mapped_id(
+                "credentials", source_source_credential_id
+            )
             if not target_source_credential_id:
                 logger.warning(
                     "credential_input_source_source_credential_not_imported",
@@ -3076,7 +3131,11 @@ class CredentialInputSourceImporter(ResourceImporter):
                 )
                 self.stats["error_count"] += 1
                 if progress_callback:
-                    progress_callback(self.stats["imported_count"], self.stats["error_count"], self.stats["skipped_count"])
+                    progress_callback(
+                        self.stats["imported_count"],
+                        self.stats["error_count"],
+                        self.stats["skipped_count"],
+                    )
                 continue
 
             # Construct the value to patch into the target credential's 'inputs'
@@ -3088,7 +3147,9 @@ class CredentialInputSourceImporter(ResourceImporter):
             try:
                 # Fetch the target credential to get its current inputs
                 # This is a GET, then PATCH - ensures other inputs are preserved
-                target_credential_obj = await self.client.get(f"credentials/{target_credential_id}/")
+                target_credential_obj = await self.client.get(
+                    f"credentials/{target_credential_id}/"
+                )
                 current_inputs = target_credential_obj.get("inputs", {})
 
                 # Update the specific input field
@@ -3107,12 +3168,14 @@ class CredentialInputSourceImporter(ResourceImporter):
                 self.state.mark_completed(
                     resource_type="credential_input_sources",
                     source_id=source_id,
-                    target_id=target_credential_id, # Link to the patched credential
+                    target_id=target_credential_id,  # Link to the patched credential
                     source_name=input_source.get("name", f"CIS-{source_id}"),
                     target_name=target_credential_obj.get("name"),
                 )
                 self.stats["imported_count"] += 1
-                results.append({"id": target_credential_id, "name": target_credential_obj.get("name")})
+                results.append(
+                    {"id": target_credential_id, "name": target_credential_obj.get("name")}
+                )
                 logger.info(
                     "credential_input_source_patched",
                     source_id=source_id,
@@ -3137,7 +3200,11 @@ class CredentialInputSourceImporter(ResourceImporter):
                 )
 
             if progress_callback:
-                progress_callback(self.stats["imported_count"], self.stats["error_count"], self.stats["skipped_count"])
+                progress_callback(
+                    self.stats["imported_count"],
+                    self.stats["error_count"],
+                    self.stats["skipped_count"],
+                )
 
         return results
 

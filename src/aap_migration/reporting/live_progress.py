@@ -52,6 +52,9 @@ class StatusIconColumn(ProgressColumn):
 
         if status == "complete_with_issues":
             return Text("⚠", style=MigrationColors.WARNING)
+        elif status == "complete_with_skips":
+            # Treat skips as success (green checkmark) per user requirement
+            return Text("✓", style=MigrationColors.COMPLETE)
         elif "complete" in status:
             return Text("✓", style=MigrationColors.COMPLETE)
         elif "running" in status:
@@ -141,8 +144,10 @@ class PhaseProgressState:
         """Status description for display."""
         total_processed = self.completed
         if total_processed >= self.total_items:
-            if self.skipped > 0 or self.failed > 0:
+            if self.failed > 0:
                 return "complete_with_issues"
+            elif self.skipped > 0:
+                return "complete_with_skips"
             return "complete"
         elif self.completed == 0 and self.skipped == 0:
             return "pending"
@@ -157,7 +162,8 @@ class PhaseProgressState:
             if self.failed > 0:
                 return MigrationColors.ERROR
             elif self.skipped > 0:
-                return MigrationColors.WARNING
+                # Skips are considered success/complete visually
+                return MigrationColors.COMPLETE
             return MigrationColors.COMPLETE
         elif self.completed == 0 and self.skipped == 0:
             return MigrationColors.PENDING
@@ -172,15 +178,14 @@ class PhaseProgressState:
 
         Returns:
             Formatted string with color-coded metrics (compact for single-line display)
-            Always includes Err:X and Skip:X for consistent column alignment
+            Always includes Err:X for consistent column alignment (Skip count hidden per user request)
         """
-        # Always show error and skip counts for consistent column width alignment
-        # Format: "XXX.X/s Err:XXX Skip:XXX XXX.Xs" (fixed width)
+        # Always show error counts for consistent column width alignment
+        # Format: "XXX.X/s Err:XXX XXX.Xs" (fixed width)
         return (
-            f"[{MigrationColors.RATE}]{self.average_rate:>5.1f}/s[/{MigrationColors.RATE}]"
-            f" [{MigrationColors.ERROR}]Err:{self.failed:<3}[/{MigrationColors.ERROR}]"
-            f" [{MigrationColors.WARNING}]Skip:{self.skipped:<3}[/{MigrationColors.WARNING}]"
-            f" [{MigrationColors.TIME}]{self.elapsed_time:>5.1f}s[/{MigrationColors.TIME}]"
+                        f" [{MigrationColors.RATE}]{self.average_rate:>5.1f}/s[/{MigrationColors.RATE}]"
+                        f" [{MigrationColors.ERROR}]Err:{self.failed:<3}[/{MigrationColors.ERROR}]"
+                        f" [{MigrationColors.TIME}]{self.elapsed_time:>5.1f}s[/{MigrationColors.TIME}]"
         )
 
 
