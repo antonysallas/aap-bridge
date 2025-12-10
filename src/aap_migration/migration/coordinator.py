@@ -790,31 +790,11 @@ class MigrationCoordinator:
 
         # Bulk import hosts by inventory
         if not self.config.dry_run:
-            # Capture transform-phase stats for progress display
-            transform_skipped = stats["skipped"]
-            transform_failed = stats["failed"]
-
-            def progress_callback(imported: int, failed: int, skipped: int) -> None:
-                """Update progress display with cumulative stats."""
-                if self.progress_display and self._current_phase_id:
-                    # completed = imported + failed (NOT skipped - it's passed separately)
-                    # Progress bar calculates: completed + skipped = total processed
-                    total_completed = imported + failed + transform_failed
-                    total_skipped = skipped + transform_skipped
-
-                    self.progress_display.update_phase(
-                        self._current_phase_id,
-                        completed=total_completed,
-                        failed=failed + transform_failed,
-                        skipped=total_skipped,
-                    )
-
             for target_inventory_id, hosts in hosts_by_inventory.items():
                 try:
                     result = await importer.import_hosts_bulk(
                         inventory_id=target_inventory_id,
                         hosts=hosts,
-                        progress_callback=progress_callback,
                     )
                     created = result.get("total_created", 0)
                     failed = result.get("total_failed", 0)
@@ -832,6 +812,17 @@ class MigrationCoordinator:
                             self.progress_tracker.update_resource(failed=1)
                         for _ in range(skipped):
                             self.progress_tracker.update_resource(skipped=1)
+
+                    # Update Rich progress display after each inventory
+                    # completed = imported + failed (NOT skipped - it's passed separately)
+                    # Progress bar calculates: completed + skipped = total processed
+                    if self.progress_display and self._current_phase_id:
+                        self.progress_display.update_phase(
+                            self._current_phase_id,
+                            completed=stats["imported"] + stats["failed"],
+                            failed=stats["failed"],
+                            skipped=stats["skipped"],
+                        )
 
                 except Exception as e:
                     # Extract sample source_ids for troubleshooting
