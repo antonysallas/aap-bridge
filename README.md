@@ -116,7 +116,7 @@ VAULT__URL=https://vault.example.com
 VAULT__ROLE_ID=xxxxx
 VAULT__SECRET_ID=xxxxx
 
-```markdown
+```
 
 #### 3. Application Configuration
 
@@ -152,7 +152,7 @@ aap-bridge validate all --sample-size 4000
 # View migration report
 aap-bridge report summary
 
-```markdown
+```
 
 #### Output Control
 
@@ -193,7 +193,7 @@ export AAP_BRIDGE__LOGGING__CONSOLE_LEVEL=WARNING
 export AAP_BRIDGE__LOGGING__DISABLE_PROGRESS=true
 aap-bridge migrate full --config config/config.yaml
 
-```markdown
+```
 
 #### Split-File Export/Import
 
@@ -225,7 +225,7 @@ exports/
     ├── hosts_0001.json
     └── hosts_0002.json
 
-```markdown
+```
 
 ## Performance Targets (TBD)
 
@@ -256,7 +256,7 @@ aap-bridge migrate resume
 # Resume from specific checkpoint
 aap-bridge migrate resume --checkpoint inventories_batch_50
 
-```markdown
+```
 
 ### Idempotency
 
@@ -341,7 +341,7 @@ pytest tests/performance/
 # Disable progress display for CI
 pytest tests/unit/ --disable-progress
 
-```markdown
+```
 
 ### Code Quality
 
@@ -359,7 +359,7 @@ make typecheck
 # Run all checks
 make check
 
-```markdown
+```
 
 ## Critical Constraints
 
