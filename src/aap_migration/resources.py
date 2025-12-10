@@ -262,6 +262,18 @@ RESOURCE_REGISTRY: dict[str, ResourceTypeInfo] = {
         has_transformer=False,
         batch_size=100,
     ),
+    # Historical/runtime data (export-only)
+    "jobs": ResourceTypeInfo(
+        name="jobs",
+        endpoint="jobs/",
+        description="Job Execution Records",
+        migration_order=175,  # After schedules (170), jobs reference templates
+        cleanup_order=5,      # Early cleanup (historical data)
+        has_exporter=True,
+        has_importer=False,   # Export-only - historical data
+        has_transformer=True,  # Transform for reporting
+        batch_size=100,
+    ),
 }
 
 
@@ -304,9 +316,10 @@ ENDPOINT_TO_RESOURCE_TYPE = {
 
 # Endpoints that contain runtime/historical data that should NOT be migrated
 # These are job execution logs, ad-hoc command history, inventory updates, etc.
+# Note: "jobs" was moved to RESOURCE_REGISTRY for export-only support
 RUNTIME_DATA_ENDPOINTS = {
     # Job execution data (historical logs, never migrated)
-    "jobs",                      # Job execution records (historical)
+    # Note: "jobs" is now in RESOURCE_REGISTRY with has_exporter=True, has_importer=False
     "workflow_jobs",             # Workflow execution records (historical)
     "project_updates",           # Project sync job logs (historical)
     "inventory_updates",         # Inventory sync job logs (historical)

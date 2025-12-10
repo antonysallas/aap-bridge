@@ -6,14 +6,20 @@ for migrating large numbers of resources efficiently.
 """
 
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from aap_migration.client.aap_target_client import AAPTargetClient
 from aap_migration.client.exceptions import BulkOperationError
 from aap_migration.utils.logging import get_logger
 from aap_migration.utils.retry import retry_api_call
 
+if TYPE_CHECKING:
+    from aap_migration.config import PerformanceConfig
+
 logger = get_logger(__name__)
+
+# Default timeout for bulk operations (seconds)
+DEFAULT_BULK_TIMEOUT = 300.0
 
 
 class BulkOperations:
@@ -24,14 +30,25 @@ class BulkOperations:
     migrating 80,000+ inventories.
     """
 
-    def __init__(self, client: AAPTargetClient):
+    def __init__(
+        self,
+        client: AAPTargetClient,
+        performance_config: "PerformanceConfig | None" = None,
+    ):
         """Initialize bulk operations handler.
 
         Args:
             client: AAP target client instance
+            performance_config: Optional performance config for timeout settings
         """
         self.client = client
-        logger.info("bulk_operations_initialized")
+        # Use config timeout or default for backwards compatibility
+        self.bulk_timeout = (
+            performance_config.bulk_operation_timeout
+            if performance_config
+            else DEFAULT_BULK_TIMEOUT
+        )
+        logger.info("bulk_operations_initialized", timeout=self.bulk_timeout)
 
     async def bulk_create_hosts(
         self,
@@ -129,8 +146,8 @@ class BulkOperations:
             "inventory": inventory_id,
             "hosts": hosts,
         }
-        # Increase timeout for bulk operations
-        return await self.client.post(endpoint, json_data=payload, timeout=300.0)
+        # Use configured timeout for bulk operations
+        return await self.client.post(endpoint, json_data=payload, timeout=self.bulk_timeout)
 
     async def bulk_create_hosts_batched(
         self,
@@ -294,8 +311,8 @@ class BulkOperations:
             "templates": job_template_ids,
             "extra_vars": extra_vars or {},
         }
-        # Increase timeout for bulk operations
-        return await self.client.post(endpoint, json_data=payload, timeout=300.0)
+        # Use configured timeout for bulk operations
+        return await self.client.post(endpoint, json_data=payload, timeout=self.bulk_timeout)
 
     @staticmethod
     def chunk_hosts(
@@ -393,8 +410,8 @@ class BulkOperations:
         payload = {
             "hosts": host_ids,
         }
-        # Increase timeout for bulk operations
-        return await self.client.post(endpoint, json_data=payload, timeout=300.0)
+        # Use configured timeout for bulk operations
+        return await self.client.post(endpoint, json_data=payload, timeout=self.bulk_timeout)
 
     async def bulk_delete_hosts_batched(
         self,
