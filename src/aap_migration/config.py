@@ -268,6 +268,12 @@ class PerformanceConfig(BaseModel):
         le=20,
         description="Number of concurrent batches for host import (speed vs load)",
     )
+    host_cleanup_batch_size: int = Field(
+        default=500,
+        ge=1,
+        le=500,
+        description="Number of hosts to delete per batch during cleanup (max 500 - AAP limit)",
+    )
     export_batch_size: int = Field(
         default=20,
         ge=1,

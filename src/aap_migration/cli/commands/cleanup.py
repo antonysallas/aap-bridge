@@ -1230,7 +1230,7 @@ async def delete_resources(
             # Use bulk delete with batching
             result = await bulk_ops.bulk_delete_hosts_batched(
                 all_host_ids=host_ids,
-                batch_size=500,  # System limit is 500 (BULK_HOST_MAX_DELETE)
+                batch_size=config.performance.host_cleanup_batch_size,
                 progress_callback=bulk_progress_cb,
             )
 
