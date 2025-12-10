@@ -1200,7 +1200,6 @@ class CredentialTransformer(DataTransformer):
             if temp_values:
                 data["_needs_vault_lookup"] = True
                 data["_encrypted_fields"] = encrypted_fields
-                data["_temp_credential_values"] = temp_values
                 logger.info(
                     "credential_temp_values_generated",
                     resource_type="credentials",
