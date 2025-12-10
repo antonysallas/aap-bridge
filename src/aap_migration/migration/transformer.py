@@ -1210,9 +1210,6 @@ class CredentialTransformer(DataTransformer):
                     message="Temporary values generated for encrypted fields - update after migration",
                 )
 
-        # Remove the 'inputs' field entirely after processing
-        data.pop("inputs", None)
-
         # Set null organization to Default (ID=1) for API compatibility
         # Testing if organization is required by the API
         if "organization" in data and data["organization"] is None:
