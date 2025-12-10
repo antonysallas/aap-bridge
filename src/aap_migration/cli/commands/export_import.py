@@ -910,7 +910,12 @@ def import_cmd(
         if not dry_run:
 
             async def run_patch():
-                await patch_project_scm_details(ctx, input_dir)
+                await patch_project_scm_details(
+                    ctx,
+                    input_dir,
+                    batch_size=ctx.config.performance.project_patch_batch_size,
+                    interval=ctx.config.performance.project_patch_batch_interval,
+                )
 
             try:
                 asyncio.run(run_patch())
@@ -1655,7 +1660,12 @@ def import_cmd(
                         try:
                             # We can't easily nest progress bars, so let patch_projects run its own
                             # It might look a bit messy if the outer one is still active, but phase is complete
-                            await patch_project_scm_details(ctx, input_dir)
+                            await patch_project_scm_details(
+                                ctx,
+                                input_dir,
+                                batch_size=ctx.config.performance.project_patch_batch_size,
+                                interval=ctx.config.performance.project_patch_batch_interval,
+                            )
                         except Exception as e:
                             echo_warning(f"Project patching failed: {e}")
                             logger.error("patch_projects_failed", error=str(e))

@@ -145,8 +145,7 @@ def configure_logging(
         structlog.processors.TimeStamper(fmt="iso"),
         add_app_context,
         structlog.processors.StackInfoRenderer(),
-        # Note: format_exc_info removed to enable Rich's pretty exception rendering
-        # (rich_tracebacks=True in RichHandler handles exceptions)
+        structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
         structlog.dev.ConsoleRenderer(colors=False),  # RichHandler handles coloring
     ]

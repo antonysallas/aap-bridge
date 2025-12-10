@@ -43,7 +43,7 @@ performance:
   cleanup_page_fetch_concurrency: 10 # Maximum concurrent page fetches during resource discovery
   cleanup_job_finish_timeout: 300
   cleanup_job_poll_interval: 5
-  host_cleanup_batch_size: 500 # Hosts per batch during cleanup (max 500 - AAP limit)
+  host_cleanup_batch_size: 200 # Hosts per batch during cleanup (max 500 - AAP limit)
 
   # User Import
   user_import_max_concurrent: 25

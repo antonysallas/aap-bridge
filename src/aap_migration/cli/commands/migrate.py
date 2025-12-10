@@ -295,7 +295,12 @@ def _run_migration_workflow(
         # Patch Projects only
         echo_info("Phase 2 (Patching): Patching Projects with SCM details...")
         async def run_patch():
-            await patch_project_scm_details(ctx, xformed_dir)
+            await patch_project_scm_details(
+                ctx,
+                xformed_dir,
+                batch_size=ctx.config.performance.project_patch_batch_size,
+                interval=ctx.config.performance.project_patch_batch_interval,
+            )
         try:
             asyncio.run(run_patch())
         except RuntimeError:
@@ -315,7 +320,12 @@ def _run_migration_workflow(
         # 2. Patch Projects (Phase 2 logic)
         echo_info("Phase 2 (Patching): Patching Projects with SCM details...")
         async def run_patch():
-            await patch_project_scm_details(ctx, xformed_dir)
+            await patch_project_scm_details(
+                ctx,
+                xformed_dir,
+                batch_size=ctx.config.performance.project_patch_batch_size,
+                interval=ctx.config.performance.project_patch_batch_interval,
+            )
         try:
             asyncio.run(run_patch())
         except RuntimeError:
