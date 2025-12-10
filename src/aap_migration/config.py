@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, PrivateAttr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -299,6 +299,12 @@ class PerformanceConfig(BaseModel):
         description="Maximum backoff time in seconds for retries",
     )
 
+    # Private caches for dummy values (generated once at first use, not from env/config)
+    _cached_dummy_password: str | None = PrivateAttr(default=None)
+    _cached_ssh_key: str | None = PrivateAttr(default=None)
+    _cached_ssh_key_passphrase: str | None = PrivateAttr(default=None)
+    _cached_encrypted_ssh_keys: dict[str, str] = PrivateAttr(default_factory=dict)
+
     @field_validator("batch_sizes")
     @classmethod
     def validate_batch_sizes(cls, v: dict[str, int]) -> dict[str, int]:
@@ -326,6 +332,58 @@ class PerformanceConfig(BaseModel):
                 "Platform Gateway overload (no healthy upstream errors)"
             )
         return self
+
+    # ==========================================================================
+    # Cached Dummy Value Methods (for encrypted fields during migration)
+    # ==========================================================================
+
+    def get_dummy_password(self) -> str:
+        """Get cached dummy password, generating once if needed.
+
+        Used for encrypted fields like passwords, API keys, secrets.
+        Generates a single value per session for performance.
+        """
+        if self._cached_dummy_password is None:
+            import secrets
+
+            self._cached_dummy_password = secrets.token_urlsafe(16)
+        return self._cached_dummy_password
+
+    def get_dummy_ssh_key_passphrase(self) -> str:
+        """Get cached SSH key passphrase, generating once if needed.
+
+        Used for ssh_key_unlock fields in credentials.
+        """
+        if self._cached_ssh_key_passphrase is None:
+            import secrets
+
+            self._cached_ssh_key_passphrase = secrets.token_urlsafe(16)
+        return self._cached_ssh_key_passphrase
+
+    def get_dummy_ssh_key(self) -> str:
+        """Get cached unencrypted SSH key, generating once if needed.
+
+        Generates a valid 2048-bit RSA private key in PEM format.
+        """
+        if self._cached_ssh_key is None:
+            from aap_migration.migration.transformer import generate_temp_ssh_key
+
+            self._cached_ssh_key = generate_temp_ssh_key()
+        return self._cached_ssh_key
+
+    def get_dummy_encrypted_ssh_key(self, passphrase: str) -> str:
+        """Get cached encrypted SSH key for passphrase, generating once if needed.
+
+        Generates a valid 2048-bit RSA private key encrypted with the passphrase.
+        Caches per unique passphrase.
+        """
+        if passphrase not in self._cached_encrypted_ssh_keys:
+            from aap_migration.migration.transformer import generate_temp_encrypted_ssh_key
+
+            self._cached_encrypted_ssh_keys[passphrase] = generate_temp_encrypted_ssh_key(
+                passphrase
+            )
+        return self._cached_encrypted_ssh_keys[passphrase]
 
 
 class StateConfig(BaseModel):

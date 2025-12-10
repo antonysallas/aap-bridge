@@ -187,17 +187,43 @@ async def patch_project_scm_details(
 
                 progress.update_phase("patching", patched_count, failed_patch_count)
 
-            # After batch is done, sleep if there are more batches
-            if i + batch_size < total_projects:
+            # After batch is done, wait for sync completion before next batch
+            # This allows early exit if all projects reach terminal state (success/fail)
+            if i + batch_size < total_projects and batch_target_ids:
                 logger.info(
-                    "phase2_batch_sleep",
-                    seconds=interval,
-                    message=f"Batch complete. Sleeping {interval}s.",
+                    "phase2_batch_wait",
+                    batch_size=len(batch_target_ids),
+                    timeout=interval,
+                    message=f"Waiting up to {interval}s for batch sync to complete.",
                 )
-                # Show sleeping status?
-                # Using asyncio.sleep prevents progress updates during sleep unless we run a background task,
-                # but for now a simple sleep is fine.
-                await asyncio.sleep(interval)
+
+                # Wait for batch to complete (with interval as timeout)
+                # This exits early if all projects reach terminal state
+                batch_synced, batch_failed, _ = await wait_for_project_sync(
+                    client=ctx.target_client,
+                    project_ids=batch_target_ids,
+                    timeout=interval,
+                    poll_interval=ctx.config.performance.project_sync_poll_interval,
+                )
+
+                # Log results
+                if batch_synced + batch_failed >= len(batch_target_ids):
+                    logger.info(
+                        "phase2_batch_complete_early",
+                        synced=batch_synced,
+                        failed=batch_failed,
+                        message="Batch sync complete, continuing to next batch.",
+                    )
+                    # Small delay to not overwhelm controller
+                    await asyncio.sleep(5)
+                else:
+                    logger.info(
+                        "phase2_batch_timeout",
+                        synced=batch_synced,
+                        failed=batch_failed,
+                        pending=len(batch_target_ids) - batch_synced - batch_failed,
+                        message="Batch timeout reached, continuing to next batch.",
+                    )
 
         progress.complete_phase("patching")
 
@@ -213,14 +239,17 @@ async def patch_project_scm_details(
             def wait_progress_callback(synced, failed, _):
                 progress.update_phase("syncing", synced, failed)
 
-            # Set a generous timeout: 10 minutes base + 1 minute per project
-            # For 1000 projects, this is huge, but necessary if they are all queuing
-            timeout = 600 + (len(all_target_ids) * 60)
+            # Use config timeout as base + 1 minute per project for scaling
+            # For large batches, this allows queued syncs time to complete
+            base_timeout = ctx.config.performance.project_sync_timeout
+            poll_interval = ctx.config.performance.project_sync_poll_interval
+            timeout = base_timeout + (len(all_target_ids) * 60)
 
             synced, failed, failed_ids = await wait_for_project_sync(
                 client=ctx.target_client,
                 project_ids=all_target_ids,
                 timeout=timeout,
+                poll_interval=poll_interval,
                 progress_callback=wait_progress_callback,
             )
 

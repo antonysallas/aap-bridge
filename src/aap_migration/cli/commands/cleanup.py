@@ -1217,7 +1217,7 @@ async def delete_resources(
             host_ids = [r["id"] for r in resources_to_delete]
 
             # Create BulkOperations instance
-            bulk_ops = BulkOperations(client)
+            bulk_ops = BulkOperations(client, config.performance)
 
             # Create progress callback wrapper for bulk delete
             def bulk_progress_cb(bulk_deleted: int, bulk_failed: int) -> None:

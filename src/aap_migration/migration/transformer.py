@@ -1169,8 +1169,11 @@ class CredentialTransformer(DataTransformer):
             # First pass: Check if we need an encrypted key (ssh_key_unlock is present/encrypted)
             ssh_key_unlock_value = None
             if "ssh_key_unlock" in data["inputs"] and data["inputs"]["ssh_key_unlock"] == "$encrypted$":
-                # Generate a passphrase first
-                ssh_key_unlock_value = secrets.token_urlsafe(16)
+                # Generate a passphrase (cached if config available)
+                if self.config and self.config.performance:
+                    ssh_key_unlock_value = self.config.performance.get_dummy_ssh_key_passphrase()
+                else:
+                    ssh_key_unlock_value = secrets.token_urlsafe(16)
                 data["inputs"]["ssh_key_unlock"] = ssh_key_unlock_value
                 temp_values["ssh_key_unlock"] = ssh_key_unlock_value
                 encrypted_fields.append("ssh_key_unlock")
@@ -1182,16 +1185,27 @@ class CredentialTransformer(DataTransformer):
                         continue
 
                     if key in ssh_key_fields or ("private" in key.lower() and "key" in key.lower()):
-                        # Generate valid PEM format for SSH key fields
+                        # Generate valid PEM format for SSH key fields (cached if config available)
                         if ssh_key_unlock_value:
                             # Use encrypted key generator with the passphrase we generated
-                            temp_value = generate_temp_encrypted_ssh_key(ssh_key_unlock_value)
+                            if self.config and self.config.performance:
+                                temp_value = self.config.performance.get_dummy_encrypted_ssh_key(
+                                    ssh_key_unlock_value
+                                )
+                            else:
+                                temp_value = generate_temp_encrypted_ssh_key(ssh_key_unlock_value)
                         else:
                             # Use unencrypted key generator
-                            temp_value = generate_temp_ssh_key()
+                            if self.config and self.config.performance:
+                                temp_value = self.config.performance.get_dummy_ssh_key()
+                            else:
+                                temp_value = generate_temp_ssh_key()
                     else:
-                        # Generate random temp value (16 chars) for other secrets
-                        temp_value = secrets.token_urlsafe(16)
+                        # Generate temp value for other secrets (cached if config available)
+                        if self.config and self.config.performance:
+                            temp_value = self.config.performance.get_dummy_password()
+                        else:
+                            temp_value = secrets.token_urlsafe(16)
 
                     data["inputs"][key] = temp_value
                     temp_values[key] = temp_value
@@ -2053,6 +2067,81 @@ class CredentialInputSourceTransformer(DataTransformer):
     REQUIRED_DEPENDENCIES = {"credential", "source_credential"}
 
 
+class JobsTransformer(DataTransformer):
+    """Transformer for job execution records (export-only).
+
+    Jobs are historical data that are exported for reporting/auditing purposes.
+    They are NOT imported to target. This transformer:
+    - Preserves all job fields for reporting
+    - Extracts human-readable names from summary_fields before they're removed
+    - Adds _source_id for reference
+    """
+
+    # No dependencies to validate for import (export-only)
+    DEPENDENCIES: dict[str, str] = {}
+    REQUIRED_DEPENDENCIES: set[str] = set()
+
+    def _apply_specific_transformations(
+        self, data: dict[str, Any], resource_type: str
+    ) -> dict[str, Any]:
+        """Apply job-specific transformations.
+
+        Extracts human-readable names from summary_fields before they're removed
+        by the base transformer.
+
+        Args:
+            data: Raw job data
+            resource_type: Should be 'jobs'
+
+        Returns:
+            Transformed job data with resolved names
+        """
+        # Preserve source ID for reference
+        data["_source_id"] = data.get("id")
+
+        # Extract human-readable names from summary_fields before they're removed
+        summary = data.get("summary_fields", {})
+        if summary:
+            # Job template info
+            if "job_template" in summary:
+                data["_job_template_name"] = summary["job_template"].get("name")
+                data["_job_template_id"] = summary["job_template"].get("id")
+
+            # Inventory info
+            if "inventory" in summary:
+                data["_inventory_name"] = summary["inventory"].get("name")
+                data["_inventory_id"] = summary["inventory"].get("id")
+
+            # Project info
+            if "project" in summary:
+                data["_project_name"] = summary["project"].get("name")
+                data["_project_id"] = summary["project"].get("id")
+
+            # Organization info
+            if "organization" in summary:
+                data["_organization_name"] = summary["organization"].get("name")
+                data["_organization_id"] = summary["organization"].get("id")
+
+            # Execution environment info
+            if "execution_environment" in summary:
+                data["_execution_environment_name"] = summary["execution_environment"].get("name")
+                data["_execution_environment_id"] = summary["execution_environment"].get("id")
+
+            # Instance group info
+            if "instance_group" in summary:
+                data["_instance_group_name"] = summary["instance_group"].get("name")
+                data["_instance_group_id"] = summary["instance_group"].get("id")
+
+            # Launched by info (user or schedule)
+            if "launched_by" in summary:
+                launched_by = summary["launched_by"]
+                data["_launched_by_type"] = launched_by.get("type")
+                data["_launched_by_name"] = launched_by.get("name")
+                data["_launched_by_id"] = launched_by.get("id")
+
+        return data
+
+
 # =============================================================================
 # Transformer Factory
 # =============================================================================
@@ -2080,6 +2169,7 @@ TRANSFORMER_CLASSES: dict[str, type[DataTransformer]] = {
     "system_job_templates": SystemJobTemplateTransformer,
     "notification_templates": NotificationTemplateTransformer,
     "credential_input_sources": CredentialInputSourceTransformer,
+    "jobs": JobsTransformer,
 }
 
 

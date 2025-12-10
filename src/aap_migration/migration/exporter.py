@@ -1725,6 +1725,34 @@ class NotificationTemplateExporter(ResourceExporter):
             yield notification
 
 
+class JobsExporter(ResourceExporter):
+    """Exporter for job execution records (historical data).
+
+    Jobs are export-only resources containing historical execution data.
+    They are NOT imported to target - used for reporting/auditing purposes.
+    """
+
+    async def export(
+        self, filters: dict[str, Any] | None = None
+    ) -> AsyncGenerator[dict[str, Any], None]:
+        """Export job execution records.
+
+        Args:
+            filters: Optional query parameters for filtering (e.g., status, date range)
+
+        Yields:
+            Job dictionaries with execution details
+        """
+        logger.info("exporting_jobs")
+        async for job in self.export_resources(
+            resource_type="jobs",
+            endpoint="jobs/",
+            page_size=self.performance_config.batch_sizes.get("jobs", 100),
+            filters=filters,
+        ):
+            yield job
+
+
 # Factory function for creating exporters
 def create_exporter(
     resource_type: str,
@@ -1768,6 +1796,7 @@ def create_exporter(
         "instance_groups": InstanceGroupExporter,
         "notification_templates": NotificationTemplateExporter,
         "system_job_templates": SystemJobTemplateExporter,
+        "jobs": JobsExporter,
     }
 
     exporter_class = exporters.get(resource_type)
