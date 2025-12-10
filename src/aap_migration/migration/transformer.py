@@ -1169,8 +1169,11 @@ class CredentialTransformer(DataTransformer):
             # First pass: Check if we need an encrypted key (ssh_key_unlock is present/encrypted)
             ssh_key_unlock_value = None
             if "ssh_key_unlock" in data["inputs"] and data["inputs"]["ssh_key_unlock"] == "$encrypted$":
-                # Generate a passphrase first
-                ssh_key_unlock_value = secrets.token_urlsafe(16)
+                # Generate a passphrase (cached if config available)
+                if self.config and self.config.performance:
+                    ssh_key_unlock_value = self.config.performance.get_dummy_ssh_key_passphrase()
+                else:
+                    ssh_key_unlock_value = secrets.token_urlsafe(16)
                 data["inputs"]["ssh_key_unlock"] = ssh_key_unlock_value
                 temp_values["ssh_key_unlock"] = ssh_key_unlock_value
                 encrypted_fields.append("ssh_key_unlock")
@@ -1182,16 +1185,27 @@ class CredentialTransformer(DataTransformer):
                         continue
 
                     if key in ssh_key_fields or ("private" in key.lower() and "key" in key.lower()):
-                        # Generate valid PEM format for SSH key fields
+                        # Generate valid PEM format for SSH key fields (cached if config available)
                         if ssh_key_unlock_value:
                             # Use encrypted key generator with the passphrase we generated
-                            temp_value = generate_temp_encrypted_ssh_key(ssh_key_unlock_value)
+                            if self.config and self.config.performance:
+                                temp_value = self.config.performance.get_dummy_encrypted_ssh_key(
+                                    ssh_key_unlock_value
+                                )
+                            else:
+                                temp_value = generate_temp_encrypted_ssh_key(ssh_key_unlock_value)
                         else:
                             # Use unencrypted key generator
-                            temp_value = generate_temp_ssh_key()
+                            if self.config and self.config.performance:
+                                temp_value = self.config.performance.get_dummy_ssh_key()
+                            else:
+                                temp_value = generate_temp_ssh_key()
                     else:
-                        # Generate random temp value (16 chars) for other secrets
-                        temp_value = secrets.token_urlsafe(16)
+                        # Generate temp value for other secrets (cached if config available)
+                        if self.config and self.config.performance:
+                            temp_value = self.config.performance.get_dummy_password()
+                        else:
+                            temp_value = secrets.token_urlsafe(16)
 
                     data["inputs"][key] = temp_value
                     temp_values[key] = temp_value

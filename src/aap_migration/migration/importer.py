@@ -840,8 +840,6 @@ class UserImporter(ResourceImporter):
         Note: AAP requires a password but we cannot extract it from the source API,
         so all users (including superusers) get temporary passwords that must be reset.
         """
-        import secrets
-
         # Check if already imported
         if self.state.is_migrated(resource_type, source_id):
             logger.debug(
@@ -867,7 +865,8 @@ class UserImporter(ResourceImporter):
 
             # Generate temporary password for all users (including superusers)
             # This is required because AAP API requires a password for new users
-            temp_password = secrets.token_urlsafe(16)
+            # Use cached password from config for performance (same value for all users)
+            temp_password = self.performance_config.get_dummy_password()
             data["password"] = temp_password
 
             logger.info(
