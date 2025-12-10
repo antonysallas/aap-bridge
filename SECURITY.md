@@ -66,7 +66,7 @@ practices:
    aap-bridge cleanup exports
    rm -rf logs/*.log
 
-   ```markdown
+   ```
 
 ### Network Security
 

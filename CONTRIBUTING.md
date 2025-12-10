@@ -54,7 +54,7 @@ report, reproduce the behavior, and find related reports.
     ```bash
     make install-dev
 
-    ```markdown
+    ```
 
 ## Styleguides
 

@@ -10,8 +10,7 @@ Common issues and solutions for AAP Bridge.
 
 ```text
 Error: Connection refused to https://source-aap.example.com
-
-```markdown
+```
 
 **Solutions:**
 
@@ -27,8 +26,7 @@ Error: Connection refused to https://source-aap.example.com
 
 ```text
 Error: 404 Not Found at /api/v2/organizations/
-
-```text
+```
 
 **Solution:**
 
@@ -41,7 +39,7 @@ TARGET__URL=https://target-aap.example.com/api/v2
 # Correct
 TARGET__URL=https://target-aap.example.com/api/controller/v2
 
-```markdown
+```
 
 ### Authentication errors
 
@@ -50,7 +48,7 @@ TARGET__URL=https://target-aap.example.com/api/controller/v2
 ```text
 Error: 401 Unauthorized
 
-```markdown
+```
 
 **Solutions:**
 
@@ -66,8 +64,7 @@ Error: 401 Unauthorized
 
 ```text
 Error: connection refused to localhost:5432
-
-```text
+```
 
 **Solutions:**
 
@@ -75,17 +72,15 @@ Error: connection refused to localhost:5432
 2. Check connection string format:
 
    ```text
-
    postgresql://user:password@host:port/database
-
-   ```text
+   ```
 
 3. Verify user permissions:
 
    ```sql
    GRANT ALL ON DATABASE aap_migration TO your_user;
 
-   ```markdown
+   ```
 
 ### State database corruption
 
@@ -93,8 +88,7 @@ Error: connection refused to localhost:5432
 
 ```text
 Error: IntegrityError or inconsistent state
-
-```text
+```
 
 **Solution:**
 
@@ -103,7 +97,7 @@ Reset the state database:
 ```bash
 aap-bridge state clear --confirm
 
-```markdown
+```
 
 !!! warning
     This will require re-running the full migration.
@@ -116,8 +110,7 @@ aap-bridge state clear --confirm
 
 ```text
 Error: MemoryError or process killed
-
-```yaml
+```
 
 **Solutions:**
 
@@ -128,14 +121,14 @@ Error: MemoryError or process killed
      batch_sizes:
        hosts: 100  # Reduce from 200
 
-   ```text
+   ```
 
 1. Enable file splitting:
 
    ```bash
    aap-bridge export --records-per-file 500
 
-   ```markdown
+   ```
 
 ### Export takes too long
 
@@ -146,7 +139,7 @@ Error: MemoryError or process killed
    ```bash
    aap-bridge export organizations inventories
 
-   ```yaml
+   ```
 
 2. Increase concurrency (if AAP can handle it):
 
@@ -154,7 +147,7 @@ Error: MemoryError or process killed
    performance:
      max_concurrent: 20
 
-   ```markdown
+   ```
 
 ## Import Issues
 
@@ -164,8 +157,7 @@ Error: MemoryError or process killed
 
 ```text
 Instances: 1 resources (⚠️ SKIPPED - no importer)
-
-```python
+```
 
 **Cause:** Missing entry in `export_import.py` method_map.
 
@@ -179,8 +171,7 @@ Instances: 1 resources (⚠️ SKIPPED - no importer)
 
 ```text
 Warning: Conflict - organization 'MyOrg' already exists
-
-```markdown
+```
 
 **Behavior:** AAP Bridge handles this automatically by:
 
@@ -196,8 +187,7 @@ This is **not an error** - it's idempotent behavior.
 
 ```text
 Warning: Unresolved dependency - organization ID 5 not found
-
-```text
+```
 
 **Causes:**
 
@@ -217,8 +207,7 @@ Warning: Unresolved dependency - organization ID 5 not found
 
 ```text
 Error: Bulk host create failed: 400 Bad Request
-
-```yaml
+```
 
 **Solutions:**
 
@@ -230,7 +219,7 @@ Error: Bulk host create failed: 400 Bad Request
      batch_sizes:
        hosts: 100
 
-   ```markdown
+   ```
 
 1. Check target AAP logs for details
 
@@ -242,8 +231,7 @@ Error: Bulk host create failed: 400 Bad Request
 
 ```text
 Validation failed: Source has 1000 hosts, target has 998
-
-```text
+```
 
 **Causes:**
 
@@ -269,7 +257,7 @@ Validation failed: Source has 1000 hosts, target has 998
    performance:
      max_concurrent: 15
 
-   ```markdown
+   ```
 
 1. Use bulk APIs (enabled by default for hosts)
 
@@ -281,8 +269,7 @@ Validation failed: Source has 1000 hosts, target has 998
 
 ```text
 Error: 429 Too Many Requests
-
-```yaml
+```
 
 **Solutions:**
 
@@ -293,7 +280,7 @@ Error: 429 Too Many Requests
      rate_limit:
        requests_per_second: 20
 
-   ```yaml
+   ```
 
 1. Reduce concurrency:
 
@@ -301,7 +288,7 @@ Error: 429 Too Many Requests
    performance:
      max_concurrent: 5
 
-   ```markdown
+   ```
 
 ## Logging and Debugging
 
@@ -310,14 +297,14 @@ Error: 429 Too Many Requests
 ```bash
 aap-bridge --log-level DEBUG migrate full
 
-```markdown
+```
 
 ### Check log files
 
 ```bash
 tail -f logs/aap-bridge.log
 
-```markdown
+```
 
 ### Enable payload logging
 
@@ -328,7 +315,7 @@ logging:
   log_payloads: true
   file_level: DEBUG
 
-```markdown
+```
 
 !!! warning
     Payload logging may contain sensitive data. Use only for debugging.

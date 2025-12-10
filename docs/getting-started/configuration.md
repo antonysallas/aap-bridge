@@ -10,7 +10,7 @@ Create a `.env` file from the example:
 ```bash
 cp .env.example .env
 
-```markdown
+```
 
 ### Required Variables
 
@@ -26,7 +26,7 @@ TARGET__TOKEN=your_target_api_token
 # PostgreSQL state database
 MIGRATION_STATE_DB_PATH=postgresql://user:password@localhost:5432/aap_migration
 
-```markdown
+```
 
 ### Optional Variables
 
@@ -40,7 +40,7 @@ VAULT__SECRET_ID=your_secret_id
 AAP_BRIDGE__LOGGING__CONSOLE_LEVEL=WARNING
 AAP_BRIDGE__LOGGING__DISABLE_PROGRESS=false
 
-```markdown
+```
 
 ## Configuration File
 
@@ -56,7 +56,7 @@ paths:
   log_dir: ./logs
   checkpoint_dir: ./checkpoints
 
-```markdown
+```
 
 ### Performance Tuning
 
@@ -72,7 +72,7 @@ performance:
     requests_per_second: 50
     burst_size: 100
 
-```markdown
+```
 
 ### Cleanup Settings
 
@@ -82,7 +82,7 @@ cleanup:
   batch_size: 100
   max_concurrent: 5
 
-```markdown
+```
 
 ### Logging Configuration
 
@@ -92,7 +92,7 @@ logging:
   file_level: DEBUG            # File log level
   log_file: ./logs/aap-bridge.log
 
-```markdown
+```
 
 ## Resource Mappings
 
@@ -104,7 +104,7 @@ credential_types:
     "Amazon Web Services": "Amazon Web Services"
     "VMware vCenter": "VMware vCenter"
 
-```markdown
+```
 
 ## Ignored Endpoints
 
@@ -119,7 +119,7 @@ ignored_endpoints:
   source: []
   target: []
 
-```markdown
+```
 
 ## Validating Configuration
 
@@ -132,7 +132,7 @@ aap-bridge config validate
 # Show current configuration
 aap-bridge config show
 
-```markdown
+```
 
 ## Environment-Specific Settings
 
@@ -143,7 +143,7 @@ export AAP_BRIDGE__LOGGING__DISABLE_PROGRESS=true
 export AAP_BRIDGE__LOGGING__CONSOLE_LEVEL=INFO
 aap-bridge migrate full
 
-```markdown
+```
 
 ### Large Migrations
 
@@ -156,7 +156,7 @@ performance:
     hosts: 200
     inventories: 200
 
-```markdown
+```
 
 ### Limited Network Bandwidth
 
