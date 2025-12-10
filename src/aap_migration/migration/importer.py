@@ -58,7 +58,6 @@ class ResourceImporter:
         }
         # Track issues for reporting
         self.unresolved_dependencies: list[dict[str, Any]] = []
-        self.placeholder_resources: list[dict[str, Any]] = []
         self.import_errors: list[dict[str, Any]] = []
 
     async def import_resource(
@@ -871,19 +870,6 @@ class UserImporter(ResourceImporter):
             temp_password = secrets.token_urlsafe(16)
             data["password"] = temp_password
 
-            # Track that user needs password reset
-            self.placeholder_resources.append(
-                {
-                    "resource_type": "users",
-                    "source_id": source_id,
-                    "name": data.get("username", "unknown"),
-                    "action_required": "User password reset required",
-                    "temp_password": temp_password,
-                    "is_superuser": data.get("is_superuser", False),
-                    "instructions": self._generate_user_password_instructions(data, temp_password),
-                }
-            )
-
             logger.info(
                 "user_temporary_password_set",
                 username=data.get("username"),
@@ -955,37 +941,6 @@ class UserImporter(ResourceImporter):
             )
 
             return None
-
-    def _generate_user_password_instructions(self, user: dict[str, Any], temp_password: str) -> str:
-        """Generate instructions for user password reset.
-
-        Args:
-            user: User data
-            temp_password: Temporary password set during migration
-
-        Returns:
-            Markdown-formatted instructions
-        """
-        return f"""
-## User Password Reset Required
-
-**Username**: {user.get("username", "Unknown")}
-**Email**: {user.get("email", "Not set")}
-
-### Temporary Password:
-`{temp_password}`
-
-### Steps:
-1. Communicate temporary password to user securely (not via email if possible)
-2. User should log in to AAP 2.6 and immediately change password
-3. Alternatively, admin can reset password via AAP UI:
-   - Navigate to Access → Users
-   - Find user: {user.get("username", "Unknown")}
-   - Click "Edit" and set a new password
-4. If using LDAP/SSO, configure external authentication
-
-**IMPORTANT**: This temporary password should be changed immediately after first login.
-"""
 
     async def import_users(
         self,
@@ -2177,8 +2132,8 @@ class CredentialImporter(ResourceImporter):
             return None
 
         # Clean up transformer markers
-        temp_values = data.pop("_temp_credential_values", None)
-        encrypted_fields = data.pop("_encrypted_fields", [])
+        data.pop("_temp_credential_values", None)
+        data.pop("_encrypted_fields", None)
         data.pop("_needs_vault_lookup", None)
 
         try:
@@ -2293,28 +2248,6 @@ class CredentialImporter(ResourceImporter):
                 target_name=name,
             )
             self.stats["imported_count"] += 1
-
-            # Track placeholder resources if temp values were used
-            if temp_values:
-                self.placeholder_resources.append(
-                    {
-                        "resource_type": "credentials",
-                        "source_id": source_id,
-                        "name": name,
-                        "target_id": target_id,
-                        "temp_values": temp_values,
-                        "action_required": "Update encrypted values",
-                        "instructions": self._generate_credential_instructions(
-                            {
-                                "name": name,
-                                "organization": data.get("organization"),
-                                "credential_type": data.get("credential_type"),
-                            },
-                            encrypted_fields,
-                            temp_values,
-                        ),
-                    }
-                )
 
             return result
 
@@ -2496,49 +2429,6 @@ class CredentialImporter(ResourceImporter):
                     encrypted_fields.append(key)
 
         return encrypted_fields
-
-    def _generate_credential_instructions(
-        self,
-        credential: dict[str, Any],
-        encrypted_fields: list[str],
-        temp_values: dict[str, str] | None = None,
-    ) -> str:
-        """Generate human-readable instructions for credential secret value updates.
-
-        Args:
-            credential: Credential data
-            encrypted_fields: List of encrypted field names
-            temp_values: Dictionary of field names to temporary values
-
-        Returns:
-            Markdown-formatted instructions
-        """
-        temp_values = temp_values or {}
-        fields_list = "\n".join(
-            f"- {field}: `{temp_values.get(field, '<temp_value>')}`" for field in encrypted_fields
-        )
-
-        return f"""
-## Credential Secret Values Update Required
-
-**Name**: {credential.get("name", "Unknown")}
-**Organization ID**: {credential.get("organization", "Unknown")}
-**Credential Type ID**: {credential.get("credential_type", "Unknown")}
-
-### Fields with Temporary Values:
-{fields_list}
-
-### Steps:
-1. Log into AAP 2.6 web interface
-2. Navigate to Resources → Credentials
-3. Find credential: {credential.get("name", "Unknown")}
-4. Click "Edit" to modify the credential
-5. Update the secret fields listed above with real values from your authoritative source
-6. Save the credential
-7. Test the credential to ensure it works correctly
-
-**IMPORTANT**: The temporary values shown above should be replaced with real secrets immediately after migration.
-"""
 
 
 class ProjectImporter(ResourceImporter):
