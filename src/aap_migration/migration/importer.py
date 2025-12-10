@@ -1856,7 +1856,7 @@ class HostImporter(ResourceImporter):
             resource_mappings: Optional resource name mappings from config/mappings.yaml
         """
         super().__init__(client, state, performance_config, resource_mappings)
-        self.bulk_ops = BulkOperations(client)
+        self.bulk_ops = BulkOperations(client, performance_config)
 
     async def import_hosts_bulk(
         self,
