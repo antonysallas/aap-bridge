@@ -1862,6 +1862,7 @@ class HostImporter(ResourceImporter):
         self,
         inventory_id: int,
         hosts: list[dict[str, Any]],
+        progress_callback: Callable[[int, int, int], None] | None = None,
     ) -> dict[str, Any]:
         """Import hosts using bulk API for performance.
 
@@ -1973,6 +1974,10 @@ class HostImporter(ResourceImporter):
 
                 all_results.append(result)
 
+                # Report progress after batch
+                if progress_callback:
+                    progress_callback(total_created, total_failed, total_skipped)
+
             except Exception as e:
                 logger.error(
                     "bulk_import_batch_failed",
@@ -2004,6 +2009,10 @@ class HostImporter(ResourceImporter):
                     }
                 )
                 # Continue with next batch instead of failing completely
+
+                # Report progress even after failure
+                if progress_callback:
+                    progress_callback(total_created, total_failed, total_skipped)
 
         logger.info(
             "bulk_import_hosts_completed",
