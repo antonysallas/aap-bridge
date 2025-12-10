@@ -1166,7 +1166,7 @@ class InstanceImporter(ResourceImporter):
                 self.state.mark_failed(
                     resource_type="instances",
                     source_id=source_id,
-                    error=error_msg,
+                    error_message=error_msg,
                 )
                 failed_count += 1
                 self.stats["error_count"] += 1

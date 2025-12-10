@@ -8,6 +8,7 @@ SCM configuration in controlled batches to prevent controller resource exhaustio
 
 import asyncio
 import json
+from contextlib import nullcontext
 from pathlib import Path
 
 import click
@@ -26,9 +27,6 @@ from aap_migration.reporting.live_progress import MigrationProgressDisplay
 from aap_migration.utils.logging import get_logger
 
 logger = get_logger(__name__)
-
-
-from contextlib import nullcontext
 
 
 async def patch_project_scm_details(
@@ -151,7 +149,9 @@ async def patch_project_scm_details(
                     # Resolve credential dependency
                     source_cred_id = deferred.get("credential")
                     if source_cred_id:
-                        target_cred_id = ctx.migration_state.get_mapped_id("credentials", source_cred_id)
+                        target_cred_id = ctx.migration_state.get_mapped_id(
+                            "credentials", source_cred_id
+                        )
                         if target_cred_id:
                             patch_data["credential"] = target_cred_id
                         else:
@@ -189,7 +189,11 @@ async def patch_project_scm_details(
 
             # After batch is done, sleep if there are more batches
             if i + batch_size < total_projects:
-                logger.info("phase2_batch_sleep", seconds=interval, message=f"Batch complete. Sleeping {interval}s.")
+                logger.info(
+                    "phase2_batch_sleep",
+                    seconds=interval,
+                    message=f"Batch complete. Sleeping {interval}s.",
+                )
                 # Show sleeping status?
                 # Using asyncio.sleep prevents progress updates during sleep unless we run a background task,
                 # but for now a simple sleep is fine.
@@ -200,7 +204,11 @@ async def patch_project_scm_details(
         # Wait for ALL patched projects to sync
         # This ensures Phase 3 (Job Templates) starts with clean state
         if all_target_ids:
-            logger.info("phase2_final_wait", count=len(all_target_ids), message="Waiting for all projects to sync")
+            logger.info(
+                "phase2_final_wait",
+                count=len(all_target_ids),
+                message="Waiting for all projects to sync",
+            )
 
             def wait_progress_callback(synced, failed, _):
                 progress.update_phase("syncing", synced, failed)
