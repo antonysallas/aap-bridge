@@ -22,10 +22,12 @@ class PathConfig(BaseModel):
     report_dir: str = Field(default="reports", description="Directory for migration reports")
     backup_dir: str = Field(default="backups", description="Directory for backups")
     mappings_file: str = Field(
-        default="config/mappings.yaml", description="Path to mappings file (relative to project root)"
+        default="config/mappings.yaml",
+        description="Path to mappings file (relative to project root)",
     )
     ignored_endpoints_file: str = Field(
-        default="config/ignored_endpoints.yaml", description="Path to ignored endpoints file (relative to project root)"
+        default="config/ignored_endpoints.yaml",
+        description="Path to ignored endpoints file (relative to project root)",
     )
 
 
@@ -651,13 +653,13 @@ class MigrationConfig(BaseSettings):
                                 self.ignored_endpoints = {
                                     "common": raw_ignored,
                                     "source": [],
-                                    "target": []
+                                    "target": [],
                                 }
                             elif isinstance(raw_ignored, dict):
                                 self.ignored_endpoints = {
                                     "common": raw_ignored.get("common") or [],
                                     "source": raw_ignored.get("source") or [],
-                                    "target": raw_ignored.get("target") or []
+                                    "target": raw_ignored.get("target") or [],
                                 }
                 except Exception:
                     pass

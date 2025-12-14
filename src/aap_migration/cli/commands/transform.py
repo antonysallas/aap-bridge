@@ -712,7 +712,7 @@ def transform(
                                         phase_id,
                                         transformed_count + failed_count,
                                         failed_count,
-                                        total_skipped
+                                        total_skipped,
                                     )
 
                             # Filter hosts whose inventory is not in id_mappings

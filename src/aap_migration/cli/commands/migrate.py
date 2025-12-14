@@ -45,15 +45,15 @@ PHASE1_RESOURCE_TYPES = [
     "labels",
     "users",
     "teams",
-    "credential_types",    # PATCH existing (pre-created in target)
-    "credentials",         # PATCH existing (pre-created in target)
+    "credential_types",  # PATCH existing (pre-created in target)
+    "credentials",  # PATCH existing (pre-created in target)
     "execution_environments",
     "inventories",
     "inventory_sources",
     "inventory_groups",
     "hosts",
-    "instances",           # After hosts, before instance_groups
-    "instance_groups",     # After instances, before projects
+    "instances",  # After hosts, before instance_groups
+    "instance_groups",  # After instances, before projects
     "projects",
 ]
 
@@ -281,7 +281,7 @@ def _run_migration_workflow(
             skip_dependencies=False,
             check_dependencies=False,
             force_reimport=False,
-            phase=phase, # pass the overall phase, although logic handles subsets
+            phase=phase,  # pass the overall phase, although logic handles subsets
         )
         click.echo()
 
@@ -294,6 +294,7 @@ def _run_migration_workflow(
     elif phase == "phase2":
         # Patch Projects only
         echo_info("Phase 2 (Patching): Patching Projects with SCM details...")
+
         async def run_patch():
             await patch_project_scm_details(
                 ctx,
@@ -301,6 +302,7 @@ def _run_migration_workflow(
                 batch_size=ctx.config.performance.project_patch_batch_size,
                 interval=ctx.config.performance.project_patch_batch_interval,
             )
+
         try:
             asyncio.run(run_patch())
         except RuntimeError:
@@ -312,13 +314,14 @@ def _run_migration_workflow(
         types = [t for t in resource_types if t in PHASE3_RESOURCE_TYPES]
         run_import(types, "Automation Definitions")
 
-    else: # phase == "all"
+    else:  # phase == "all"
         # 1. Import Phase 1
         types1 = [t for t in resource_types if t in PHASE1_RESOURCE_TYPES]
         run_import(types1, "Infrastructure & Projects")
 
         # 2. Patch Projects (Phase 2 logic)
         echo_info("Phase 2 (Patching): Patching Projects with SCM details...")
+
         async def run_patch():
             await patch_project_scm_details(
                 ctx,
@@ -326,6 +329,7 @@ def _run_migration_workflow(
                 batch_size=ctx.config.performance.project_patch_batch_size,
                 interval=ctx.config.performance.project_patch_batch_interval,
             )
+
         try:
             asyncio.run(run_patch())
         except RuntimeError:

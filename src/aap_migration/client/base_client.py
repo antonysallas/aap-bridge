@@ -173,7 +173,9 @@ class BaseAPIClient:
         # Handle case where API returns a list instead of dict
         if isinstance(error_data, list):
             # Convert list to string representation for error message
-            error_message = ", ".join(str(item) for item in error_data) if error_data else "Unknown error"
+            error_message = (
+                ", ".join(str(item) for item in error_data) if error_data else "Unknown error"
+            )
             # Wrap in dict for consistent error_data structure
             error_data = {"detail": error_message, "_raw_list": error_data}
         else:
@@ -205,9 +207,15 @@ class BaseAPIClient:
                 )
 
             # Check for "resource is being used by running jobs"
-            if "being used" in error_detail or "active jobs" in error_detail or "running jobs" in error_detail:
+            if (
+                "being used" in error_detail
+                or "active jobs" in error_detail
+                or "running jobs" in error_detail
+            ):
                 # Try to extract active_jobs list from response
-                active_jobs = error_data.get("active_jobs", []) if isinstance(error_data, dict) else []
+                active_jobs = (
+                    error_data.get("active_jobs", []) if isinstance(error_data, dict) else []
+                )
                 raise ResourceInUseError(
                     message=error_message,
                     status_code=status_code,
@@ -324,7 +332,7 @@ class BaseAPIClient:
                         method=method,
                         url=url,
                         status_code=response.status_code,
-                        payload=response.text[:self.max_payload_size],
+                        payload=response.text[: self.max_payload_size],
                         payload_size=len(response.text),
                     )
 
@@ -341,8 +349,15 @@ class BaseAPIClient:
         except httpx.TimeoutException as e:
             logger.error("timeout_error", method=method, url=url, error=str(e))
             raise NetworkError(f"Request timeout: {str(e)}") from e
-        except (AuthenticationError, AuthorizationError, NotFoundError, ConflictError,
-                RateLimitError, ServerError, APIError):
+        except (
+            AuthenticationError,
+            AuthorizationError,
+            NotFoundError,
+            ConflictError,
+            RateLimitError,
+            ServerError,
+            APIError,
+        ):
             # Re-raise our custom exceptions
             raise
         except Exception as e:

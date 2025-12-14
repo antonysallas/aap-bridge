@@ -230,7 +230,10 @@ class IDMapping(Base):
         BigInteger, nullable=False, index=True, comment="ID in source AAP 2.3 system"
     )
     target_id: Mapped[int | None] = mapped_column(
-        BigInteger, nullable=True, index=True, comment="ID in target AAP 2.6 system (null if not yet imported)"
+        BigInteger,
+        nullable=True,
+        index=True,
+        comment="ID in target AAP 2.6 system (null if not yet imported)",
     )
 
     # Additional mapping data

@@ -196,9 +196,7 @@ def generate_schema_report_text(comparisons: dict[str, ComparisonResult]) -> str
     # Summary
     total_resources = len(comparisons)
     resources_with_changes = sum(1 for c in comparisons.values() if c.has_changes)
-    resources_with_breaking = sum(
-        1 for c in comparisons.values() if c.has_breaking_changes
-    )
+    resources_with_breaking = sum(1 for c in comparisons.values() if c.has_breaking_changes)
 
     lines.extend(
         [
@@ -253,9 +251,7 @@ def generate_schema_report_text(comparisons: dict[str, ComparisonResult]) -> str
     return "\n".join(lines)
 
 
-def save_schema_report(
-    comparisons: dict[str, ComparisonResult], output_path: str
-) -> None:
+def save_schema_report(comparisons: dict[str, ComparisonResult], output_path: str) -> None:
     """Save schema comparison report to file.
 
     Args:

@@ -103,7 +103,9 @@ def generate(input_dir: Path, force: bool) -> None:
         }
         total_resources += resource_count
 
-        click.echo(f"  {resource_type}: {format_count(resource_count)} resources in {len(json_files)} file(s)")
+        click.echo(
+            f"  {resource_type}: {format_count(resource_count)} resources in {len(json_files)} file(s)"
+        )
 
     if not resource_types:
         echo_error(f"No valid resource directories found in {input_dir}")

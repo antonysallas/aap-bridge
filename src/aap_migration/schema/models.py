@@ -103,9 +103,9 @@ class ComparisonResult:
     @property
     def has_breaking_changes(self) -> bool:
         """Check if there are any breaking changes."""
-        return any(
-            diff.is_breaking for diff in self.field_diffs
-        ) or any(change.is_breaking for change in self.schema_changes)
+        return any(diff.is_breaking for diff in self.field_diffs) or any(
+            change.is_breaking for change in self.schema_changes
+        )
 
     @property
     def deprecated_fields(self) -> list[str]:
@@ -175,12 +175,10 @@ class ComparisonResult:
             ],
             "new_required_fields": self.new_required_fields,
             "type_changes": {
-                field: {"from": old, "to": new}
-                for field, (old, new) in self.type_changes.items()
+                field: {"from": old, "to": new} for field, (old, new) in self.type_changes.items()
             },
             "field_renames": {
-                old_name: rename.to_dict()
-                for old_name, rename in self.field_renames.items()
+                old_name: rename.to_dict() for old_name, rename in self.field_renames.items()
             },
             "validation_changes": validation_changes,
             "severity": max_severity.name,

@@ -1239,9 +1239,9 @@ class CredentialInputSourceExporter(ResourceExporter):
                     source_cred = self._credential_cache[source_cred_id]
                     source_cred_type_id = source_cred.get("credential_type")
                     if source_cred_type_id and source_cred_type_id in self._credential_type_cache:
-                        input_source["source_credential_type_details"] = (
-                            self._credential_type_cache[source_cred_type_id]
-                        )
+                        input_source[
+                            "source_credential_type_details"
+                        ] = self._credential_type_cache[source_cred_type_id]
 
             yield input_source
 
@@ -1310,9 +1310,7 @@ class JobTemplateExporter(ResourceExporter):
                 else:
                     # Fallback: Fetch from API if summary_fields missing
                     try:
-                        credentials = await self.client.get_job_template_credentials(
-                            template["id"]
-                        )
+                        credentials = await self.client.get_job_template_credentials(template["id"])
                         # Store credential IDs for import (only need IDs)
                         template["_credentials"] = [cred["id"] for cred in credentials]
                         logger.debug(
@@ -1363,9 +1361,7 @@ class JobTemplateExporter(ResourceExporter):
             else:
                 # Fallback: Fetch from API
                 try:
-                    credentials = await self.client.get_job_template_credentials(
-                        template["id"]
-                    )
+                    credentials = await self.client.get_job_template_credentials(template["id"])
                     template["_credentials"] = [cred["id"] for cred in credentials]
                     logger.debug(
                         "job_template_credentials_fetched_from_api",

@@ -350,11 +350,7 @@ class AAPTargetClient(BaseAPIClient):
         return await self.get(endpoint)
 
     @retry_api_call
-    async def cancel_job(
-        self,
-        job_id: int,
-        endpoint_prefix: str = "jobs"
-    ) -> dict[str, Any]:
+    async def cancel_job(self, job_id: int, endpoint_prefix: str = "jobs") -> dict[str, Any]:
         """Cancel a running job (AWX-inspired implementation).
 
         This method implements AWX best practices:
@@ -388,10 +384,7 @@ class AAPTargetClient(BaseAPIClient):
             job = await self.get(job_endpoint)
         except Exception as e:
             logger.error(
-                "failed_to_get_job_status",
-                job_id=job_id,
-                endpoint=endpoint_prefix,
-                error=str(e)
+                "failed_to_get_job_status", job_id=job_id, endpoint=endpoint_prefix, error=str(e)
             )
             raise
 
@@ -403,7 +396,7 @@ class AAPTargetClient(BaseAPIClient):
                 "job_already_finished",
                 job_id=job_id,
                 endpoint=endpoint_prefix,
-                status=current_status
+                status=current_status,
             )
             return job
 
@@ -412,7 +405,7 @@ class AAPTargetClient(BaseAPIClient):
                 "job_already_canceling",
                 job_id=job_id,
                 endpoint=endpoint_prefix,
-                status=current_status
+                status=current_status,
             )
             return job
 
@@ -424,7 +417,7 @@ class AAPTargetClient(BaseAPIClient):
                 job_id=job_id,
                 endpoint=endpoint_prefix,
                 status=current_status,
-                can_cancel=can_cancel
+                can_cancel=can_cancel,
             )
             return job
 
@@ -436,18 +429,18 @@ class AAPTargetClient(BaseAPIClient):
                 "job_cancelled_successfully",
                 job_id=job_id,
                 endpoint=endpoint_prefix,
-                previous_status=current_status
+                previous_status=current_status,
             )
             return result
         except Exception as e:
             # Handle race condition - job may have finished between check and cancel
-            if hasattr(e, 'status_code') and e.status_code == 405:
+            if hasattr(e, "status_code") and e.status_code == 405:
                 # Method not allowed - this job type doesn't support cancellation
                 logger.debug(
                     "job_type_does_not_support_cancel",
                     job_id=job_id,
                     endpoint=endpoint_prefix,
-                    status_code=405
+                    status_code=405,
                 )
                 raise  # Let caller handle 405
             elif "not allowed" in str(e).lower():
@@ -455,7 +448,7 @@ class AAPTargetClient(BaseAPIClient):
                     "job_finished_during_cancel_attempt",
                     job_id=job_id,
                     endpoint=endpoint_prefix,
-                    error=str(e)
+                    error=str(e),
                 )
                 # Return refreshed status
                 return await self.get(job_endpoint)
@@ -466,7 +459,7 @@ class AAPTargetClient(BaseAPIClient):
                     job_id=job_id,
                     endpoint=endpoint_prefix,
                     error=str(e),
-                    status_code=getattr(e, 'status_code', None)
+                    status_code=getattr(e, "status_code", None),
                 )
                 raise
 
@@ -529,6 +522,7 @@ class AAPTargetClient(BaseAPIClient):
             if next_url:
                 # Extract path from full URL for next request
                 from urllib.parse import urlparse
+
                 parsed = urlparse(next_url)
                 endpoint = parsed.path.replace("/api/controller/v2/", "")
                 params = {}  # Next URL already has query params
@@ -539,7 +533,7 @@ class AAPTargetClient(BaseAPIClient):
             "list_resources_completed",
             resource_type=resource_type,
             total_results=len(all_results),
-            filters=filters
+            filters=filters,
         )
 
         return all_results

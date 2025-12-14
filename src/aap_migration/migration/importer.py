@@ -1611,7 +1611,6 @@ class WorkflowNodeImporter(ResourceImporter):
         results = []
         success_count = 0
         failed_count = 0
-        skipped_count = 0
 
         for node in nodes:
             source_id = node.pop("_source_id", node.get("id"))

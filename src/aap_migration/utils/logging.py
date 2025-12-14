@@ -359,7 +359,7 @@ def sanitize_payload(payload: dict[str, Any] | list[Any] | Any, max_depth: int =
             # Check if key matches any sensitive field (case-insensitive)
             if any(sensitive in key.lower() for sensitive in sensitive_fields):
                 sanitized[key] = "[REDACTED]"
-            elif isinstance(value, (dict, list)):
+            elif isinstance(value, dict | list):
                 sanitized[key] = sanitize_payload(value, max_depth - 1)
             else:
                 sanitized[key] = value

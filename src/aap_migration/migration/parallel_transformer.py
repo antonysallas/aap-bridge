@@ -84,7 +84,7 @@ class ParallelTransformCoordinator:
             "skipped_missing_inventory": 0,
             "skipped_smart_inventories": 0,
             "skipped_dynamic_hosts": 0,
-            "skipped_from_transformer": 0, # New field for skips from transformer.stats
+            "skipped_from_transformer": 0,  # New field for skips from transformer.stats
             "fields_removed": 0,
             "fields_added": 0,
             "fields_renamed": 0,
@@ -163,9 +163,7 @@ class ParallelTransformCoordinator:
                         summary_fields = resource.get("summary_fields", {})
                         related = resource.get("related", {})
 
-                        has_created_by = (
-                            "created_by" in summary_fields or "created_by" in related
-                        )
+                        has_created_by = "created_by" in summary_fields or "created_by" in related
 
                         if is_managed and has_created_by:
                             stats["skipped_custom_managed"] += 1

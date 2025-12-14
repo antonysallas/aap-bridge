@@ -69,9 +69,7 @@ def generate_temp_encrypted_ssh_key(passphrase: str) -> str:
     pem = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.BestAvailableEncryption(
-            passphrase.encode("utf-8")
-        ),
+        encryption_algorithm=serialization.BestAvailableEncryption(passphrase.encode("utf-8")),
     )
     return pem.decode("utf-8")
 
@@ -105,6 +103,7 @@ class SkipResourceError(Exception):
         self.resource_type = resource_type
         self.source_id = source_id
         self.missing_dependency = missing_dependency
+
 
 class DataTransformer:
     """Base transformer for converting AAP 2.3 data to AAP 2.6 format.
@@ -143,11 +142,11 @@ class DataTransformer:
         "total_groups",
         "groups_with_active_failures",
         # Project-specific read-only fields
-        "local_path",       # Auto-generated filesystem path (causes 400 conflicts)
-        "scm_revision",     # Current SCM commit hash (updated after sync)
-        "last_updated",     # Last update timestamp
+        "local_path",  # Auto-generated filesystem path (causes 400 conflicts)
+        "scm_revision",  # Current SCM commit hash (updated after sync)
+        "last_updated",  # Last update timestamp
         "last_job_failed",  # Last job failure status
-        "next_job_run",     # Scheduled next run time
+        "next_job_run",  # Scheduled next run time
     ]
 
     # Required fields for each resource type (empty - schema comparison handles this)
@@ -203,8 +202,9 @@ class DataTransformer:
 
                 # Support both old format ("resources") and new format ("transformations")
                 transformations_count = len(
-                    self.schema_comparison_data.get("transformations",
-                    self.schema_comparison_data.get("resources", {}))
+                    self.schema_comparison_data.get(
+                        "transformations", self.schema_comparison_data.get("resources", {})
+                    )
                 )
 
                 logger.info(
@@ -416,9 +416,7 @@ class DataTransformer:
 
         return data
 
-    def _apply_field_renames(
-        self, data: dict[str, Any], resource_type: str
-    ) -> dict[str, Any]:
+    def _apply_field_renames(self, data: dict[str, Any], resource_type: str) -> dict[str, Any]:
         """Apply field renames from schema comparison.
 
         Renames fields that have been renamed between AAP 2.3 and 2.6.
@@ -436,11 +434,12 @@ class DataTransformer:
 
         # Support both "transformations" (new) and "resources" (old) format
         transformations = self.schema_comparison_data.get(
-            "transformations",
-            self.schema_comparison_data.get("resources", {})
+            "transformations", self.schema_comparison_data.get("resources", {})
         )
         resource_schema = transformations.get(resource_type, {})
-        field_renames = resource_schema.get("fields_renamed", resource_schema.get("field_renames", {}))
+        field_renames = resource_schema.get(
+            "fields_renamed", resource_schema.get("field_renames", {})
+        )
 
         source_id = data.get("_source_id") or data.get("id")
         for old_name, rename_info in field_renames.items():
@@ -477,9 +476,7 @@ class DataTransformer:
 
         return data
 
-    def _remove_deprecated_fields(
-        self, data: dict[str, Any], resource_type: str
-    ) -> dict[str, Any]:
+    def _remove_deprecated_fields(self, data: dict[str, Any], resource_type: str) -> dict[str, Any]:
         """Remove fields deprecated in AAP 2.6.
 
         Uses schema comparison data to identify deprecated fields for this resource type.
@@ -497,14 +494,12 @@ class DataTransformer:
         if self.schema_comparison_data:
             # Support both "transformations" (new) and "resources" (old) format
             transformations = self.schema_comparison_data.get(
-                "transformations",
-                self.schema_comparison_data.get("resources", {})
+                "transformations", self.schema_comparison_data.get("resources", {})
             )
             resource_schema = transformations.get(resource_type, {})
             # New format uses "fields_removed", old format uses "deprecated_fields"
             deprecated_fields = resource_schema.get(
-                "fields_removed",
-                resource_schema.get("deprecated_fields", [])
+                "fields_removed", resource_schema.get("deprecated_fields", [])
             )
 
         # Also check ComparisonResult object if available
@@ -546,14 +541,12 @@ class DataTransformer:
         if self.schema_comparison_data:
             # Support both "transformations" (new) and "resources" (old) format
             transformations = self.schema_comparison_data.get(
-                "transformations",
-                self.schema_comparison_data.get("resources", {})
+                "transformations", self.schema_comparison_data.get("resources", {})
             )
             resource_schema = transformations.get(resource_type, {})
             # New format uses "new_required_defaults", old format uses "new_required_fields"
             required_fields = resource_schema.get(
-                "new_required_defaults",
-                resource_schema.get("new_required_fields", {})
+                "new_required_defaults", resource_schema.get("new_required_fields", {})
             )
 
         # Also check ComparisonResult object if available
@@ -1077,7 +1070,11 @@ class CredentialTransformer(DataTransformer):
 
         # Check if credential depends on an external credential type that is NOT mapped
         cred_type_id = data.get("credential_type")
-        if cred_type_id and self.external_credential_type_ids and cred_type_id in self.external_credential_type_ids:
+        if (
+            cred_type_id
+            and self.external_credential_type_ids
+            and cred_type_id in self.external_credential_type_ids
+        ):
             # Check if mapped
             if self.state and not self.state.get_mapped_id("credential_types", cred_type_id):
                 logger.info(
@@ -1168,7 +1165,10 @@ class CredentialTransformer(DataTransformer):
 
             # First pass: Check if we need an encrypted key (ssh_key_unlock is present/encrypted)
             ssh_key_unlock_value = None
-            if "ssh_key_unlock" in data["inputs"] and data["inputs"]["ssh_key_unlock"] == "$encrypted$":
+            if (
+                "ssh_key_unlock" in data["inputs"]
+                and data["inputs"]["ssh_key_unlock"] == "$encrypted$"
+            ):
                 # Generate a passphrase (cached if config available)
                 if self.config and self.config.performance:
                     ssh_key_unlock_value = self.config.performance.get_dummy_ssh_key_passphrase()
@@ -1250,7 +1250,7 @@ class CredentialTransformer(DataTransformer):
         We no longer pre-populate credential mappings because we support creating
         credentials with temporary values if they don't exist.
         """
-        self.stats["skipped_count"] += 1 # Increment skipped count for this item
+        self.stats["skipped_count"] += 1  # Increment skipped count for this item
         return data
 
     # Old implementation commented out/replaced
@@ -1310,13 +1310,15 @@ class JobTemplateTransformer(DataTransformer):
                     extracted_creds = []
                     for c in creds:
                         if isinstance(c, dict) and "id" in c:
-                            extracted_creds.append({
-                                "id": c["id"],
-                                "name": c.get("name"),
-                                "description": c.get("description"),
-                                "kind": c.get("kind"),
-                                "cloud": c.get("cloud", False),
-                            })
+                            extracted_creds.append(
+                                {
+                                    "id": c["id"],
+                                    "name": c.get("name"),
+                                    "description": c.get("description"),
+                                    "kind": c.get("kind"),
+                                    "cloud": c.get("cloud", False),
+                                }
+                            )
 
                     if extracted_creds:
                         data["credentials"] = extracted_creds
@@ -1444,8 +1446,12 @@ class ProjectTransformer(DataTransformer):
                 data["scm_url"] = ""
                 # Remove other SCM fields to be clean
                 for field in [
-                    "scm_branch", "scm_clean", "scm_delete_on_update",
-                    "scm_update_on_launch", "scm_update_cache_timeout", "credential"
+                    "scm_branch",
+                    "scm_clean",
+                    "scm_delete_on_update",
+                    "scm_update_on_launch",
+                    "scm_update_cache_timeout",
+                    "credential",
                 ]:
                     data.pop(field, None)
 
@@ -1555,8 +1561,7 @@ class InstanceGroupTransformer(DataTransformer):
         if "policy_instance_list" in data and data["policy_instance_list"]:
             original_list = data["policy_instance_list"]
             data["policy_instance_list"] = [
-                instance_mappings.get(hostname, hostname)
-                for hostname in original_list
+                instance_mappings.get(hostname, hostname) for hostname in original_list
             ]
             if original_list != data["policy_instance_list"]:
                 logger.info(
@@ -1709,7 +1714,7 @@ class CredentialTypeTransformer(DataTransformer):
         """
         # Skip custom types (managed=False) - they will be created during import
         if not data.get("managed"):
-            self.stats["skipped_count"] += 1 # Increment skipped count for this item
+            self.stats["skipped_count"] += 1  # Increment skipped count for this item
             return data
 
         name = data.get("name")
@@ -1942,7 +1947,7 @@ class ScheduleTransformer(DataTransformer):
                         "workflow_job_template": "workflow_job_templates",
                         "project": "projects",
                         "inventory_source": "inventory_sources",
-                        "system_job_template": "system_job_templates", # Not migrated usually
+                        "system_job_template": "system_job_templates",  # Not migrated usually
                     }
                     ujt_type = type_map.get(api_type)
 
@@ -1997,6 +2002,7 @@ class SystemJobTemplateTransformer(DataTransformer):
     System job templates (e.g. Cleanup jobs) exist in both environments.
     We map them by name/ID.
     """
+
     DEPENDENCIES = {}
     REQUIRED_DEPENDENCIES = set()
 
@@ -2060,6 +2066,7 @@ class CredentialInputSourceTransformer(DataTransformer):
     These resources link one credential's input field to another credential.
     They depend on both the "parent" credential and the "source" credential.
     """
+
     DEPENDENCIES = {
         "credential": "credentials",  # The credential being modified
         "source_credential": "credentials",  # The credential providing the input

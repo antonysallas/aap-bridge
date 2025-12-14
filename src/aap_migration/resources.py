@@ -127,7 +127,7 @@ RESOURCE_REGISTRY: dict[str, ResourceTypeInfo] = {
         endpoint="execution_environments/",
         description="Execution Environments",
         migration_order=90,  # CHANGED: Was 65, now after credential_input_sources
-        cleanup_order=135,   # Delete AFTER projects (before orgs)
+        cleanup_order=135,  # Delete AFTER projects (before orgs)
         has_exporter=True,
         has_importer=True,
         has_transformer=True,  # Extracts organization, credential
@@ -137,7 +137,7 @@ RESOURCE_REGISTRY: dict[str, ResourceTypeInfo] = {
         endpoint="instance_groups/",
         description="Instance Groups",
         migration_order=117,  # After hosts (115), before projects (120)
-        cleanup_order=87,    # Delete before EEs
+        cleanup_order=87,  # Delete before EEs
         has_exporter=True,
         has_importer=True,
         has_transformer=False,
@@ -149,7 +149,7 @@ RESOURCE_REGISTRY: dict[str, ResourceTypeInfo] = {
         endpoint="projects/",
         description="Projects",
         migration_order=120,  # CHANGED: Was 75, now after hosts
-        cleanup_order=80,     # Delete before EEs
+        cleanup_order=80,  # Delete before EEs
         has_exporter=True,
         has_importer=True,
         has_transformer=True,  # Extracts organization, default_environment, credential
@@ -202,7 +202,7 @@ RESOURCE_REGISTRY: dict[str, ResourceTypeInfo] = {
         endpoint="instances/",
         description="Instances (AAP Controller Nodes)",
         migration_order=116,  # After hosts (115), before instance_groups (117)
-        cleanup_order=88,     # After instance_groups (87) - delete dependents first
+        cleanup_order=88,  # After instance_groups (87) - delete dependents first
         has_exporter=True,
         has_importer=True,
         has_transformer=False,
@@ -235,10 +235,10 @@ RESOURCE_REGISTRY: dict[str, ResourceTypeInfo] = {
         endpoint="system_job_templates/",
         description="System Job Templates",
         migration_order=165,  # Before schedules (170)
-        cleanup_order=15,     # Not deleted, but order needed
+        cleanup_order=15,  # Not deleted, but order needed
         has_exporter=True,
-        has_importer=True,    # Mapping only
-        has_transformer=True, # Mapping logic
+        has_importer=True,  # Mapping only
+        has_transformer=True,  # Mapping logic
         batch_size=50,
     ),
     "schedules": ResourceTypeInfo(
@@ -256,7 +256,7 @@ RESOURCE_REGISTRY: dict[str, ResourceTypeInfo] = {
         endpoint="notification_templates/",
         description="Notification Templates",
         migration_order=140,  # Before job_templates (150)
-        cleanup_order=25,     # Delete before schedules
+        cleanup_order=25,  # Delete before schedules
         has_exporter=True,
         has_importer=True,
         has_transformer=False,
@@ -268,9 +268,9 @@ RESOURCE_REGISTRY: dict[str, ResourceTypeInfo] = {
         endpoint="jobs/",
         description="Job Execution Records",
         migration_order=175,  # After schedules (170), jobs reference templates
-        cleanup_order=5,      # Early cleanup (historical data)
+        cleanup_order=5,  # Early cleanup (historical data)
         has_exporter=True,
-        has_importer=False,   # Export-only - historical data
+        has_importer=False,  # Export-only - historical data
         has_transformer=True,  # Transform for reporting
         batch_size=100,
     ),
@@ -284,15 +284,15 @@ RESOURCE_REGISTRY: dict[str, ResourceTypeInfo] = {
 # Endpoints that are read-only and should never be exported/migrated
 # These are informational, meta, or auto-discovered endpoints
 READ_ONLY_ENDPOINTS = {
-    "ping",                    # Health check endpoint
-    "config",                  # System configuration (read-only)
-    "dashboard",               # Dashboard data (read-only)
-    "metrics",                 # Metrics endpoint (read-only)
-    "mesh_visualizer",         # Visualization data (read-only)
-    "me",                      # Current user info (read-only)
-    "activity_stream",         # Audit log (historical)
-    "unified_job_templates",   # Meta-endpoint (virtual)
-    "unified_jobs",            # Meta-endpoint (virtual)
+    "ping",  # Health check endpoint
+    "config",  # System configuration (read-only)
+    "dashboard",  # Dashboard data (read-only)
+    "metrics",  # Metrics endpoint (read-only)
+    "mesh_visualizer",  # Visualization data (read-only)
+    "me",  # Current user info (read-only)
+    "activity_stream",  # Audit log (historical)
+    "unified_job_templates",  # Meta-endpoint (virtual)
+    "unified_jobs",  # Meta-endpoint (virtual)
 }
 
 
@@ -320,19 +320,16 @@ ENDPOINT_TO_RESOURCE_TYPE = {
 RUNTIME_DATA_ENDPOINTS = {
     # Job execution data (historical logs, never migrated)
     # Note: "jobs" is now in RESOURCE_REGISTRY with has_exporter=True, has_importer=False
-    "workflow_jobs",             # Workflow execution records (historical)
-    "project_updates",           # Project sync job logs (historical)
-    "inventory_updates",         # Inventory sync job logs (historical)
-    "ad_hoc_commands",           # Ad-hoc command execution records (historical)
-    "system_jobs",               # System job execution records (historical)
-    "workflow_job_nodes",        # Workflow execution node logs (historical - NOT workflow_job_template_nodes)
-
+    "workflow_jobs",  # Workflow execution records (historical)
+    "project_updates",  # Project sync job logs (historical)
+    "inventory_updates",  # Inventory sync job logs (historical)
+    "ad_hoc_commands",  # Ad-hoc command execution records (historical)
+    "system_jobs",  # System job execution records (historical)
+    "workflow_job_nodes",  # Workflow execution node logs (historical - NOT workflow_job_template_nodes)
     # Runtime notifications (not migrated)
-    "notifications",             # Runtime notification instances (historical)
-
+    "notifications",  # Runtime notification instances (historical)
     # System metrics (auto-generated, ephemeral)
     "host_metric_summary_monthly",  # Host usage metrics (auto-expires, ephemeral)
-
     # System job templates (auto-created, not migrated)
 }
 
@@ -344,11 +341,11 @@ RUNTIME_DATA_ENDPOINTS = {
 # Endpoints that require manual migration or special handling
 # These cannot be automatically migrated due to security or architectural constraints
 MANUAL_MIGRATION_ENDPOINTS = {
-    "settings",                  # Global system settings (manual review/config required)
-    "roles",                     # RBAC role assignments (handled separately via RBAC import)
-    "applications",              # OAuth applications (manual recreation recommended)
-    "tokens",                    # OAuth tokens (short-lived, manual recreation)
-    "inventory_sources",         # Inventory sources (manual recreation - tied to dynamic inventories)
+    "settings",  # Global system settings (manual review/config required)
+    "roles",  # RBAC role assignments (handled separately via RBAC import)
+    "applications",  # OAuth applications (manual recreation recommended)
+    "tokens",  # OAuth tokens (short-lived, manual recreation)
+    "inventory_sources",  # Inventory sources (manual recreation - tied to dynamic inventories)
 }
 
 
@@ -375,12 +372,12 @@ JOB_ALL_STATUSES = JOB_ACTIVE_STATUSES + JOB_TERMINAL_STATUSES + JOB_TRANSIENT_S
 # These are runtime/historical data - safe to delete when doing a full cleanup
 # See: docs/JOB_CLEANUP_BEFORE_IMPORT.md for detailed explanations
 JOB_DELETABLE_TYPES = [
-    "jobs",                # Job template execution records
-    "workflow_jobs",       # Workflow execution records
-    "project_updates",     # Project SCM sync jobs
-    "inventory_updates",   # Inventory source sync jobs
-    "system_jobs",         # System cleanup/management jobs
-    "ad_hoc_commands",     # Ad-hoc command execution records
+    "jobs",  # Job template execution records
+    "workflow_jobs",  # Workflow execution records
+    "project_updates",  # Project SCM sync jobs
+    "inventory_updates",  # Inventory source sync jobs
+    "system_jobs",  # System cleanup/management jobs
+    "ad_hoc_commands",  # Ad-hoc command execution records
 ]
 
 

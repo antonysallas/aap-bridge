@@ -518,15 +518,17 @@ class MigrationCoordinator:
                     stats["skipped"] += 1
 
                     # Track skip for reporting
-                    self.metrics["skipped_items"].append({
-                        "phase": phase_config["name"],
-                        "resource_type": resource_type,
-                        "source_id": e.source_id,
-                        "name": resource.get("name", "unknown"),
-                        "reason": str(e),
-                        "missing_dependency": e.missing_dependency,
-                        "timestamp": datetime.now(UTC).isoformat(),
-                    })
+                    self.metrics["skipped_items"].append(
+                        {
+                            "phase": phase_config["name"],
+                            "resource_type": resource_type,
+                            "source_id": e.source_id,
+                            "name": resource.get("name", "unknown"),
+                            "reason": str(e),
+                            "missing_dependency": e.missing_dependency,
+                            "timestamp": datetime.now(UTC).isoformat(),
+                        }
+                    )
 
                     # Update progress
                     if self.progress_tracker:
@@ -560,7 +562,9 @@ class MigrationCoordinator:
             if self.progress_display and self._current_phase_id and stats["exported"] > 0:
                 # Set actual total items based on what was exported
                 if self._current_phase_id in self.progress_display.phase_states:
-                    self.progress_display.phase_states[self._current_phase_id].total_items = stats["exported"]
+                    self.progress_display.phase_states[self._current_phase_id].total_items = stats[
+                        "exported"
+                    ]
                 # Also update the Rich Progress task's total
                 if self._current_phase_id in self.progress_display.phase_tasks:
                     task_id = self.progress_display.phase_tasks[self._current_phase_id]
@@ -572,10 +576,9 @@ class MigrationCoordinator:
                 # completed = successful imports (not failures)
                 # failed = import failures only
                 # skipped = transform skips + import skips (already migrated)
-                import_succeeded = 0   # Successful imports
-                import_failed = 0      # Failed imports
-                import_skipped = 0     # Already migrated (import-time skips)
-                transform_skipped = stats["skipped"]  # Skips from transformation phase
+                import_succeeded = 0  # Successful imports
+                import_failed = 0  # Failed imports
+                import_skipped = 0  # Already migrated (import-time skips)
 
                 for resource in resources_to_import:
                     source_id = resource.pop("_source_id", None)
@@ -628,14 +631,12 @@ class MigrationCoordinator:
                         message="See full error list in migration report",
                     )
                     # Add errors to global metrics for reporting
-                    self.metrics["errors"].extend([
-                        {
-                            "phase": phase_config["name"],
-                            "resource_type": resource_type,
-                            **error
-                        }
-                        for error in importer.import_errors
-                    ])
+                    self.metrics["errors"].extend(
+                        [
+                            {"phase": phase_config["name"], "resource_type": resource_type, **error}
+                            for error in importer.import_errors
+                        ]
+                    )
 
             else:
                 # Dry run - just count what would be imported
@@ -753,15 +754,17 @@ class MigrationCoordinator:
                 stats["skipped"] += 1
 
                 # Track skip for reporting
-                self.metrics["skipped_items"].append({
-                    "phase": "hosts",
-                    "resource_type": "hosts",
-                    "source_id": e.source_id,
-                    "name": host.get("name", "unknown"),
-                    "reason": str(e),
-                    "missing_dependency": e.missing_dependency,
-                    "timestamp": datetime.now(UTC).isoformat(),
-                })
+                self.metrics["skipped_items"].append(
+                    {
+                        "phase": "hosts",
+                        "resource_type": "hosts",
+                        "source_id": e.source_id,
+                        "name": host.get("name", "unknown"),
+                        "reason": str(e),
+                        "missing_dependency": e.missing_dependency,
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    }
+                )
 
                 if self.progress_tracker:
                     self.progress_tracker.update_resource(skipped=1)
@@ -782,7 +785,9 @@ class MigrationCoordinator:
         if self.progress_display and self._current_phase_id and stats["exported"] > 0:
             # Set actual total items based on what was exported
             if self._current_phase_id in self.progress_display.phase_states:
-                self.progress_display.phase_states[self._current_phase_id].total_items = stats["exported"]
+                self.progress_display.phase_states[self._current_phase_id].total_items = stats[
+                    "exported"
+                ]
             # Also update the Rich Progress task's total
             if self._current_phase_id in self.progress_display.phase_tasks:
                 task_id = self.progress_display.phase_tasks[self._current_phase_id]
@@ -826,9 +831,7 @@ class MigrationCoordinator:
 
                 except Exception as e:
                     # Extract sample source_ids for troubleshooting
-                    sample_source_ids = [
-                        h.get("_source_id") or h.get("id") for h in hosts[:5]
-                    ]
+                    sample_source_ids = [h.get("_source_id") or h.get("id") for h in hosts[:5]]
                     logger.error(
                         "bulk_host_import_failed",
                         resource_type="hosts",

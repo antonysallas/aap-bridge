@@ -107,7 +107,7 @@ class PayloadValidator:
 
                 # Basic type validation
                 if expected_type == "string" and not isinstance(value, str):
-                    if not isinstance(value, (int, float, bool)):  # Allow type coercion
+                    if not isinstance(value, int | float | bool):  # Allow type coercion
                         errors.append(
                             f"Field '{field_name}' expected string, got {type(value).__name__}"
                         )

@@ -127,25 +127,19 @@ def generate_schemas(
 
                     try:
                         # Fetch source schema (step 1)
-                        source_schema = await comparator.fetch_schema(
-                            ctx.source_client, rtype
-                        )
+                        source_schema = await comparator.fetch_schema(ctx.source_client, rtype)
                         source_schemas[rtype] = source_schema
                         completed += 1
                         progress.update_phase(phase_id, completed, failed)
 
                         # Fetch target schema (step 2)
-                        target_schema = await comparator.fetch_schema(
-                            ctx.target_client, rtype
-                        )
+                        target_schema = await comparator.fetch_schema(ctx.target_client, rtype)
                         target_schemas[rtype] = target_schema
                         completed += 1
                         progress.update_phase(phase_id, completed, failed)
 
                         # Compare schemas (step 3)
-                        comparison = comparator.compare_schemas(
-                            rtype, source_schema, target_schema
-                        )
+                        comparison = comparator.compare_schemas(rtype, source_schema, target_schema)
                         comparisons[rtype] = comparison
                         completed += 1
                         progress.update_phase(phase_id, completed, failed)

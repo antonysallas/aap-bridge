@@ -1182,9 +1182,7 @@ async def delete_resources(
 
                 # Skip managed/system instances (like localhost, controlplane nodes)
                 elif resource_type == "instances" and (
-                    is_managed
-                    or resource_name in ("localhost", "controlplane")
-                    or resource_id == 1
+                    is_managed or resource_name in ("localhost", "controlplane") or resource_id == 1
                 ):
                     skip_resource = True
                     skip_reason = "managed/system instance"
