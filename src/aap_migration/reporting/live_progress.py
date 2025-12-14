@@ -352,7 +352,7 @@ class MigrationProgressDisplay:
         self.total_phases = total
         # Overall task creation moved to initialize_phases() to avoid jitter
 
-    def initialize_phases(self, phases: list[tuple[str, str, int]]):
+    def initialize_phases(self, phases: list[tuple[str, str, int]]) -> None:
         """Initialize all phase tasks upfront (guidellm pattern).
 
         Creates a task for each phase and displays them all as "pending".
@@ -409,11 +409,67 @@ class MigrationProgressDisplay:
                 total=self.total_phases,
             )
 
-        # NOW start the live display after ALL tasks are added
-        # This prevents jitter from panel resizing as tasks are added
+        # NOTE: We DO NOT start the live display here anymore.
+        # It will be started in start_phase() when the first phase actually begins.
+        # This prevents duplicate header rendering artifacts (Option A in SPEC).
+
+    def initialize_and_start_single_phase(
+        self, phase_name: str, resource_type: str, total_items: int
+    ) -> str:
+        """Initialize and start a single phase immediately (Option C in SPEC).
+
+        Designed for standalone single-phase operations (like Phase 2).
+        Avoids the initialize(pending) -> start(running) sequence which can
+        cause duplicate header artifacts.
+
+        Args:
+            phase_name: Name of the phase
+            resource_type: Description of the phase
+            total_items: Total items to process
+
+        Returns:
+            Phase ID (same as phase_name)
+        """
+        if not self.enabled:
+            return phase_name
+
+        self.phases_list = [(phase_name, resource_type)]
+
+        # Create state
+        state = PhaseProgressState(
+            phase_name=phase_name,
+            resource_type=resource_type,
+            total_items=total_items,
+        )
+        self.phase_states[phase_name] = state
+
+        # Add task directly in RUNNING state (skipping pending)
+        task_id = self.phase_progress.add_task(
+            description=resource_type,
+            total=total_items,
+            completed=0,
+            start_time=datetime.now().strftime("%H:%M:%S"),
+            phase_name=phase_name,
+            status_text="running",  # For StatusIconColumn
+            status=f"[{MigrationColors.RUNNING}]running[/{MigrationColors.RUNNING}]",
+            metrics=state.formatted_metrics,
+            visible=True,
+        )
+        self.phase_tasks[phase_name] = task_id
+
+        # Create overall task
+        if self.total_phases > 0 and self.overall_task is None:
+            self.overall_task = self.overall_progress.add_task(
+                "overall",
+                total=self.total_phases,
+            )
+
+        # Start live display immediately with the running task
         if not self._live_started:
             self.live.start()
             self._live_started = True
+
+        return phase_name
 
     def start_phase(self, phase_name: str, resource_type: str, total_items: int) -> str:
         """Start tracking a new migration phase.
@@ -431,11 +487,6 @@ class MigrationProgressDisplay:
         """
         if not self.enabled:
             return phase_name
-
-        # Ensure live display is started (fallback if initialize_phases wasn't called)
-        if not self._live_started:
-            self.live.start()
-            self._live_started = True
 
         # Get or create state tracker
         if phase_name in self.phase_states:
@@ -480,6 +531,13 @@ class MigrationProgressDisplay:
                 metrics=state.formatted_metrics,
             )
             self.phase_tasks[phase_name] = task_id
+
+        # Ensure live display is started (fallback if initialize_phases wasn't called)
+        # MOVED TO END: Start display AFTER task is in "running" state
+        # This prevents duplicate header artifacts caused by Pending -> Running transition
+        if not self._live_started:
+            self.live.start()
+            self._live_started = True
 
         return phase_name
 

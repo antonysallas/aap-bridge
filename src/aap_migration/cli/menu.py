@@ -39,8 +39,7 @@ def interactive_menu(ctx: Any) -> None:
                 "2. Export (All)\n"
                 "3. Transform (All)\n"
                 "4. Import Phase 1 (Base Resources)\n"
-                "5. Import Phase 2 (Patch Projects)\n"
-                "6. Import Phase 3 (Automation Resources)\n"
+                "5. Import Phase 2 (Patch Projects + Automation)\n"
                 "q. quit",
                 title="Main Menu",
                 border_style="blue",
@@ -48,7 +47,7 @@ def interactive_menu(ctx: Any) -> None:
         )
 
         choice = Prompt.ask(
-            "Select an option", choices=["0", "1", "2", "3", "4", "5", "6", "q"], default="q"
+            "Select an option", choices=["0", "1", "2", "3", "4", "5", "q"], default="q"
         )
 
         if choice.lower() == "q":
@@ -68,7 +67,5 @@ def interactive_menu(ctx: Any) -> None:
             run_command(["import", "--phase", "phase1"], ctx)
         elif choice == "5":
             run_command(["import", "--phase", "phase2"], ctx)
-        elif choice == "6":
-            run_command(["import", "--phase", "phase3"], ctx)
 
         Prompt.ask("\nPress Enter to return to menu...")

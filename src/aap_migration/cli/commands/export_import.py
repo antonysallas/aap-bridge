@@ -771,7 +771,7 @@ def export(
     "--phase",
     type=click.Choice(["phase1", "phase2", "phase3", "all"], case_sensitive=False),
     default="all",
-    help="Import phase: phase1 (up to projects), phase2 (patch projects), phase3 (job_templates onwards), all (complete)",
+    help="Import phase: phase1 (up to projects), phase2 (patch projects and automation definitions), all (complete)",
 )
 @click.option(
     "-y",
@@ -904,27 +904,12 @@ def import_cmd(
         echo_info("")
         raise click.ClickException("Import requires transformed data from xformed/ directory")
 
-    # Handle Phase 2 (Patch Projects) exclusively
+    # Handle Phase 2 (Patch Projects) merged with Phase 3
     if phase == "phase2":
-        echo_info("Executing Phase 2: Patching Projects with SCM details...")
-        if not dry_run:
-
-            async def run_patch():
-                await patch_project_scm_details(
-                    ctx,
-                    input_dir,
-                    batch_size=ctx.config.performance.project_patch_batch_size,
-                    interval=ctx.config.performance.project_patch_batch_interval,
-                )
-
-            try:
-                asyncio.run(run_patch())
-            except RuntimeError:
-                loop = asyncio.get_event_loop()
-                loop.run_until_complete(run_patch())
-        else:
-            echo_warning("DRY RUN: Skipping project patching")
-        return
+        echo_info(
+            "Phase 2: Patching Projects + Importing Automation (Job Templates, Schedules, etc.)"
+        )
+        # Proceed to import Phase 3 resources after patching (logic handled in run_import)
 
     # Determine resource types to import
     available_types = list(metadata.get("resource_types", {}).keys())
@@ -996,9 +981,9 @@ def import_cmd(
     if phase == "phase1":
         types_to_import = [t for t in types_to_import if t in PHASE1_RESOURCE_TYPES]
         echo_info("Phase 1 import: credential_types/credentials will be PATCHed (pre-created)")
-    elif phase == "phase3":
+    elif phase == "phase2":
+        # Phase 2 includes Phase 3 resources (merged)
         types_to_import = [t for t in types_to_import if t in PHASE3_RESOURCE_TYPES]
-        echo_info("Phase 3 import: job_templates and automation definitions")
 
     # Force re-import: Clear import progress and reset target_ids
     if force_reimport:
@@ -1290,6 +1275,28 @@ def import_cmd(
 
         # Initialize phases
         phases = []
+
+        # If Phase 2, check for projects to patch and add as first phase
+        if phase == "phase2" and not dry_run:
+            # Duplicate scanning logic to get count for progress bar
+            projects_dir = input_dir / "projects"
+            patch_count = 0
+            if projects_dir.exists():
+                json_files = sorted(projects_dir.glob("projects_*.json"))
+                # Silent scan (no step_progress)
+                for json_file in json_files:
+                    try:
+                        with open(json_file) as f:
+                            resources = json.load(f)
+                            for resource in resources:
+                                if "_deferred_scm_details" in resource:
+                                    patch_count += 1
+                    except Exception:
+                        pass
+
+            if patch_count > 0:
+                phases.append(("patching", "Patching Projects", patch_count))
+
         for rtype in types_to_import:
             stats = metadata.get("resource_types", {}).get(rtype, {})
             count = stats.get("count", 0)
@@ -1310,6 +1317,19 @@ def import_cmd(
                 progress.initialize_phases(phases)
 
                 for rtype, description, total_count in phases:
+                    # Handle patching phase (Phase 2 logic)
+                    if rtype == "patching":
+                        # Call patch logic using existing progress display
+                        # Note: patch_project_scm_details handles start_phase/update/complete internally
+                        await patch_project_scm_details(
+                            ctx,
+                            input_dir,
+                            batch_size=ctx.config.performance.project_patch_batch_size,
+                            interval=ctx.config.performance.project_patch_batch_interval,
+                            progress_display=progress,
+                        )
+                        continue
+
                     # Start phase
                     phase_id = progress.start_phase(rtype, description, total_count)
 

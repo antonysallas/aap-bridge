@@ -65,7 +65,14 @@ async def patch_project_scm_details(
     # Load all projects with deferred details
     projects_to_patch = []
 
-    with step_progress("Scanning projects for deferred SCM details"):
+    # If progress_display is active, suppress step_progress to avoid Live display conflicts
+    scan_ctx = (
+        step_progress("Scanning projects for deferred SCM details")
+        if not progress_display
+        else nullcontext()
+    )
+
+    with scan_ctx:
         for json_file in json_files:
             try:
                 with open(json_file) as f:
@@ -77,12 +84,19 @@ async def patch_project_scm_details(
                 echo_error(f"Failed to load {json_file}: {e}")
 
     if not projects_to_patch:
-        echo_info("No projects found with deferred SCM details. Phase 2 not required.")
+        if not progress_display:
+            echo_info("No projects found with deferred SCM details. Phase 2 not required.")
         return
 
     total_projects = len(projects_to_patch)
-    echo_info(f"Found {total_projects} projects requiring SCM activation.")
-    echo_info(f"Starting Phase 2: Patching {batch_size} projects every {interval}s")
+    if not progress_display:
+        echo_info(f"Found {total_projects} projects requiring SCM activation.")
+        echo_info(f"Starting Phase 2: Patching {batch_size} projects every {interval}s")
+
+    # Define phases for progress display (matches Phase 3 pattern)
+    # phases = [
+    #     ("patching", "Patching Projects", total_projects),
+    # ]
 
     # Use existing display or create new one
     progress_ctx: AbstractContextManager[MigrationProgressDisplay]
@@ -95,12 +109,13 @@ async def patch_project_scm_details(
         # If new display, initialize layout
         if not progress_display:
             progress.set_total_phases(1)
-            # Initialize with empty list to start Live display and overall task
-            # but don't add the phase task yet (let start_phase do it)
-            # This prevents duplicate header rendering artifacts
-            progress.initialize_phases([])
-
-        progress.start_phase("patching", "Patching Projects", total_projects)
+            # Use specialized method for single-phase initialization to prevent artifacts
+            progress.initialize_and_start_single_phase(
+                "patching", "Patching Projects", total_projects
+            )
+        else:
+            # If re-using existing display (e.g. from import all), use standard start
+            progress.start_phase("patching", "Patching Projects", total_projects)
 
         patched_count = 0
         failed_patch_count = 0
@@ -184,9 +199,10 @@ async def patch_project_scm_details(
 
                 progress.update_phase("patching", patched_count, failed_patch_count)
 
-            # After batch is done, wait for sync completion before next batch
+            # After batch is done, wait for sync completion
             # This allows early exit if all projects reach terminal state (success/fail)
-            if i + batch_size < total_projects and batch_target_ids:
+            # and prevents phase completion while projects are still syncing
+            if batch_target_ids:
                 logger.info(
                     "phase2_batch_wait",
                     batch_size=len(batch_target_ids),
@@ -225,9 +241,11 @@ async def patch_project_scm_details(
         progress.complete_phase("patching")
 
         if patched_count > 0:
-            echo_success(f"Phase 2 Complete: {patched_count} projects patched.")
+            if not progress_display:
+                echo_success(f"Phase 2 Complete: {patched_count} projects patched.")
         else:
-            echo_warning("Phase 2 completed but no projects were patched.")
+            if not progress_display:
+                echo_warning("Phase 2 completed but no projects were patched.")
 
 
 @click.command(name="patch-projects")

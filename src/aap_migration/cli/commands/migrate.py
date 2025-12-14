@@ -57,17 +57,17 @@ PHASE1_RESOURCE_TYPES = [
     "projects",
 ]
 
-# Phase 2: Project SCM Patching (Logic phase, no resources to import)
+# Phase 2: Project SCM Patching + Automation Definitions
+# (Logic phase, no resources to import - handled by import --phase phase2)
 PHASE2_RESOURCE_TYPES = []
 
-# Phase 3: Automation Definitions (after project sync)
+# Phase 3 resources (now part of Phase 2 logic, but kept for reference/imports)
 PHASE3_RESOURCE_TYPES = [
     "notification_templates",
     "job_templates",
     "workflow_job_templates",
     "schedules",
 ]
-
 
 async def _map_managed_credential_types(source_client, target_client, state) -> int:
     """Create ID mappings for managed (built-in) credential types.
@@ -292,27 +292,27 @@ def _run_migration_workflow(
         run_import(types, "Infrastructure & Projects")
 
     elif phase == "phase2":
-        # Patch Projects only
-        echo_info("Phase 2 (Patching): Patching Projects with SCM details...")
+        # Patch Projects + Import Phase 3 resources
+        echo_info("Phase 2 (Patching + Automation Import): Patching Projects and Importing Automation Definitions...")
 
-        async def run_patch():
-            await patch_project_scm_details(
-                ctx,
-                xformed_dir,
-                batch_size=ctx.config.performance.project_patch_batch_size,
-                interval=ctx.config.performance.project_patch_batch_interval,
+        async def run_patch_and_import():
+            # Call import_cmd with phase2 to trigger combined logic
+            import_ctx.invoke(
+                import_cmd,
+                input_dir=xformed_dir,
+                force=force,
+                resume=resume,
+                dry_run=False,
+                skip_dependencies=False,
+                check_dependencies=False,
+                force_reimport=False,
+                phase="phase2",
             )
-
         try:
-            asyncio.run(run_patch())
+            asyncio.run(run_patch_and_import())
         except RuntimeError:
             loop = asyncio.get_event_loop()
-            loop.run_until_complete(run_patch())
-
-    elif phase == "phase3":
-        # Import Phase 3 resources
-        types = [t for t in resource_types if t in PHASE3_RESOURCE_TYPES]
-        run_import(types, "Automation Definitions")
+            loop.run_until_complete(run_patch_and_import())
 
     else:  # phase == "all"
         # 1. Import Phase 1
@@ -353,11 +353,7 @@ def _run_migration_workflow(
         echo_info("  Next step: Run Phase 2 to patch projects")
         echo_info("  Then run: aap-bridge migrate --phase phase2")
     elif phase == "phase2":
-        echo_success("✅ Phase 2 migration complete (Projects Patched)!")
-        echo_info("  Next step: Run Phase 3 to import job templates")
-        echo_info("  Then run: aap-bridge migrate --phase phase3")
-    elif phase == "phase3":
-        echo_success("✅ Phase 3 migration complete!")
+        echo_success("✅ Phase 2 migration complete (Projects Patched and Automation Imported)!")
     else:
         echo_success("✅ Migration workflow complete!")
 
@@ -396,7 +392,7 @@ def _run_migration_workflow(
     "--phase",
     type=click.Choice(["phase1", "phase2", "phase3", "all"], case_sensitive=False),
     default="all",
-    help="Import phase: phase1 (up to projects), phase2 (patch projects), phase3 (job_templates onwards), all (complete)",
+    help="Import phase: phase1 (up to projects), phase2 (patch projects and automation definitions), all (complete)",
 )
 @click.pass_context
 def migrate(ctx, resource_type, force, resume, skip_prep, phase) -> None:
