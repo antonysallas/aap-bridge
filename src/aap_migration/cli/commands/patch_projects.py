@@ -84,11 +84,6 @@ async def patch_project_scm_details(
     echo_info(f"Found {total_projects} projects requiring SCM activation.")
     echo_info(f"Starting Phase 2: Patching {batch_size} projects every {interval}s")
 
-    # Initialize progress display
-    phases = [
-        ("patching", "Patching Projects", total_projects),
-    ]
-
     # Use existing display or create new one
     progress_ctx: AbstractContextManager[MigrationProgressDisplay]
     if progress_display:
@@ -100,7 +95,10 @@ async def patch_project_scm_details(
         # If new display, initialize layout
         if not progress_display:
             progress.set_total_phases(1)
-            progress.initialize_phases(phases)
+            # Initialize with empty list to start Live display and overall task
+            # but don't add the phase task yet (let start_phase do it)
+            # This prevents duplicate header rendering artifacts
+            progress.initialize_phases([])
 
         progress.start_phase("patching", "Patching Projects", total_projects)
 
