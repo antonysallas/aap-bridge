@@ -8,7 +8,7 @@ SCM configuration in controlled batches to prevent controller resource exhaustio
 
 import asyncio
 import json
-from contextlib import nullcontext
+from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path
 
 import click
@@ -87,10 +87,10 @@ async def patch_project_scm_details(
     # Initialize progress display
     phases = [
         ("patching", "Patching Projects", total_projects),
-        ("syncing", "Waiting for Final Sync", total_projects),
     ]
 
     # Use existing display or create new one
+    progress_ctx: AbstractContextManager[MigrationProgressDisplay]
     if progress_display:
         progress_ctx = nullcontext(progress_display)
     else:
@@ -99,11 +99,10 @@ async def patch_project_scm_details(
     with progress_ctx as progress:
         # If new display, initialize layout
         if not progress_display:
-            progress.set_total_phases(2)
+            progress.set_total_phases(1)
             progress.initialize_phases(phases)
 
         progress.start_phase("patching", "Patching Projects", total_projects)
-        progress.start_phase("syncing", "Waiting for Final Sync", total_projects)
 
         patched_count = 0
         failed_patch_count = 0
@@ -227,42 +226,9 @@ async def patch_project_scm_details(
 
         progress.complete_phase("patching")
 
-        # Wait for ALL patched projects to sync
-        # This ensures Phase 3 (Job Templates) starts with clean state
-        if all_target_ids:
-            logger.info(
-                "phase2_final_wait",
-                count=len(all_target_ids),
-                message="Waiting for all projects to sync",
-            )
-
-            def wait_progress_callback(synced, failed, _):
-                progress.update_phase("syncing", synced, failed)
-
-            # Use config timeout as base + 1 minute per project for scaling
-            # For large batches, this allows queued syncs time to complete
-            base_timeout = ctx.config.performance.project_sync_timeout
-            poll_interval = ctx.config.performance.project_sync_poll_interval
-            timeout = base_timeout + (len(all_target_ids) * 60)
-
-            synced, failed, failed_ids = await wait_for_project_sync(
-                client=ctx.target_client,
-                project_ids=all_target_ids,
-                timeout=timeout,
-                poll_interval=poll_interval,
-                progress_callback=wait_progress_callback,
-            )
-
-            progress.update_phase("syncing", synced, failed)
-            progress.complete_phase("syncing")
-
-            if failed_ids:
-                echo_warning(f"Phase 2 completed with {failed} sync failures.")
-                logger.warning("phase2_sync_failures", failed_ids=failed_ids)
-            else:
-                echo_success(f"Phase 2 Complete: All {synced} projects patched and synced.")
+        if patched_count > 0:
+            echo_success(f"Phase 2 Complete: {patched_count} projects patched.")
         else:
-            progress.complete_phase("syncing")
             echo_warning("Phase 2 completed but no projects were patched.")
 
 
@@ -312,7 +278,7 @@ def patch_projects(
     if interval is None:
         interval = ctx.config.performance.project_patch_batch_interval
 
-    async def run():
+    async def run() -> None:
         await patch_project_scm_details(ctx, input_dir, batch_size, interval)
 
     try:
