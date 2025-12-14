@@ -769,7 +769,7 @@ def export(
 )
 @click.option(
     "--phase",
-    type=click.Choice(["phase1", "phase2", "phase3", "all"], case_sensitive=False),
+    type=click.Choice(["phase1", "phase2", "all"], case_sensitive=False),
     default="all",
     help="Import phase: phase1 (up to projects), phase2 (patch projects and automation definitions), all (complete)",
 )
