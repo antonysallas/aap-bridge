@@ -62,6 +62,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 This command will create/update your virtual environment, install all dependencies (including development dependencies), and install the `aap-bridge` package in editable mode.
 
 uv sync
+```
 
 ### Configuration
 
@@ -80,7 +81,7 @@ psql -c "GRANT ALL PRIVILEGES ON DATABASE aap_migration TO aap_migration_user;"
 # Ensure the user owns the schema/tables (Postgres 15+)
 psql -d aap_migration -c "GRANT ALL ON SCHEMA public TO aap_migration_user;"
 
-```dockerfile
+```
 
 #### 2. Environment Setup
 
@@ -90,7 +91,7 @@ Copy the example environment file and configure your credentials:
 
 cp .env.example .env
 
-```text
+```
 
 Edit `.env` with your AAP instance details and database connection string.
 
@@ -175,7 +176,7 @@ aap-bridge migrate full --config config/config.yaml --show-stats
 # Combination: Quiet + no progress for automation
 aap-bridge migrate full --config config/config.yaml --quiet --disable-progress
 
-```text
+```
 
 **Output Modes:**
 
@@ -207,7 +208,7 @@ aap-bridge export --output exports/ --records-per-file 500
 # Import handles multiple files automatically
 aap-bridge import --input exports/
 
-```text
+```
 
 **Export Structure:**
 
