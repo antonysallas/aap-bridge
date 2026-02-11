@@ -1,0 +1,21 @@
+name: aap-bridge
+description: AAP migration tool for Ansible Automation Platform 2.3 to 2.6
+language: python
+plane:
+  project_slug: 5a51c00b-824b-4117-ac17-1f5685c367af
+  workspace_slug: ai-dev
+gitea:
+  repo: aap-bridge
+  owner: asallas
+outline:
+  specs_collection_id: 1311aed7-1f30-4cde-8d74-e6a4a4971dfd
+  reviews_collection_id: 649bed3d-81f9-4af5-8b48-5cde887491da
+architecture: ''
+validation:
+  tools:
+  - ruff
+  - mypy
+  command: uv run {tool} check src/
+path: /home/asallas/workarea/projects/personal/aap-bridge
+mcp_root: /home/asallas/workarea/projects/personal/ai-dev/mcp-servers
+portreg_bin: /home/asallas/.local/share/uv/tools/portreg/bin/portreg-mcp
