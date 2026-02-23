@@ -35,7 +35,7 @@ tool_timeout_sec = 60
 [mcp_servers.workflow]
 command = "uv"
 args = ["--directory", "/home/asallas/workarea/projects/personal/ai-dev/mcp-servers/workflow-mcp", "run", "workflow-mcp"]
-env = { AGENT_ROLE = "codex", PLANE_API_URL = "http://localhost:4004/api/v1", OUTLINE_API_URL = "http://localhost:4003/api", GITEA_API_URL = "http://localhost:4001/api/v1", PLANE_WORKSPACE_SLUG = "ai-dev", PLANE_PROJECT_SLUG = "5a51c00b-824b-4117-ac17-1f5685c367af", OUTLINE_SPECS_COLLECTION_ID = "1311aed7-1f30-4cde-8d74-e6a4a4971dfd", OUTLINE_REVIEWS_COLLECTION_ID = "649bed3d-81f9-4af5-8b48-5cde887491da", GITEA_OWNER = "asallas", GITEA_DEFAULT_REPO = "aap-bridge" }
+env = { AGENT_ROLE = "codex", PLANE_API_URL = "http://localhost:4004/api/v1", OUTLINE_API_URL = "http://localhost:4003/api", GITEA_API_URL = "http://localhost:4001/api/v1", PLANE_WORKSPACE_SLUG = "ai-dev", PLANE_PROJECT_SLUG = "5a51c00b-824b-4117-ac17-1f5685c367af", OUTLINE_SPECS_COLLECTION_ID = "1311aed7-1f30-4cde-8d74-e6a4a4971dfd", OUTLINE_REVIEWS_COLLECTION_ID = "649bed3d-81f9-4af5-8b48-5cde887491da", GITEA_OWNER = "asallas", GITEA_DEFAULT_REPO = "aap-bridge", PLANE_MEMBER_ID_CLAUDE = "dde261d5-62a4-42c7-87bb-49551b23df7d", PLANE_MEMBER_ID_GEMINI = "3e50c42c-9693-49d9-9c1f-1f33cd7734c3", PLANE_MEMBER_ID_CODEX = "21c10692-3116-4b79-93d3-8a2a5fb6be1e" }
 env_vars = ["CODEX_PLANE_API_KEY", "CODEX_OUTLINE_API_KEY", "CODEX_GITEA_TOKEN", "PLANE_API_KEY", "OUTLINE_API_KEY", "GITEA_TOKEN"]
 startup_timeout_sec = 30
 tool_timeout_sec = 60
