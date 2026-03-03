@@ -1,0 +1,6266 @@
+{
+  "api_version": "4.5.30",
+  "generated_at": "2026-03-03T20:13:45.579858+00:00",
+  "schemas": {
+    "instances": {
+      "fields": {
+        "hostname": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "",
+          "max_length": 250
+        },
+        "capacity_adjustment": {
+          "type": "decimal",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": 1.0
+        },
+        "enabled": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": true
+        },
+        "managed_by_policy": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": true
+        },
+        "node_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "Role that this node plays in the mesh.",
+          "default": "execution",
+          "choices": [
+            [
+              "control",
+              "Control plane node"
+            ],
+            [
+              "execution",
+              "Execution plane node"
+            ],
+            [
+              "hybrid",
+              "Controller and execution"
+            ],
+            [
+              "hop",
+              "Message-passing node, no execution capability"
+            ]
+          ]
+        },
+        "node_state": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "Indicates the current life cycle stage of this instance.",
+          "default": "installed",
+          "choices": [
+            [
+              "provisioning",
+              "Provisioning"
+            ],
+            [
+              "provision-fail",
+              "Provisioning Failure"
+            ],
+            [
+              "installed",
+              "Installed"
+            ],
+            [
+              "ready",
+              "Ready"
+            ],
+            [
+              "unavailable",
+              "Unavailable"
+            ],
+            [
+              "deprovisioning",
+              "De-provisioning"
+            ],
+            [
+              "deprovision-fail",
+              "De-provisioning Failure"
+            ]
+          ]
+        },
+        "listener_port": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "Port that Receptor will listen for incoming connections on.",
+          "default": null
+        },
+        "peers": {
+          "type": "field",
+          "required": false,
+          "read_only": false,
+          "help_text": ""
+        },
+        "peers_from_control_nodes": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "If True, control plane cluster nodes should automatically peer to it.",
+          "default": false
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this instance."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this instance."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this instance."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "uuid": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this instance was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this instance was last modified."
+        },
+        "last_seen": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Last time instance ran its heartbeat task for main cluster nodes. Last known connection to receptor mesh for execution nodes."
+        },
+        "health_check_started": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The last time a health check was initiated on this instance."
+        },
+        "health_check_pending": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "last_health_check": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Last time a health check was ran on this instance to refresh cpu, memory, and capacity."
+        },
+        "errors": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Any error details from the last health check."
+        },
+        "version": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "capacity": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "consumed_capacity": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "percent_capacity_remaining": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "jobs_running": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Count of jobs in the running or waiting state that are targeted for this instance"
+        },
+        "jobs_total": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Count of all jobs that target this instance"
+        },
+        "cpu": {
+          "type": "decimal",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "memory": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Total system memory of this instance in bytes."
+        },
+        "cpu_capacity": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "mem_capacity": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "ip_address": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        }
+      }
+    },
+    "instance_groups": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this instance group.",
+          "max_length": 250
+        },
+        "max_concurrent_jobs": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "Maximum number of concurrent jobs to run on a group. When set to zero, no maximum is enforced.",
+          "default": 0
+        },
+        "max_forks": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "Maximum number of forks to execute concurrently on a group. When set to zero, no maximum is enforced.",
+          "default": 0
+        },
+        "is_container_group": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "Indicates whether instances in this group are containerized.Containerized groups have a designated Openshift or Kubernetes cluster."
+        },
+        "credential": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": ""
+        },
+        "policy_instance_percentage": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "Minimum percentage of all instances that will be automatically assigned to this group when new instances come online.",
+          "default": 0
+        },
+        "policy_instance_minimum": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "Static minimum number of Instances that will be automatically assign to this group when new instances come online.",
+          "default": 0
+        },
+        "policy_instance_list": {
+          "type": "json",
+          "required": false,
+          "read_only": false,
+          "help_text": "List of exact-match Instances that will be assigned to this group"
+        },
+        "pod_spec_override": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+              "namespace": "default"
+            },
+            "spec": {
+              "serviceAccountName": "default",
+              "automountServiceAccountToken": false,
+              "containers": [
+                {
+                  "image": "192.168.100.26/ee-supported-rhel8:latest",
+                  "name": "worker",
+                  "args": [
+                    "ansible-runner",
+                    "worker",
+                    "--private-data-dir=/runner"
+                  ],
+                  "resources": {
+                    "requests": {
+                      "cpu": "250m",
+                      "memory": "100Mi"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this instance group."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this instance group."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this instance group."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this instance group was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this instance group was last modified."
+        },
+        "capacity": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "consumed_capacity": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "percent_capacity_remaining": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "jobs_running": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "jobs_total": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Count of all jobs that target this instance group"
+        },
+        "instances": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        }
+      }
+    },
+    "settings": {
+      "fields": {
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "slug": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "name": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        }
+      }
+    },
+    "me": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this user."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this user."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this user."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this user was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this user was last modified."
+        },
+        "username": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+        },
+        "first_name": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "last_name": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "email": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "is_superuser": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "Designates that this user has all permissions without explicitly assigning them."
+        },
+        "is_system_auditor": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "password": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Field used to change the password."
+        },
+        "ldap_dn": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "last_login": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "external_account": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": "Set if the account is managed by an external service"
+        }
+      }
+    },
+    "organizations": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this organization.",
+          "max_length": 512
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this organization.",
+          "default": ""
+        },
+        "max_hosts": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "Maximum number of hosts allowed to be managed by this organization.",
+          "default": 0
+        },
+        "default_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "The default execution environment for jobs run by this organization."
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this organization."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this organization."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this organization."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this organization was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this organization was last modified."
+        },
+        "custom_virtualenv": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Local absolute file path containing a custom Python virtualenv to use"
+        }
+      }
+    },
+    "users": {
+      "fields": {
+        "username": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
+          "max_length": 150
+        },
+        "first_name": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "max_length": 150
+        },
+        "last_name": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "max_length": 150
+        },
+        "email": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "max_length": 254
+        },
+        "is_superuser": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "Designates that this user has all permissions without explicitly assigning them.",
+          "default": false
+        },
+        "is_system_auditor": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "password": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Field used to change the password.",
+          "default": ""
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this user."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this user."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this user."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this user was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this user was last modified."
+        },
+        "ldap_dn": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "last_login": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "external_account": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": "Set if the account is managed by an external service"
+        }
+      }
+    },
+    "execution_environments": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this execution environment.",
+          "max_length": 512
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this execution environment.",
+          "default": ""
+        },
+        "organization": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "The organization used to determine access to this execution environment."
+        },
+        "image": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "The full image location, including the container registry, image name, and version tag.",
+          "max_length": 1024
+        },
+        "credential": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": ""
+        },
+        "pull": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "Pull image before running?",
+          "default": "",
+          "choices": [
+            [
+              "",
+              "---------"
+            ],
+            [
+              "always",
+              "Always pull container before running."
+            ],
+            [
+              "missing",
+              "Only pull the image if not present before running."
+            ],
+            [
+              "never",
+              "Never pull container before running."
+            ]
+          ]
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this execution environment."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this execution environment."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this execution environment."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this execution environment was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this execution environment was last modified."
+        },
+        "managed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        }
+      }
+    },
+    "projects": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this project.",
+          "max_length": 512
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this project.",
+          "default": ""
+        },
+        "local_path": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Local path (relative to PROJECTS_ROOT) containing playbooks and related files for this project.",
+          "max_length": 1024
+        },
+        "scm_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "Specifies the source control system used to store the project.",
+          "default": "",
+          "choices": [
+            [
+              "",
+              "Manual"
+            ],
+            [
+              "git",
+              "Git"
+            ],
+            [
+              "svn",
+              "Subversion"
+            ],
+            [
+              "insights",
+              "Red Hat Insights"
+            ],
+            [
+              "archive",
+              "Remote Archive"
+            ]
+          ]
+        },
+        "scm_url": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "The location where the project is stored.",
+          "max_length": 1024,
+          "default": ""
+        },
+        "scm_branch": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Specific branch, tag or commit to checkout.",
+          "max_length": 256,
+          "default": ""
+        },
+        "scm_refspec": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "For git projects, an additional refspec to fetch.",
+          "max_length": 1024,
+          "default": ""
+        },
+        "scm_clean": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "Discard any local changes before syncing the project.",
+          "default": false
+        },
+        "scm_track_submodules": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "Track submodules latest commits on defined branch.",
+          "default": false
+        },
+        "scm_delete_on_update": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "Delete the project before syncing.",
+          "default": false
+        },
+        "credential": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": ""
+        },
+        "timeout": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "The amount of time (in seconds) to run before the task is canceled.",
+          "default": 0
+        },
+        "organization": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "The organization used to determine access to this template."
+        },
+        "scm_update_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "Update the project when a job is launched that uses the project.",
+          "default": false
+        },
+        "scm_update_cache_timeout": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "The number of seconds after the last project update ran that a new project update will be launched as a job dependency.",
+          "default": 0
+        },
+        "allow_override": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "Allow changing the SCM branch or revision in a job template that uses this project.",
+          "default": false
+        },
+        "default_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "The default execution environment for jobs run using this project."
+        },
+        "signature_validation_credential": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "An optional credential used for validating files in the project against unexpected changes."
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this project."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this project."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this project."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this project was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this project was last modified."
+        },
+        "scm_revision": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The last revision fetched by a project update"
+        },
+        "last_job_run": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "last_job_failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "next_job_run": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "status": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "custom_virtualenv": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Local absolute file path containing a custom Python virtualenv to use"
+        },
+        "last_update_failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "last_updated": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        }
+      }
+    },
+    "project_updates": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this project update."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this project update."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this project update."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this project update was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this project update was last modified."
+        },
+        "name": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Name of this project update."
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Optional description of this project update."
+        },
+        "unified_job_template": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "launch_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "status": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "execution_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "The container image to be used for execution."
+        },
+        "failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "started": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job was queued for starting."
+        },
+        "finished": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job finished execution."
+        },
+        "canceled_on": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time when the cancel request was sent."
+        },
+        "elapsed": {
+          "type": "decimal",
+          "required": false,
+          "read_only": true,
+          "help_text": "Elapsed time in seconds that the job ran."
+        },
+        "job_explanation": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "A status field to indicate the state of the job if it wasn't able to run and capture stdout"
+        },
+        "execution_node": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The node the job executed on."
+        },
+        "launched_by": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "work_unit_id": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The Receptor work unit ID associated with this job."
+        },
+        "local_path": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Local path (relative to PROJECTS_ROOT) containing playbooks and related files for this project."
+        },
+        "scm_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Specifies the source control system used to store the project."
+        },
+        "scm_url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The location where the project is stored."
+        },
+        "scm_branch": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Specific branch, tag or commit to checkout."
+        },
+        "scm_refspec": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "For git projects, an additional refspec to fetch."
+        },
+        "scm_clean": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "Discard any local changes before syncing the project."
+        },
+        "scm_track_submodules": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "Track submodules latest commits on defined branch."
+        },
+        "scm_delete_on_update": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "Delete the project before syncing."
+        },
+        "credential": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "timeout": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "The amount of time (in seconds) to run before the task is canceled."
+        },
+        "scm_revision": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The SCM Revision discovered by this update for the given project and branch."
+        },
+        "project": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "job_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "job_tags": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Parts of the project update playbook that will be run."
+        }
+      }
+    },
+    "teams": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this team.",
+          "max_length": 512
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this team.",
+          "default": ""
+        },
+        "organization": {
+          "type": "id",
+          "required": true,
+          "read_only": false,
+          "help_text": ""
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this team."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this team."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this team."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this team was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this team was last modified."
+        }
+      }
+    },
+    "credentials": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this credential.",
+          "max_length": 512
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this credential.",
+          "default": ""
+        },
+        "organization": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "Inherit permissions from organization roles. If provided on creation, do not give either user or team.",
+          "default": null
+        },
+        "credential_type": {
+          "type": "id",
+          "required": true,
+          "read_only": false,
+          "help_text": "Specify the type of credential you want to create. Refer to the documentation for details on each type."
+        },
+        "inputs": {
+          "type": "json",
+          "required": false,
+          "read_only": false,
+          "help_text": "Enter inputs using either JSON or YAML syntax. Refer to the documentation for example syntax.",
+          "default": {}
+        },
+        "user": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "Write-only field used to add user to owner role. If provided, do not give either team or organization. Only valid for creation.",
+          "default": null
+        },
+        "team": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "Write-only field used to add team to owner role. If provided, do not give either user or organization. Only valid for creation.",
+          "default": null
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this credential."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this credential."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this credential."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this credential was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this credential was last modified."
+        },
+        "managed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "kind": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "cloud": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "kubernetes": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        }
+      }
+    },
+    "credential_types": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this credential type.",
+          "max_length": 512
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this credential type.",
+          "default": ""
+        },
+        "kind": {
+          "type": "choice",
+          "required": true,
+          "read_only": false,
+          "help_text": "",
+          "choices": [
+            [
+              "net",
+              "Network"
+            ],
+            [
+              "cloud",
+              "Cloud"
+            ]
+          ]
+        },
+        "inputs": {
+          "type": "json",
+          "required": false,
+          "read_only": false,
+          "help_text": "Enter inputs using either JSON or YAML syntax. Refer to the documentation for example syntax.",
+          "default": {}
+        },
+        "injectors": {
+          "type": "json",
+          "required": false,
+          "read_only": false,
+          "help_text": "Enter injectors using either JSON or YAML syntax. Refer to the documentation for example syntax.",
+          "default": {}
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this credential type."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this credential type."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this credential type."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this credential type was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this credential type was last modified."
+        },
+        "namespace": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "managed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        }
+      }
+    },
+    "credential_input_sources": {
+      "fields": {
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this credential input source.",
+          "default": ""
+        },
+        "input_field_name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "",
+          "max_length": 1024
+        },
+        "metadata": {
+          "type": "json",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": {}
+        },
+        "target_credential": {
+          "type": "id",
+          "required": true,
+          "read_only": false,
+          "help_text": ""
+        },
+        "source_credential": {
+          "type": "id",
+          "required": true,
+          "read_only": false,
+          "help_text": ""
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this credential input source."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this credential input source."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this credential input source."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this credential input source was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this credential input source was last modified."
+        }
+      }
+    },
+    "applications": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this application.",
+          "max_length": 255
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this application.",
+          "default": ""
+        },
+        "client_type": {
+          "type": "choice",
+          "required": true,
+          "read_only": false,
+          "help_text": "Set to Public or Confidential depending on how secure the client device is.",
+          "choices": [
+            [
+              "confidential",
+              "Confidential"
+            ],
+            [
+              "public",
+              "Public"
+            ]
+          ]
+        },
+        "redirect_uris": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Allowed URIs list, space separated"
+        },
+        "authorization_grant_type": {
+          "type": "choice",
+          "required": true,
+          "read_only": false,
+          "help_text": "The Grant type the user must use for acquire tokens for this application.",
+          "choices": [
+            [
+              "authorization-code",
+              "Authorization code"
+            ],
+            [
+              "password",
+              "Resource owner password-based"
+            ]
+          ]
+        },
+        "skip_authorization": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "Set True to skip authorization step for completely trusted applications.",
+          "default": false
+        },
+        "organization": {
+          "type": "id",
+          "required": true,
+          "read_only": false,
+          "help_text": "Organization containing this application."
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this application."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this application."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this application."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this application was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this application was last modified."
+        },
+        "client_id": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "client_secret": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Used for more stringent verification of access to an application when creating a token."
+        }
+      }
+    },
+    "tokens": {
+      "fields": {
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this access token.",
+          "default": ""
+        },
+        "application": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": ""
+        },
+        "scope": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Allowed scopes, further restricts user's permissions. Must be a simple space-separated string with allowed scopes ['read', 'write'].",
+          "default": "write"
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this access token."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this access token."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this access token."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this access token was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this access token was last modified."
+        },
+        "user": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "The user representing the token owner"
+        },
+        "token": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "refresh_token": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "expires": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        }
+      }
+    },
+    "inventory": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this inventory.",
+          "max_length": 512
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this inventory.",
+          "default": ""
+        },
+        "organization": {
+          "type": "id",
+          "required": true,
+          "read_only": false,
+          "help_text": "Organization containing this inventory."
+        },
+        "kind": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "Kind of inventory being represented.",
+          "default": "",
+          "choices": [
+            [
+              "",
+              "Hosts have a direct link to this inventory."
+            ],
+            [
+              "smart",
+              "Hosts for inventory generated using the host_filter property."
+            ],
+            [
+              "constructed",
+              "Parse list of source inventories with the constructed inventory plugin."
+            ]
+          ]
+        },
+        "host_filter": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Filter that will be applied to the hosts of this inventory.",
+          "default": null
+        },
+        "variables": {
+          "type": "json",
+          "required": false,
+          "read_only": false,
+          "help_text": "Inventory variables in JSON or YAML format.",
+          "default": ""
+        },
+        "prevent_instance_group_fallback": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "If enabled, the inventory will prevent adding any organization instance groups to the list of preferred instances groups to run associated job templates on.If this setting is enabled and you provided an empty list, the global instance groups will be applied.",
+          "default": false
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this inventory."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this inventory."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this inventory."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this inventory was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this inventory was last modified."
+        },
+        "has_active_failures": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "This field is deprecated and will be removed in a future release. Flag indicating whether any hosts in this inventory have failed."
+        },
+        "total_hosts": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "This field is deprecated and will be removed in a future release. Total number of hosts in this inventory."
+        },
+        "hosts_with_active_failures": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "This field is deprecated and will be removed in a future release. Number of hosts in this inventory with active failures."
+        },
+        "total_groups": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "This field is deprecated and will be removed in a future release. Total number of groups in this inventory."
+        },
+        "has_inventory_sources": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "This field is deprecated and will be removed in a future release. Flag indicating whether this inventory has any external inventory sources."
+        },
+        "total_inventory_sources": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Total number of external inventory sources configured within this inventory."
+        },
+        "inventory_sources_with_failures": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Number of external inventory sources in this inventory with failures."
+        },
+        "pending_deletion": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "Flag indicating the inventory is being deleted."
+        }
+      }
+    },
+    "constructed_inventory": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this inventory.",
+          "max_length": 512
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this inventory.",
+          "default": ""
+        },
+        "organization": {
+          "type": "id",
+          "required": true,
+          "read_only": false,
+          "help_text": "Organization containing this inventory."
+        },
+        "variables": {
+          "type": "json",
+          "required": false,
+          "read_only": false,
+          "help_text": "Inventory variables in JSON or YAML format.",
+          "default": ""
+        },
+        "prevent_instance_group_fallback": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "If enabled, the inventory will prevent adding any organization instance groups to the list of preferred instances groups to run associated job templates on.If this setting is enabled and you provided an empty list, the global instance groups will be applied.",
+          "default": false
+        },
+        "source_vars": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "The source_vars for the related auto-created inventory source, special to constructed inventory.",
+          "default": null
+        },
+        "update_cache_timeout": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "The cache timeout for the related auto-created inventory source, special to constructed inventory",
+          "default": null
+        },
+        "limit": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "The limit to restrict the returned hosts for the related auto-created inventory source, special to constructed inventory.",
+          "default": null
+        },
+        "verbosity": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "The verbosity level for the related auto-created inventory source, special to constructed inventory",
+          "default": null
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this inventory."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this inventory."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this inventory."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this inventory was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this inventory was last modified."
+        },
+        "kind": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Kind of inventory being represented."
+        },
+        "has_active_failures": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "This field is deprecated and will be removed in a future release. Flag indicating whether any hosts in this inventory have failed."
+        },
+        "total_hosts": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "This field is deprecated and will be removed in a future release. Total number of hosts in this inventory."
+        },
+        "hosts_with_active_failures": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "This field is deprecated and will be removed in a future release. Number of hosts in this inventory with active failures."
+        },
+        "total_groups": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "This field is deprecated and will be removed in a future release. Total number of groups in this inventory."
+        },
+        "has_inventory_sources": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "This field is deprecated and will be removed in a future release. Flag indicating whether this inventory has any external inventory sources."
+        },
+        "total_inventory_sources": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Total number of external inventory sources configured within this inventory."
+        },
+        "inventory_sources_with_failures": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Number of external inventory sources in this inventory with failures."
+        },
+        "pending_deletion": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "Flag indicating the inventory is being deleted."
+        }
+      }
+    },
+    "inventory_sources": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this inventory source.",
+          "max_length": 512
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this inventory source.",
+          "default": ""
+        },
+        "source": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null,
+          "choices": [
+            [
+              "file",
+              "File, Directory or Script"
+            ],
+            [
+              "constructed",
+              "Template additional groups and hostvars at runtime"
+            ],
+            [
+              "scm",
+              "Sourced from a Project"
+            ],
+            [
+              "ec2",
+              "Amazon EC2"
+            ],
+            [
+              "gce",
+              "Google Compute Engine"
+            ],
+            [
+              "azure_rm",
+              "Microsoft Azure Resource Manager"
+            ],
+            [
+              "vmware",
+              "VMware vCenter"
+            ],
+            [
+              "satellite6",
+              "Red Hat Satellite 6"
+            ],
+            [
+              "openstack",
+              "OpenStack"
+            ],
+            [
+              "rhv",
+              "Red Hat Virtualization"
+            ],
+            [
+              "controller",
+              "Red Hat Ansible Automation Platform"
+            ],
+            [
+              "insights",
+              "Red Hat Insights"
+            ]
+          ]
+        },
+        "source_path": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "max_length": 1024,
+          "default": ""
+        },
+        "source_vars": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Inventory source variables in YAML or JSON format.",
+          "default": ""
+        },
+        "scm_branch": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Inventory source SCM branch. Project default used if blank. Only allowed if project allow_override field is set to true.",
+          "max_length": 1024,
+          "default": ""
+        },
+        "credential": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "Cloud credential to use for inventory updates.",
+          "default": null
+        },
+        "enabled_var": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Retrieve the enabled state from the given dict of host variables. The enabled variable may be specified as \"foo.bar\", in which case the lookup will traverse into nested dicts, equivalent to: from_dict.get(\"foo\", {}).get(\"bar\", default)",
+          "default": ""
+        },
+        "enabled_value": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Only used when enabled_var is set. Value when the host is considered enabled. For example if enabled_var=\"status.power_state\"and enabled_value=\"powered_on\" with host variables:{   \"status\": {     \"power_state\": \"powered_on\",     \"created\": \"2020-08-04T18:13:04+00:00\",     \"healthy\": true    },    \"name\": \"foobar\",    \"ip_address\": \"192.168.2.1\"}The host would be marked enabled. If power_state where any value other than powered_on then the host would be disabled when imported. If the key is not found then the host will be enabled",
+          "default": ""
+        },
+        "host_filter": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "This field is deprecated and will be removed in a future release. Regex where only matching hosts will be imported.",
+          "default": ""
+        },
+        "overwrite": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "Overwrite local groups and hosts from remote inventory source.",
+          "default": false
+        },
+        "overwrite_vars": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "Overwrite local variables from remote inventory source.",
+          "default": false
+        },
+        "timeout": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "The amount of time (in seconds) to run before the task is canceled.",
+          "default": 0
+        },
+        "verbosity": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": 1,
+          "choices": [
+            [
+              0,
+              "0 (WARNING)"
+            ],
+            [
+              1,
+              "1 (INFO)"
+            ],
+            [
+              2,
+              "2 (DEBUG)"
+            ]
+          ]
+        },
+        "limit": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Enter host, group or pattern match",
+          "default": ""
+        },
+        "execution_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "The container image to be used for execution."
+        },
+        "inventory": {
+          "type": "id",
+          "required": true,
+          "read_only": false,
+          "help_text": ""
+        },
+        "update_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "update_cache_timeout": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": 0
+        },
+        "source_project": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "Project containing inventory file used as source."
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this inventory source."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this inventory source."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this inventory source."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this inventory source was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this inventory source was last modified."
+        },
+        "custom_virtualenv": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Local absolute file path containing a custom Python virtualenv to use"
+        },
+        "last_job_run": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "last_job_failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "next_job_run": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "status": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "last_update_failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "last_updated": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        }
+      }
+    },
+    "inventory_updates": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this inventory update."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this inventory update."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this inventory update."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this inventory update was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this inventory update was last modified."
+        },
+        "name": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Name of this inventory update."
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Optional description of this inventory update."
+        },
+        "unified_job_template": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "launch_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "status": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "execution_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "The container image to be used for execution."
+        },
+        "failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "started": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job was queued for starting."
+        },
+        "finished": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job finished execution."
+        },
+        "canceled_on": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time when the cancel request was sent."
+        },
+        "elapsed": {
+          "type": "decimal",
+          "required": false,
+          "read_only": true,
+          "help_text": "Elapsed time in seconds that the job ran."
+        },
+        "job_explanation": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "A status field to indicate the state of the job if it wasn't able to run and capture stdout"
+        },
+        "execution_node": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The node the job executed on."
+        },
+        "controller_node": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The instance that managed the execution environment."
+        },
+        "launched_by": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "work_unit_id": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The Receptor work unit ID associated with this job."
+        },
+        "source": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "source_path": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "source_vars": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Inventory source variables in YAML or JSON format."
+        },
+        "scm_branch": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Inventory source SCM branch. Project default used if blank. Only allowed if project allow_override field is set to true."
+        },
+        "credential": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Cloud credential to use for inventory updates."
+        },
+        "enabled_var": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Retrieve the enabled state from the given dict of host variables. The enabled variable may be specified as \"foo.bar\", in which case the lookup will traverse into nested dicts, equivalent to: from_dict.get(\"foo\", {}).get(\"bar\", default)"
+        },
+        "enabled_value": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Only used when enabled_var is set. Value when the host is considered enabled. For example if enabled_var=\"status.power_state\"and enabled_value=\"powered_on\" with host variables:{   \"status\": {     \"power_state\": \"powered_on\",     \"created\": \"2020-08-04T18:13:04+00:00\",     \"healthy\": true    },    \"name\": \"foobar\",    \"ip_address\": \"192.168.2.1\"}The host would be marked enabled. If power_state where any value other than powered_on then the host would be disabled when imported. If the key is not found then the host will be enabled"
+        },
+        "host_filter": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "This field is deprecated and will be removed in a future release. Regex where only matching hosts will be imported."
+        },
+        "overwrite": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "Overwrite local groups and hosts from remote inventory source."
+        },
+        "overwrite_vars": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "Overwrite local variables from remote inventory source."
+        },
+        "custom_virtualenv": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "timeout": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "The amount of time (in seconds) to run before the task is canceled."
+        },
+        "verbosity": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "limit": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Enter host, group or pattern match"
+        },
+        "inventory": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "inventory_source": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "license_error": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "org_host_limit_error": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "source_project_update": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "Inventory files from this Project Update were used for the inventory update."
+        },
+        "instance_group": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "The Instance group the job was run under"
+        },
+        "scm_revision": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The SCM Revision from the Project used for this inventory update.  Only applicable to inventories source from scm"
+        }
+      }
+    },
+    "groups": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this group.",
+          "max_length": 512
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this group.",
+          "default": ""
+        },
+        "inventory": {
+          "type": "id",
+          "required": true,
+          "read_only": false,
+          "help_text": ""
+        },
+        "variables": {
+          "type": "json",
+          "required": false,
+          "read_only": false,
+          "help_text": "Group variables in JSON or YAML format.",
+          "default": ""
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this group."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this group."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this group."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this group was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this group was last modified."
+        }
+      }
+    },
+    "hosts": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this host.",
+          "max_length": 512
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this host.",
+          "default": ""
+        },
+        "inventory": {
+          "type": "id",
+          "required": true,
+          "read_only": false,
+          "help_text": ""
+        },
+        "enabled": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "Is this host online and available for running jobs?",
+          "default": true
+        },
+        "instance_id": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "The value used by the remote inventory source to uniquely identify the host",
+          "max_length": 1024,
+          "default": ""
+        },
+        "variables": {
+          "type": "json",
+          "required": false,
+          "read_only": false,
+          "help_text": "Host variables in JSON or YAML format.",
+          "default": ""
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this host."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this host."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this host."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this host was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this host was last modified."
+        },
+        "has_active_failures": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "has_inventory_sources": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "last_job": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "last_job_host_summary": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "ansible_facts_modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time ansible_facts was last modified."
+        }
+      }
+    },
+    "host_metrics": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this host metric."
+        },
+        "hostname": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this host metric."
+        },
+        "first_automation": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "When the host was first automated against"
+        },
+        "last_automation": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "When the host was last automated against"
+        },
+        "last_deleted": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "When the host was last deleted"
+        },
+        "automated_counter": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "How many times was the host automated"
+        },
+        "deleted_counter": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "How many times was the host deleted"
+        },
+        "deleted": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "Boolean flag saying whether the host is deleted and therefore not counted into the subscription consumption"
+        },
+        "used_in_inventories": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "How many inventories contain this host"
+        }
+      }
+    },
+    "host_metric_summary_monthly": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this host metric summary monthly."
+        },
+        "date": {
+          "type": "date",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "license_consumed": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "How many unique hosts are consumed from the license"
+        },
+        "license_capacity": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "'License capacity as max. number of unique hosts"
+        },
+        "hosts_added": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "How many hosts were added in the associated month, consuming more license capacity"
+        },
+        "hosts_deleted": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "How many hosts were deleted in the associated month, freeing the license capacity"
+        },
+        "indirectly_managed_hosts": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Manually entered number indirectly managed hosts for a certain month"
+        }
+      }
+    },
+    "job_templates": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this job template.",
+          "max_length": 512
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this job template.",
+          "default": ""
+        },
+        "job_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": "run",
+          "choices": [
+            [
+              "run",
+              "Run"
+            ],
+            [
+              "check",
+              "Check"
+            ]
+          ]
+        },
+        "inventory": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": ""
+        },
+        "project": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": ""
+        },
+        "playbook": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "max_length": 1024,
+          "default": ""
+        },
+        "scm_branch": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Branch to use in job run. Project default used if blank. Only allowed if project allow_override field is set to true.",
+          "max_length": 1024,
+          "default": ""
+        },
+        "forks": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": 0
+        },
+        "limit": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": ""
+        },
+        "verbosity": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": 0,
+          "choices": [
+            [
+              0,
+              "0 (Normal)"
+            ],
+            [
+              1,
+              "1 (Verbose)"
+            ],
+            [
+              2,
+              "2 (More Verbose)"
+            ],
+            [
+              3,
+              "3 (Debug)"
+            ],
+            [
+              4,
+              "4 (Connection Debug)"
+            ],
+            [
+              5,
+              "5 (WinRM Debug)"
+            ]
+          ]
+        },
+        "extra_vars": {
+          "type": "json",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": ""
+        },
+        "job_tags": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": ""
+        },
+        "force_handlers": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "skip_tags": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "max_length": 1024,
+          "default": ""
+        },
+        "start_at_task": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "max_length": 1024,
+          "default": ""
+        },
+        "timeout": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "The amount of time (in seconds) to run before the task is canceled.",
+          "default": 0
+        },
+        "use_fact_cache": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "If enabled, the service will act as an Ansible Fact Cache Plugin; persisting facts at the end of a playbook run to the database and caching facts for use by Ansible.",
+          "default": false
+        },
+        "execution_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "The container image to be used for execution."
+        },
+        "host_config_key": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "max_length": 1024,
+          "default": ""
+        },
+        "ask_scm_branch_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_diff_mode_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_variables_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_limit_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_tags_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_skip_tags_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_job_type_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_verbosity_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_inventory_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_credential_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_execution_environment_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_labels_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_forks_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_job_slice_count_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_timeout_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_instance_groups_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "survey_enabled": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "become_enabled": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "diff_mode": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "If enabled, textual changes made to any templated files on the host are shown in the standard output",
+          "default": false
+        },
+        "allow_simultaneous": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "job_slice_count": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "The number of jobs to slice into at runtime. Will cause the Job Template to launch a workflow if value is greater than 1.",
+          "default": 1
+        },
+        "webhook_service": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "Service that webhook requests will be accepted from",
+          "choices": [
+            [
+              "",
+              "---------"
+            ],
+            [
+              "github",
+              "GitHub"
+            ],
+            [
+              "gitlab",
+              "GitLab"
+            ],
+            [
+              "bitbucket_dc",
+              "BitBucket DataCenter"
+            ]
+          ]
+        },
+        "webhook_credential": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "Personal Access Token for posting back the status to the service API"
+        },
+        "prevent_instance_group_fallback": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "If enabled, the job template will prevent adding any inventory or organization instance groups to the list of preferred instances groups to run on.If this setting is enabled and you provided an empty list, the global instance groups will be applied.",
+          "default": false
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this job template."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this job template."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this job template."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this job template was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this job template was last modified."
+        },
+        "organization": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "The organization used to determine access to this template."
+        },
+        "last_job_run": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "last_job_failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "next_job_run": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "status": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "custom_virtualenv": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Local absolute file path containing a custom Python virtualenv to use"
+        }
+      }
+    },
+    "jobs": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this job."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this job."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this job."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this job was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this job was last modified."
+        },
+        "name": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Name of this job."
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Optional description of this job."
+        },
+        "unified_job_template": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "launch_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "status": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "execution_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "The container image to be used for execution."
+        },
+        "failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "started": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job was queued for starting."
+        },
+        "finished": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job finished execution."
+        },
+        "canceled_on": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time when the cancel request was sent."
+        },
+        "elapsed": {
+          "type": "decimal",
+          "required": false,
+          "read_only": true,
+          "help_text": "Elapsed time in seconds that the job ran."
+        },
+        "job_explanation": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "A status field to indicate the state of the job if it wasn't able to run and capture stdout"
+        },
+        "execution_node": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The node the job executed on."
+        },
+        "controller_node": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The instance that managed the execution environment."
+        },
+        "launched_by": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "work_unit_id": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The Receptor work unit ID associated with this job."
+        },
+        "job_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "inventory": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "project": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "playbook": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "scm_branch": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Branch to use in job run. Project default used if blank. Only allowed if project allow_override field is set to true."
+        },
+        "forks": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "limit": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "verbosity": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "extra_vars": {
+          "type": "json",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "job_tags": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "force_handlers": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "skip_tags": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "start_at_task": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "timeout": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "The amount of time (in seconds) to run before the task is canceled."
+        },
+        "use_fact_cache": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "If enabled, the service will act as an Ansible Fact Cache Plugin; persisting facts at the end of a playbook run to the database and caching facts for use by Ansible."
+        },
+        "organization": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "The organization used to determine access to this unified job."
+        },
+        "job_template": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "passwords_needed_to_start": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "allow_simultaneous": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "artifacts": {
+          "type": "json",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "scm_revision": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The SCM Revision from the Project used for this job, if available"
+        },
+        "instance_group": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "The Instance group the job was run under"
+        },
+        "diff_mode": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "If enabled, textual changes made to any templated files on the host are shown in the standard output"
+        },
+        "job_slice_number": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "If part of a sliced job, the ID of the inventory slice operated on. If not part of sliced job, parameter is not used."
+        },
+        "job_slice_count": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "If ran as part of sliced jobs, the total number of slices. If 1, job is not part of a sliced job."
+        },
+        "webhook_service": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Service that webhook requests will be accepted from"
+        },
+        "webhook_credential": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "Personal Access Token for posting back the status to the service API"
+        },
+        "webhook_guid": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Unique identifier of the event that triggered this webhook"
+        }
+      }
+    },
+    "ad_hoc_commands": {
+      "fields": {
+        "execution_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "The container image to be used for execution."
+        },
+        "job_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": "run",
+          "choices": [
+            [
+              "run",
+              "Run"
+            ],
+            [
+              "check",
+              "Check"
+            ]
+          ]
+        },
+        "inventory": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": ""
+        },
+        "limit": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": ""
+        },
+        "credential": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": ""
+        },
+        "module_name": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": "command",
+          "choices": [
+            [
+              "command",
+              "command"
+            ],
+            [
+              "shell",
+              "shell"
+            ],
+            [
+              "yum",
+              "yum"
+            ],
+            [
+              "apt",
+              "apt"
+            ],
+            [
+              "apt_key",
+              "apt_key"
+            ],
+            [
+              "apt_repository",
+              "apt_repository"
+            ],
+            [
+              "apt_rpm",
+              "apt_rpm"
+            ],
+            [
+              "service",
+              "service"
+            ],
+            [
+              "group",
+              "group"
+            ],
+            [
+              "user",
+              "user"
+            ],
+            [
+              "mount",
+              "mount"
+            ],
+            [
+              "ping",
+              "ping"
+            ],
+            [
+              "selinux",
+              "selinux"
+            ],
+            [
+              "setup",
+              "setup"
+            ],
+            [
+              "win_ping",
+              "win_ping"
+            ],
+            [
+              "win_service",
+              "win_service"
+            ],
+            [
+              "win_updates",
+              "win_updates"
+            ],
+            [
+              "win_group",
+              "win_group"
+            ],
+            [
+              "win_user",
+              "win_user"
+            ]
+          ]
+        },
+        "module_args": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": ""
+        },
+        "forks": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": 0
+        },
+        "verbosity": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": 0,
+          "choices": [
+            [
+              0,
+              "0 (Normal)"
+            ],
+            [
+              1,
+              "1 (Verbose)"
+            ],
+            [
+              2,
+              "2 (More Verbose)"
+            ],
+            [
+              3,
+              "3 (Debug)"
+            ],
+            [
+              4,
+              "4 (Connection Debug)"
+            ],
+            [
+              5,
+              "5 (WinRM Debug)"
+            ]
+          ]
+        },
+        "extra_vars": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": ""
+        },
+        "become_enabled": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "diff_mode": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this ad hoc command."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this ad hoc command."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this ad hoc command."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this ad hoc command was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this ad hoc command was last modified."
+        },
+        "name": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Name of this ad hoc command."
+        },
+        "launch_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "status": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "started": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job was queued for starting."
+        },
+        "finished": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job finished execution."
+        },
+        "canceled_on": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time when the cancel request was sent."
+        },
+        "elapsed": {
+          "type": "decimal",
+          "required": false,
+          "read_only": true,
+          "help_text": "Elapsed time in seconds that the job ran."
+        },
+        "job_explanation": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "A status field to indicate the state of the job if it wasn't able to run and capture stdout"
+        },
+        "execution_node": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The node the job executed on."
+        },
+        "controller_node": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The instance that managed the execution environment."
+        },
+        "launched_by": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "work_unit_id": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The Receptor work unit ID associated with this job."
+        }
+      }
+    },
+    "system_job_templates": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this system job template."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this system job template."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this system job template."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this system job template was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this system job template was last modified."
+        },
+        "name": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Name of this system job template."
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Optional description of this system job template."
+        },
+        "last_job_run": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "last_job_failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "next_job_run": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "status": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "execution_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "The container image to be used for execution."
+        },
+        "job_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        }
+      }
+    },
+    "system_jobs": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this system job."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this system job."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this system job."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this system job was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this system job was last modified."
+        },
+        "name": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Name of this system job."
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Optional description of this system job."
+        },
+        "unified_job_template": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "launch_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "status": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "execution_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "The container image to be used for execution."
+        },
+        "failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "started": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job was queued for starting."
+        },
+        "finished": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job finished execution."
+        },
+        "canceled_on": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time when the cancel request was sent."
+        },
+        "elapsed": {
+          "type": "decimal",
+          "required": false,
+          "read_only": true,
+          "help_text": "Elapsed time in seconds that the job ran."
+        },
+        "job_explanation": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "A status field to indicate the state of the job if it wasn't able to run and capture stdout"
+        },
+        "execution_node": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The node the job executed on."
+        },
+        "launched_by": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "work_unit_id": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The Receptor work unit ID associated with this job."
+        },
+        "system_job_template": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "job_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "extra_vars": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "result_stdout": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        }
+      }
+    },
+    "schedules": {
+      "fields": {
+        "rrule": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "A value representing the schedules iCal recurrence rule."
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this schedule.",
+          "max_length": 512
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this schedule.",
+          "default": ""
+        },
+        "extra_data": {
+          "type": "json",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": {}
+        },
+        "inventory": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "Inventory applied as a prompt, assuming job template prompts for inventory"
+        },
+        "scm_branch": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "job_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null,
+          "choices": [
+            [
+              null,
+              "---------"
+            ],
+            [
+              "",
+              "---------"
+            ],
+            [
+              "run",
+              "Run"
+            ],
+            [
+              "check",
+              "Check"
+            ]
+          ]
+        },
+        "job_tags": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "skip_tags": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "limit": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "diff_mode": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "verbosity": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null,
+          "choices": [
+            [
+              null,
+              "---------"
+            ],
+            [
+              0,
+              "0 (Normal)"
+            ],
+            [
+              1,
+              "1 (Verbose)"
+            ],
+            [
+              2,
+              "2 (More Verbose)"
+            ],
+            [
+              3,
+              "3 (Debug)"
+            ],
+            [
+              4,
+              "4 (Connection Debug)"
+            ],
+            [
+              5,
+              "5 (WinRM Debug)"
+            ]
+          ]
+        },
+        "execution_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "The container image to be used for execution."
+        },
+        "forks": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "job_slice_count": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "timeout": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "unified_job_template": {
+          "type": "id",
+          "required": true,
+          "read_only": false,
+          "help_text": ""
+        },
+        "enabled": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "Enables processing of this schedule.",
+          "default": true
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this schedule."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this schedule."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this schedule."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this schedule was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this schedule was last modified."
+        },
+        "dtstart": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The first occurrence of the schedule occurs on or after this time."
+        },
+        "dtend": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The last occurrence of the schedule occurs before this time, aftewards the schedule expires."
+        },
+        "next_run": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The next time that the scheduled action will run."
+        },
+        "timezone": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": "The timezone this schedule runs in. This field is extracted from the RRULE. If the timezone in the RRULE is a link to another timezone, the link will be reflected in this field."
+        },
+        "until": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date this schedule will end. This field is computed from the RRULE. If the schedule does not end an empty string will be returned"
+        }
+      }
+    },
+    "roles": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this role."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this role."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this role."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "name": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": "Name of this role."
+        },
+        "description": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": "Optional description of this role."
+        }
+      }
+    },
+    "notification_templates": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this notification template.",
+          "max_length": 512
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this notification template.",
+          "default": ""
+        },
+        "organization": {
+          "type": "id",
+          "required": true,
+          "read_only": false,
+          "help_text": ""
+        },
+        "notification_type": {
+          "type": "choice",
+          "required": true,
+          "read_only": false,
+          "help_text": "",
+          "choices": [
+            [
+              "email",
+              "Email"
+            ],
+            [
+              "grafana",
+              "Grafana"
+            ],
+            [
+              "irc",
+              "IRC"
+            ],
+            [
+              "mattermost",
+              "Mattermost"
+            ],
+            [
+              "pagerduty",
+              "Pagerduty"
+            ],
+            [
+              "rocketchat",
+              "Rocket.Chat"
+            ],
+            [
+              "slack",
+              "Slack"
+            ],
+            [
+              "twilio",
+              "Twilio"
+            ],
+            [
+              "webhook",
+              "Webhook"
+            ]
+          ]
+        },
+        "notification_configuration": {
+          "type": "json",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": {}
+        },
+        "messages": {
+          "type": "json",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional custom messages for notification template.",
+          "default": {
+            "started": null,
+            "success": null,
+            "error": null,
+            "workflow_approval": null
+          }
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this notification template."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this notification template."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this notification template."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this notification template was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this notification template was last modified."
+        }
+      }
+    },
+    "notifications": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this notification."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this notification."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this notification."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this notification was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this notification was last modified."
+        },
+        "notification_template": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "error": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "status": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "notifications_sent": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "notification_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "recipients": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "subject": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "body": {
+          "type": "json",
+          "required": false,
+          "read_only": true,
+          "help_text": "Notification body"
+        }
+      }
+    },
+    "labels": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this label.",
+          "max_length": 512
+        },
+        "organization": {
+          "type": "id",
+          "required": true,
+          "read_only": false,
+          "help_text": "Organization this label belongs to."
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this label."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this label."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this label."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this label was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this label was last modified."
+        }
+      }
+    },
+    "unified_job_templates": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this unified job template."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this unified job template."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this unified job template."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this unified job template was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this unified job template was last modified."
+        },
+        "name": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Name of this unified job template."
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Optional description of this unified job template."
+        },
+        "last_job_run": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "last_job_failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "next_job_run": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "status": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "execution_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "The container image to be used for execution."
+        }
+      }
+    },
+    "unified_jobs": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this unified job."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this unified job."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this unified job."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this unified job was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this unified job was last modified."
+        },
+        "name": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Name of this unified job."
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Optional description of this unified job."
+        },
+        "unified_job_template": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "launch_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "status": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "execution_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "The container image to be used for execution."
+        },
+        "failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "started": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job was queued for starting."
+        },
+        "finished": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job finished execution."
+        },
+        "canceled_on": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time when the cancel request was sent."
+        },
+        "elapsed": {
+          "type": "decimal",
+          "required": false,
+          "read_only": true,
+          "help_text": "Elapsed time in seconds that the job ran."
+        },
+        "job_explanation": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "A status field to indicate the state of the job if it wasn't able to run and capture stdout"
+        },
+        "execution_node": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The node the job executed on."
+        },
+        "controller_node": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The instance that managed the execution environment."
+        },
+        "launched_by": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "work_unit_id": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The Receptor work unit ID associated with this job."
+        }
+      }
+    },
+    "activity_stream": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this activity stream."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this activity stream."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this activity stream."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "timestamp": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "operation": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "The action taken with respect to the given object(s)."
+        },
+        "changes": {
+          "type": "json",
+          "required": false,
+          "read_only": true,
+          "help_text": "A summary of the new and changed values when an object is created, updated, or deleted"
+        },
+        "object1": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "For create, update, and delete events this is the object type that was affected. For associate and disassociate events this is the object type associated or disassociated with object2."
+        },
+        "object2": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Unpopulated for create, update, and delete events. For associate and disassociate events this is the object type that object1 is being associated with."
+        },
+        "object_association": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": "When present, shows the field name of the role or relationship that changed."
+        },
+        "action_node": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The cluster node the activity took place on."
+        },
+        "object_type": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": "When present, shows the model on which the role or relationship was defined."
+        }
+      }
+    },
+    "workflow_job_templates": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "read_only": false,
+          "help_text": "Name of this workflow job template.",
+          "max_length": 512
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "Optional description of this workflow job template.",
+          "default": ""
+        },
+        "extra_vars": {
+          "type": "json",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": ""
+        },
+        "organization": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "The organization used to determine access to this template."
+        },
+        "survey_enabled": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "allow_simultaneous": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_variables_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "inventory": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "Inventory applied as a prompt, assuming job template prompts for inventory"
+        },
+        "limit": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "scm_branch": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "ask_inventory_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_scm_branch_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_limit_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "webhook_service": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "Service that webhook requests will be accepted from",
+          "choices": [
+            [
+              "",
+              "---------"
+            ],
+            [
+              "github",
+              "GitHub"
+            ],
+            [
+              "gitlab",
+              "GitLab"
+            ],
+            [
+              "bitbucket_dc",
+              "BitBucket DataCenter"
+            ]
+          ]
+        },
+        "webhook_credential": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "Personal Access Token for posting back the status to the service API"
+        },
+        "ask_labels_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_skip_tags_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "ask_tags_on_launch": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": false
+        },
+        "skip_tags": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "job_tags": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this workflow job template."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this workflow job template."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this workflow job template."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this workflow job template was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this workflow job template was last modified."
+        },
+        "last_job_run": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "last_job_failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "next_job_run": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "status": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        }
+      }
+    },
+    "workflow_jobs": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this workflow job."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this workflow job."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this workflow job."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this workflow job was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this workflow job was last modified."
+        },
+        "name": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Name of this workflow job."
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Optional description of this workflow job."
+        },
+        "unified_job_template": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "launch_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "status": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "started": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job was queued for starting."
+        },
+        "finished": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job finished execution."
+        },
+        "canceled_on": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time when the cancel request was sent."
+        },
+        "elapsed": {
+          "type": "decimal",
+          "required": false,
+          "read_only": true,
+          "help_text": "Elapsed time in seconds that the job ran."
+        },
+        "job_explanation": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "A status field to indicate the state of the job if it wasn't able to run and capture stdout"
+        },
+        "launched_by": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "work_unit_id": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The Receptor work unit ID associated with this job."
+        },
+        "workflow_job_template": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "extra_vars": {
+          "type": "json",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "allow_simultaneous": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "job_template": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "If automatically created for a sliced job run, the job template the workflow job was created from."
+        },
+        "is_sliced_job": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "inventory": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "Inventory applied as a prompt, assuming job template prompts for inventory"
+        },
+        "limit": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "scm_branch": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "webhook_service": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Service that webhook requests will be accepted from"
+        },
+        "webhook_credential": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "Personal Access Token for posting back the status to the service API"
+        },
+        "webhook_guid": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Unique identifier of the event that triggered this webhook"
+        },
+        "skip_tags": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "job_tags": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        }
+      }
+    },
+    "workflow_approvals": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this workflow approval."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this workflow approval."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this workflow approval."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this workflow approval was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this workflow approval was last modified."
+        },
+        "name": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Name of this workflow approval."
+        },
+        "description": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "Optional description of this workflow approval."
+        },
+        "unified_job_template": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "launch_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "status": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "execution_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "The container image to be used for execution."
+        },
+        "failed": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "started": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job was queued for starting."
+        },
+        "finished": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time the job finished execution."
+        },
+        "canceled_on": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "The date and time when the cancel request was sent."
+        },
+        "elapsed": {
+          "type": "decimal",
+          "required": false,
+          "read_only": true,
+          "help_text": "Elapsed time in seconds that the job ran."
+        },
+        "job_explanation": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "A status field to indicate the state of the job if it wasn't able to run and capture stdout"
+        },
+        "launched_by": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "work_unit_id": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "The Receptor work unit ID associated with this job."
+        },
+        "can_approve_or_deny": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "approval_expiration": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "timed_out": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        }
+      }
+    },
+    "workflow_job_template_nodes": {
+      "fields": {
+        "extra_data": {
+          "type": "json",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": {}
+        },
+        "inventory": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "Inventory applied as a prompt, assuming job template prompts for inventory"
+        },
+        "scm_branch": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "job_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null,
+          "choices": [
+            [
+              null,
+              "---------"
+            ],
+            [
+              "",
+              "---------"
+            ],
+            [
+              "run",
+              "Run"
+            ],
+            [
+              "check",
+              "Check"
+            ]
+          ]
+        },
+        "job_tags": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "skip_tags": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "limit": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "diff_mode": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "verbosity": {
+          "type": "choice",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null,
+          "choices": [
+            [
+              null,
+              "---------"
+            ],
+            [
+              0,
+              "0 (Normal)"
+            ],
+            [
+              1,
+              "1 (Verbose)"
+            ],
+            [
+              2,
+              "2 (More Verbose)"
+            ],
+            [
+              3,
+              "3 (Debug)"
+            ],
+            [
+              4,
+              "4 (Connection Debug)"
+            ],
+            [
+              5,
+              "5 (WinRM Debug)"
+            ]
+          ]
+        },
+        "execution_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": "The container image to be used for execution."
+        },
+        "forks": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "job_slice_count": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "timeout": {
+          "type": "integer",
+          "required": false,
+          "read_only": false,
+          "help_text": "",
+          "default": null
+        },
+        "workflow_job_template": {
+          "type": "id",
+          "required": true,
+          "read_only": false,
+          "help_text": ""
+        },
+        "unified_job_template": {
+          "type": "id",
+          "required": false,
+          "read_only": false,
+          "help_text": ""
+        },
+        "all_parents_must_converge": {
+          "type": "boolean",
+          "required": false,
+          "read_only": false,
+          "help_text": "If enabled then the node will only run if all of the parent nodes have met the criteria to reach this node",
+          "default": false
+        },
+        "identifier": {
+          "type": "string",
+          "required": false,
+          "read_only": false,
+          "help_text": "An identifier for this node that is unique within its workflow. It is copied to workflow job nodes corresponding to this node.",
+          "max_length": 512,
+          "default": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+        },
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this workflow job template node."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this workflow job template node."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this workflow job template node."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this workflow job template node was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this workflow job template node was last modified."
+        },
+        "success_nodes": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "failure_nodes": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "always_nodes": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        }
+      }
+    },
+    "workflow_job_nodes": {
+      "fields": {
+        "id": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": "Database ID for this workflow job node."
+        },
+        "type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data type for this workflow job node."
+        },
+        "url": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "URL for this workflow job node."
+        },
+        "related": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with URLs of related resources."
+        },
+        "summary_fields": {
+          "type": "object",
+          "required": false,
+          "read_only": true,
+          "help_text": "Data structure with name/description for related resources.  The output for some objects may be limited for performance reasons."
+        },
+        "created": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this workflow job node was created."
+        },
+        "modified": {
+          "type": "datetime",
+          "required": false,
+          "read_only": true,
+          "help_text": "Timestamp when this workflow job node was last modified."
+        },
+        "extra_data": {
+          "type": "json",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "inventory": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "Inventory applied as a prompt, assuming job template prompts for inventory"
+        },
+        "scm_branch": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "job_type": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "job_tags": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "skip_tags": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "limit": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "diff_mode": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "verbosity": {
+          "type": "choice",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "execution_environment": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": "The container image to be used for execution."
+        },
+        "forks": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "job_slice_count": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "timeout": {
+          "type": "integer",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "job": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "workflow_job": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "unified_job_template": {
+          "type": "id",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "success_nodes": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "failure_nodes": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "always_nodes": {
+          "type": "field",
+          "required": false,
+          "read_only": true,
+          "help_text": ""
+        },
+        "all_parents_must_converge": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "If enabled then the node will only run if all of the parent nodes have met the criteria to reach this node"
+        },
+        "do_not_run": {
+          "type": "boolean",
+          "required": false,
+          "read_only": true,
+          "help_text": "Indicates that a job will not be created when True. Workflow runtime semantics will mark this True if the node is in a path that will decidedly not be ran. A value of False means the node may not run."
+        },
+        "identifier": {
+          "type": "string",
+          "required": false,
+          "read_only": true,
+          "help_text": "An identifier coresponding to the workflow job template node that this node was created from."
+        }
+      }
+    }
+  }
+}

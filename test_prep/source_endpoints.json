@@ -1,0 +1,295 @@
+{
+  "api_version": "4.5.30",
+  "discovered_at": "2026-03-03T20:13:42.141962+00:00",
+  "base_url": "https://localhost:8443/api/v2",
+  "endpoints": {
+    "ping": {
+      "url": "ping/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "instances": {
+      "url": "instances/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "instance_groups": {
+      "url": "instance_groups/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "config": {
+      "url": "config/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "settings": {
+      "url": "settings/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "me": {
+      "url": "me/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "dashboard": {
+      "url": "dashboard/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "organizations": {
+      "url": "organizations/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "users": {
+      "url": "users/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "execution_environments": {
+      "url": "execution_environments/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "projects": {
+      "url": "projects/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "project_updates": {
+      "url": "project_updates/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "teams": {
+      "url": "teams/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "credentials": {
+      "url": "credentials/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "credential_types": {
+      "url": "credential_types/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "credential_input_sources": {
+      "url": "credential_input_sources/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "applications": {
+      "url": "applications/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "tokens": {
+      "url": "tokens/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "metrics": {
+      "url": "metrics/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "inventory": {
+      "url": "inventories/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "constructed_inventory": {
+      "url": "constructed_inventories/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "inventory_sources": {
+      "url": "inventory_sources/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "inventory_updates": {
+      "url": "inventory_updates/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "groups": {
+      "url": "groups/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "hosts": {
+      "url": "hosts/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "host_metrics": {
+      "url": "host_metrics/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "host_metric_summary_monthly": {
+      "url": "host_metric_summary_monthly/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "job_templates": {
+      "url": "job_templates/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "jobs": {
+      "url": "jobs/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "ad_hoc_commands": {
+      "url": "ad_hoc_commands/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "system_job_templates": {
+      "url": "system_job_templates/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "system_jobs": {
+      "url": "system_jobs/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "schedules": {
+      "url": "schedules/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "roles": {
+      "url": "roles/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "notification_templates": {
+      "url": "notification_templates/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "notifications": {
+      "url": "notifications/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "labels": {
+      "url": "labels/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "unified_job_templates": {
+      "url": "unified_job_templates/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "unified_jobs": {
+      "url": "unified_jobs/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "activity_stream": {
+      "url": "activity_stream/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "workflow_job_templates": {
+      "url": "workflow_job_templates/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "workflow_jobs": {
+      "url": "workflow_jobs/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "workflow_approvals": {
+      "url": "workflow_approvals/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "workflow_job_template_nodes": {
+      "url": "workflow_job_template_nodes/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "workflow_job_nodes": {
+      "url": "workflow_job_nodes/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "mesh_visualizer": {
+      "url": "mesh_visualizer/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "bulk": {
+      "url": "bulk/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    },
+    "analytics": {
+      "url": "analytics/",
+      "methods": null,
+      "supports_filtering": null,
+      "supports_pagination": null
+    }
+  }
+}

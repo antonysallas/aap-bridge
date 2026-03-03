@@ -1,0 +1,12 @@
+{
+  "export_timestamp": "2026-03-03T20:45:31.509617",
+  "source_url": "https://localhost:8443/api/v2",
+  "total_resources": 8,
+  "records_per_file": 1000,
+  "resource_types": {
+    "credentials": {
+      "count": 8,
+      "files": 1
+    }
+  }
+}
