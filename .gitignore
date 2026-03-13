@@ -209,13 +209,15 @@ docs/*.pdf
 archive/
 *.bak
 
-# AI Development Workflow (private - not tracked in public repos)
 .claude/
+.codex/
 .gemini/
+AGENTS.md
 CLAUDE.md
 GEMINI.md
 .mcp.json
 workflow/
+analysis/
 
 # Backup files
 bak/
