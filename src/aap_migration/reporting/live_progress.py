@@ -139,14 +139,13 @@ class PhaseProgressState:
     @property
     def status_text(self) -> str:
         """Status description for display."""
-        # Total processed includes completed + skipped for progress calculation
-        total_processed = self.completed + self.skipped
+        # Total processed includes completed + skipped + failed
+        total_processed = self.completed + self.skipped + self.failed
         if total_processed >= self.total_items:
             if self.failed > 0:
                 return "complete_with_issues"
-            # Skips without errors are considered complete (green checkmark)
             return "complete"
-        elif self.completed == 0 and self.skipped == 0:
+        elif self.completed == 0 and self.skipped == 0 and self.failed == 0:
             return "pending"
         else:
             return "running"
@@ -154,14 +153,13 @@ class PhaseProgressState:
     @property
     def status_color(self) -> str:
         """Color for status based on current state."""
-        # Total processed includes completed + skipped for progress calculation
-        total_processed = self.completed + self.skipped
+        # Total processed includes completed + skipped + failed
+        total_processed = self.completed + self.skipped + self.failed
         if total_processed >= self.total_items:
             if self.failed > 0:
                 return MigrationColors.ERROR
-            # Skips without errors are considered complete (green)
             return MigrationColors.COMPLETE
-        elif self.completed == 0 and self.skipped == 0:
+        elif self.completed == 0 and self.skipped == 0 and self.failed == 0:
             return MigrationColors.PENDING
         elif self.failed > 0:
             return MigrationColors.WARNING
@@ -586,14 +584,19 @@ class MigrationProgressDisplay:
             task_id = self.phase_tasks[phase_id]
 
             # Mark the specific phase's task as complete
-            # Use total processed (completed + skipped) for progress bar to show 100% when done
-            # Also use state's status_text which handles "complete_with_issues"
+            # When explicitly completed, always show as complete (✓) unless there were errors
             total_processed = state.completed + state.skipped
+            final_status = state.status_text
+            final_color = state.status_color
+            # If no items were tracked but phase is explicitly completed, force complete status
+            if final_status == "pending":
+                final_status = "complete"
+                final_color = MigrationColors.COMPLETE
             self.phase_progress.update(
                 task_id,
                 completed=total_processed if total_processed > 0 else state.total_items,
-                status_text=state.status_text,  # Uses "complete_with_issues" if errors
-                status=f"[{state.status_color}]{state.status_text}[/{state.status_color}]",
+                status_text=final_status,
+                status=f"[{final_color}]{final_status}[/{final_color}]",
                 metrics=state.formatted_metrics,
             )
 

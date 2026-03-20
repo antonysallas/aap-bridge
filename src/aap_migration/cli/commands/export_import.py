@@ -978,7 +978,7 @@ def import_cmd(
     # Filter by phase if specified
     if phase == "phase1":
         types_to_import = [t for t in types_to_import if t in PHASE1_RESOURCE_TYPES]
-        echo_info("Phase 1 import: credential_types/credentials will be PATCHed (pre-created)")
+        logger.info("Phase 1 import: credential_types/credentials will be PATCHed (pre-created)")
     elif phase == "phase2":
         # Phase 2 includes Phase 3 resources (merged)
         types_to_import = [t for t in types_to_import if t in PHASE3_RESOURCE_TYPES]
@@ -1044,8 +1044,10 @@ def import_cmd(
     # Confirmation check (unless --force, --yes, or --dry-run)
     if not force and not yes and not dry_run:
         click.echo()
-        echo_info(
-            f"Importing {len(types_to_import)} resource types ({format_count(total_resources_to_import)} resources)"
+        logger.info(
+            "import_summary",
+            resource_type_count=len(types_to_import),
+            total_resources=total_resources_to_import,
         )
         if not click.confirm("Proceed with import?"):
             echo_info("Import cancelled")
