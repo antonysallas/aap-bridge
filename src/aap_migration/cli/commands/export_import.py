@@ -1300,6 +1300,21 @@ def import_cmd(
         for rtype in types_to_import:
             stats = metadata.get("resource_types", {}).get(rtype, {})
             count = stats.get("count", 0)
+
+            # For accurate counts, read actual file contents instead of metadata
+            # (metadata count may not reflect post-transform splits like constructed inventories)
+            rtype_dir = input_dir / rtype
+            if rtype_dir.exists():
+                actual_count = 0
+                for json_file in sorted(rtype_dir.glob(f"{rtype}_*.json")):
+                    try:
+                        with open(json_file) as f:
+                            actual_count += len(json.load(f))
+                    except Exception:
+                        pass
+                if actual_count > 0:
+                    count = actual_count
+
             description = rtype.replace("_", " ").title()
             phases.append((rtype, description, count))
 
