@@ -338,6 +338,7 @@ READ_ONLY_ENDPOINTS = {
     "activity_stream",  # Audit log (historical)
     "unified_job_templates",  # Meta-endpoint (virtual)
     "unified_jobs",  # Meta-endpoint (virtual)
+    "receptor_addresses",  # Receptor mesh addresses (infrastructure, read-only)
 }
 
 
