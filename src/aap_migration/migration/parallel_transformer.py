@@ -186,8 +186,12 @@ class ParallelTransformCoordinator:
                             filtered_resources.append(resource)
                     raw_resources = filtered_resources
 
-                # 3. Filter out dynamic hosts
-                if resource_type == "hosts":
+                # 3. Filter out dynamic hosts (only when config flag is set)
+                if (
+                    resource_type == "hosts"
+                    and self.config
+                    and self.config.export.skip_dynamic_hosts
+                ):
                     filtered_resources = []
                     for resource in raw_resources:
                         if resource.get("has_inventory_sources"):
@@ -264,6 +268,29 @@ class ParallelTransformCoordinator:
                                 mapped_count += 1
                     except Exception as e:
                         logger.warning("populate_target_id_failed", error=str(e))
+
+                # Split constructed inventories into separate directory
+                if resource_type == "inventories":
+                    constructed_batch = [
+                        r for r in transformed_batch
+                        if r.get("kind") == "constructed"
+                    ]
+                    if constructed_batch:
+                        ci_dir = self.output_dir / "constructed_inventories"
+                        ci_dir.mkdir(parents=True, exist_ok=True)
+                        ci_file = ci_dir / f"constructed_inventories_{output_file_num + 1:04d}.json"
+                        with open(ci_file, "w") as f:
+                            json.dump(constructed_batch, f, indent=2)
+                        logger.info(
+                            "constructed_inventories_split",
+                            count=len(constructed_batch),
+                            file=str(ci_file),
+                        )
+                        # Remove constructed from regular batch
+                        transformed_batch = [
+                            r for r in transformed_batch
+                            if r.get("kind") != "constructed"
+                        ]
 
                 # Write output file (even if empty)
                 output_file_num += 1
