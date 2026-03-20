@@ -40,6 +40,9 @@ logger = get_logger(__name__)
 NON_DELETABLE_RESOURCES = [
     "labels",  # Labels don't support DELETE via API (405 Method Not Allowed)
     "system_job_templates",  # System job templates are built-in and cannot be deleted
+    "role_definitions",  # System-managed roles cannot be deleted (400: Role is managed by the system)
+    "role_user_assignments",  # Assignments are removed when the role/user/resource is deleted
+    "role_team_assignments",  # Assignments are removed when the role/team/resource is deleted
 ]
 
 
