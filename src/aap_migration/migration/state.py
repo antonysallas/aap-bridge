@@ -695,10 +695,14 @@ class MigrationState:
                     )
 
                     if progress is None:
-                        raise StateError(
-                            f"Cannot mark as failed: Resource not found "
-                            f"(type={resource_type}, source_id={source_id})"
+                        logger.warning(
+                            "Cannot mark as failed: resource not tracked "
+                            "in progress table, skipping",
+                            resource_type=resource_type,
+                            source_id=source_id,
+                            error_message=error_message,
                         )
+                        return
 
                     # Update progress
                     progress.status = "failed"
@@ -753,10 +757,14 @@ class MigrationState:
                     )
 
                     if progress is None:
-                        raise StateError(
-                            f"Cannot mark as skipped: Resource not found "
-                            f"(type={resource_type}, source_id={source_id})"
+                        logger.warning(
+                            "Cannot mark as skipped: resource not tracked "
+                            "in progress table, skipping",
+                            resource_type=resource_type,
+                            source_id=source_id,
+                            reason=reason,
                         )
+                        return
 
                     # Update progress
                     progress.status = "skipped"

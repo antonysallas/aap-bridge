@@ -177,7 +177,7 @@ advanced:
 # ============================================================================
 export:
   skip_dynamic_hosts: true # DEFAULT: Skip hosts with inventory sources (filter: inventory_sources__isnull=true)
-  skip_smart_inventories: true # DEFAULT: Skip inventories with sources or pending deletion (filter: inventory_sources__isnull=true&not__pending_deletion=true)
+  skip_smart_inventories: false # CHANGED: Export ALL inventories including those with inventory sources
   skip_inventory_sources: []
   skip_pending_deletion_inventories: true
   skip_hosts_with_inventory_sources: true
