@@ -432,14 +432,12 @@ def export(
                         resource_type=rtype,
                         filter="inventory_sources__isnull=true (exclude dynamic hosts)",
                     )
-                if rtype == "inventories" and ctx.config.export.skip_smart_inventories:
-                    count_filters["inventory_sources__isnull"] = "true"
-                    count_filters["not__pending_deletion"] = "true"
-                    count_filters["kind"] = ""
+                if rtype == "inventories":
+                    count_filters["pending_deletion"] = "false"
                     logger.info(
-                        "export_count_applying_smart_inventory_filter",
+                        "export_count_applying_inventory_filter",
                         resource_type=rtype,
-                        filter="inventory_sources__isnull=true&not__pending_deletion=true",
+                        filter="pending_deletion=false",
                     )
 
                 # Get count from API WITH FILTERS
@@ -1459,8 +1457,13 @@ def import_cmd(
                             "job_templates": "import_job_templates",
                             "workflow_job_templates": "import_workflow_job_templates",
                             "schedules": "import_schedules",
+                            # Constructed inventories
+                            "constructed_inventories": "import_constructed_inventories",
                             # RBAC
                             "rbac": "import_rbac_assignments",
+                            "role_definitions": "import_role_definitions",
+                            "role_user_assignments": "import_role_user_assignments",
+                            "role_team_assignments": "import_role_team_assignments",
                         }
 
                         method_name = method_map.get(rtype)

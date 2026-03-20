@@ -3064,6 +3064,460 @@ class CredentialInputSourceImporter(ResourceImporter):
         return results
 
 
+class ConstructedInventoryImporter(ResourceImporter):
+    """Importer for constructed inventory resources.
+
+    Constructed inventories are imported similarly to regular inventories
+    but POST to the constructed_inventories/ endpoint.
+    Saves id_mappings as 'inventories' type for downstream resolution.
+    """
+
+    DEPENDENCIES = {
+        "organization": "organizations",
+    }
+
+    async def import_constructed_inventories(
+        self,
+        inventories: list[dict[str, Any]],
+        progress_callback: Callable[[int, int, int], None] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Import constructed inventories.
+
+        Args:
+            inventories: List of constructed inventory data
+            progress_callback: Optional callback for progress updates
+
+        Returns:
+            List of successfully imported inventory data
+        """
+        results = []
+
+        for inventory in inventories:
+            source_id = inventory.pop("_source_id", inventory.get("id"))
+
+            # Remove 'kind' field before POST - API sets it automatically
+            inventory.pop("kind", None)
+
+            # Resolve organization
+            org_source_id = inventory.get("organization")
+            if org_source_id:
+                target_org_id = self.state.get_mapped_id("organizations", org_source_id)
+                if target_org_id:
+                    inventory["organization"] = target_org_id
+                else:
+                    logger.warning(
+                        "constructed_inventory_org_not_found",
+                        source_id=source_id,
+                        org_source_id=org_source_id,
+                    )
+                    self.stats["error_count"] += 1
+                    if progress_callback:
+                        progress_callback(
+                            self.stats["imported_count"],
+                            self.stats["error_count"],
+                            self.stats["skipped_count"],
+                        )
+                    continue
+
+            try:
+                result = await self.client.post(
+                    "constructed_inventories/",
+                    json_data=inventory,
+                )
+                target_id = result.get("id")
+
+                if target_id:
+                    # Save as 'inventories' type for downstream resolution
+                    self.state.save_id_mapping(
+                        resource_type="inventories",
+                        source_id=source_id,
+                        target_id=target_id,
+                        source_name=inventory.get("name"),
+                        target_name=result.get("name"),
+                    )
+                    self.stats["imported_count"] += 1
+                    results.append(result)
+
+            except ConflictError:
+                self.stats["skipped_count"] += 1
+                logger.info(
+                    "constructed_inventory_exists",
+                    source_id=source_id,
+                    name=inventory.get("name"),
+                )
+            except Exception as e:
+                self.stats["error_count"] += 1
+                logger.error(
+                    "constructed_inventory_import_failed",
+                    source_id=source_id,
+                    error=str(e),
+                )
+
+            if progress_callback:
+                progress_callback(
+                    self.stats["imported_count"],
+                    self.stats["error_count"],
+                    self.stats["skipped_count"],
+                )
+
+        return results
+
+
+class RoleDefinitionImporter(ResourceImporter):
+    """Importer for role definition resources.
+
+    Role definitions are built-in and read-only in AAP 2.6.
+    We only map them by name (similar to SystemJobTemplateImporter).
+    """
+
+    DEPENDENCIES = {}
+
+    async def import_resource(
+        self,
+        resource_type: str,
+        source_id: int,
+        data: dict[str, Any],
+        resolve_dependencies: bool = True,
+    ) -> dict[str, Any] | None:
+        """Map role definition by name."""
+        if self.state.is_migrated(resource_type, source_id):
+            self.stats["skipped_count"] += 1
+            return None
+
+        name = data.get("name")
+        if not name:
+            return None
+
+        self.state.mark_in_progress(resource_type, source_id, name, "import")
+
+        try:
+            results = await self.client.get(
+                "role_definitions/",
+                params={"name": name},
+            )
+            resources = results.get("results", [])
+
+            if resources:
+                target_id = resources[0]["id"]
+                self.state.save_id_mapping(
+                    resource_type=resource_type,
+                    source_id=source_id,
+                    target_id=target_id,
+                    source_name=name,
+                    target_name=name,
+                )
+                self.state.mark_completed(resource_type, source_id, target_id, name)
+                self.stats["imported_count"] += 1
+                logger.info(
+                    "role_definition_mapped",
+                    source_id=source_id,
+                    target_id=target_id,
+                    name=name,
+                )
+                return {"id": target_id, "name": name}
+            else:
+                logger.warning(
+                    "role_definition_not_found_in_target",
+                    name=name,
+                    source_id=source_id,
+                )
+                self.state.mark_failed(resource_type, source_id, "Not found in target")
+                self.stats["error_count"] += 1
+                return None
+
+        except Exception as e:
+            logger.error(
+                "role_definition_import_failed",
+                name=name,
+                error=str(e),
+            )
+            self.state.mark_failed(resource_type, source_id, str(e))
+            self.stats["error_count"] += 1
+            return None
+
+    async def import_role_definitions(
+        self,
+        definitions: list[dict[str, Any]],
+        progress_callback: Callable[[int, int, int], None] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Import multiple role definitions (mapping only)."""
+        return await self._import_parallel("role_definitions", definitions, progress_callback)
+
+
+class RoleUserAssignmentImporter(ResourceImporter):
+    """Importer for user role assignments (AAP 2.6 RBAC).
+
+    Resolves role_key to role_definition via mappings, resolves resource/user IDs
+    via id_mappings, and POSTs to role_user_assignments/.
+    """
+
+    DEPENDENCIES = {}
+
+    async def import_role_user_assignments(
+        self,
+        assignments: list[dict[str, Any]],
+        progress_callback: Callable[[int, int, int], None] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Import user role assignments.
+
+        Args:
+            assignments: List of normalized assignment records
+            progress_callback: Optional callback for progress updates
+
+        Returns:
+            List of successfully created assignments
+        """
+        results = []
+        role_name_mappings = self.resource_mappings.get("role_name_mappings", {})
+
+        for assignment in assignments:
+            source_id = assignment.pop("_source_id", assignment.get("id"))
+            resource_type = assignment.get("resource_type")
+            resource_source_id = assignment.get("resource_source_id")
+            role_key = assignment.get("role_key")
+            principal_source_id = assignment.get("principal_source_id")
+
+            # Resolve role_key to role_definition name
+            mapping_key = f"{resource_type}.{role_key}"
+            role_def_name = role_name_mappings.get(mapping_key)
+            if not role_def_name:
+                logger.warning(
+                    "role_mapping_not_found",
+                    mapping_key=mapping_key,
+                    source_id=source_id,
+                )
+                self.stats["skipped_count"] += 1
+                if progress_callback:
+                    progress_callback(
+                        self.stats["imported_count"],
+                        self.stats["error_count"],
+                        self.stats["skipped_count"],
+                    )
+                continue
+
+            # Resolve role_definition ID from name
+            role_def_mapping = self.state.get_mapped_id_by_name(
+                "role_definitions", role_def_name
+            )
+            if not role_def_mapping:
+                logger.warning(
+                    "role_definition_not_mapped",
+                    role_def_name=role_def_name,
+                    source_id=source_id,
+                )
+                self.stats["skipped_count"] += 1
+                if progress_callback:
+                    progress_callback(
+                        self.stats["imported_count"],
+                        self.stats["error_count"],
+                        self.stats["skipped_count"],
+                    )
+                continue
+
+            # Resolve resource ID
+            target_resource_id = self.state.get_mapped_id(resource_type, resource_source_id)
+            if not target_resource_id:
+                logger.warning(
+                    "role_assignment_resource_not_found",
+                    resource_type=resource_type,
+                    source_id=resource_source_id,
+                )
+                self.stats["skipped_count"] += 1
+                if progress_callback:
+                    progress_callback(
+                        self.stats["imported_count"],
+                        self.stats["error_count"],
+                        self.stats["skipped_count"],
+                    )
+                continue
+
+            # Resolve user ID
+            target_user_id = self.state.get_mapped_id("users", principal_source_id)
+            if not target_user_id:
+                logger.warning(
+                    "role_assignment_user_not_found",
+                    source_user_id=principal_source_id,
+                )
+                self.stats["skipped_count"] += 1
+                if progress_callback:
+                    progress_callback(
+                        self.stats["imported_count"],
+                        self.stats["error_count"],
+                        self.stats["skipped_count"],
+                    )
+                continue
+
+            try:
+                payload = {
+                    "role_definition": role_def_mapping,
+                    "object_id": target_resource_id,
+                    "user": target_user_id,
+                }
+                await self.client.post("role_user_assignments/", json_data=payload)
+                self.stats["imported_count"] += 1
+                results.append(payload)
+
+            except ConflictError:
+                # Assignment already exists - that's fine
+                self.stats["skipped_count"] += 1
+                logger.debug(
+                    "role_user_assignment_exists",
+                    source_id=source_id,
+                )
+            except Exception as e:
+                self.stats["error_count"] += 1
+                logger.error(
+                    "role_user_assignment_failed",
+                    source_id=source_id,
+                    error=str(e),
+                )
+
+            if progress_callback:
+                progress_callback(
+                    self.stats["imported_count"],
+                    self.stats["error_count"],
+                    self.stats["skipped_count"],
+                )
+
+        return results
+
+
+class RoleTeamAssignmentImporter(ResourceImporter):
+    """Importer for team role assignments (AAP 2.6 RBAC).
+
+    Same pattern as RoleUserAssignmentImporter but for teams.
+    """
+
+    DEPENDENCIES = {}
+
+    async def import_role_team_assignments(
+        self,
+        assignments: list[dict[str, Any]],
+        progress_callback: Callable[[int, int, int], None] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Import team role assignments.
+
+        Args:
+            assignments: List of normalized assignment records
+            progress_callback: Optional callback for progress updates
+
+        Returns:
+            List of successfully created assignments
+        """
+        results = []
+        role_name_mappings = self.resource_mappings.get("role_name_mappings", {})
+
+        for assignment in assignments:
+            source_id = assignment.pop("_source_id", assignment.get("id"))
+            resource_type = assignment.get("resource_type")
+            resource_source_id = assignment.get("resource_source_id")
+            role_key = assignment.get("role_key")
+            principal_source_id = assignment.get("principal_source_id")
+
+            # Resolve role_key to role_definition name
+            mapping_key = f"{resource_type}.{role_key}"
+            role_def_name = role_name_mappings.get(mapping_key)
+            if not role_def_name:
+                logger.warning(
+                    "role_mapping_not_found",
+                    mapping_key=mapping_key,
+                    source_id=source_id,
+                )
+                self.stats["skipped_count"] += 1
+                if progress_callback:
+                    progress_callback(
+                        self.stats["imported_count"],
+                        self.stats["error_count"],
+                        self.stats["skipped_count"],
+                    )
+                continue
+
+            # Resolve role_definition ID from name
+            role_def_mapping = self.state.get_mapped_id_by_name(
+                "role_definitions", role_def_name
+            )
+            if not role_def_mapping:
+                logger.warning(
+                    "role_definition_not_mapped",
+                    role_def_name=role_def_name,
+                    source_id=source_id,
+                )
+                self.stats["skipped_count"] += 1
+                if progress_callback:
+                    progress_callback(
+                        self.stats["imported_count"],
+                        self.stats["error_count"],
+                        self.stats["skipped_count"],
+                    )
+                continue
+
+            # Resolve resource ID
+            target_resource_id = self.state.get_mapped_id(resource_type, resource_source_id)
+            if not target_resource_id:
+                logger.warning(
+                    "role_assignment_resource_not_found",
+                    resource_type=resource_type,
+                    source_id=resource_source_id,
+                )
+                self.stats["skipped_count"] += 1
+                if progress_callback:
+                    progress_callback(
+                        self.stats["imported_count"],
+                        self.stats["error_count"],
+                        self.stats["skipped_count"],
+                    )
+                continue
+
+            # Resolve team ID
+            target_team_id = self.state.get_mapped_id("teams", principal_source_id)
+            if not target_team_id:
+                logger.warning(
+                    "role_assignment_team_not_found",
+                    source_team_id=principal_source_id,
+                )
+                self.stats["skipped_count"] += 1
+                if progress_callback:
+                    progress_callback(
+                        self.stats["imported_count"],
+                        self.stats["error_count"],
+                        self.stats["skipped_count"],
+                    )
+                continue
+
+            try:
+                payload = {
+                    "role_definition": role_def_mapping,
+                    "object_id": target_resource_id,
+                    "team": target_team_id,
+                }
+                await self.client.post("role_team_assignments/", json_data=payload)
+                self.stats["imported_count"] += 1
+                results.append(payload)
+
+            except ConflictError:
+                self.stats["skipped_count"] += 1
+                logger.debug(
+                    "role_team_assignment_exists",
+                    source_id=source_id,
+                )
+            except Exception as e:
+                self.stats["error_count"] += 1
+                logger.error(
+                    "role_team_assignment_failed",
+                    source_id=source_id,
+                    error=str(e),
+                )
+
+            if progress_callback:
+                progress_callback(
+                    self.stats["imported_count"],
+                    self.stats["error_count"],
+                    self.stats["skipped_count"],
+                )
+
+        return results
+
+
 # Factory function for creating importers
 def create_importer(
     resource_type: str,
@@ -3114,8 +3568,13 @@ def create_importer(
         "schedules": ScheduleImporter,
         # Notifications
         "notification_templates": NotificationTemplateImporter,
+        # Constructed inventories
+        "constructed_inventories": ConstructedInventoryImporter,
         # RBAC
         "rbac": RBACImporter,
+        "role_definitions": RoleDefinitionImporter,
+        "role_user_assignments": RoleUserAssignmentImporter,
+        "role_team_assignments": RoleTeamAssignmentImporter,
         # System
         "system_job_templates": SystemJobTemplateImporter,
     }

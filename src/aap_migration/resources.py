@@ -165,6 +165,17 @@ RESOURCE_REGISTRY: dict[str, ResourceTypeInfo] = {
         has_importer=True,
         has_transformer=True,
     ),
+    "constructed_inventories": ResourceTypeInfo(
+        name="constructed_inventories",
+        endpoint="constructed_inventories/",
+        description="Constructed Inventories",
+        migration_order=101,
+        cleanup_order=58,
+        has_exporter=True,
+        has_importer=True,
+        has_transformer=True,
+        batch_size=100,
+    ),
     "inventory_sources": ResourceTypeInfo(
         name="inventory_sources",
         endpoint="inventory_sources/",
@@ -262,6 +273,40 @@ RESOURCE_REGISTRY: dict[str, ResourceTypeInfo] = {
         has_transformer=False,
         batch_size=100,
     ),
+    # RBAC (AAP 2.6 role-based access control)
+    "role_definitions": ResourceTypeInfo(
+        name="role_definitions",
+        endpoint="role_definitions/",
+        description="Role Definitions",
+        migration_order=175,
+        cleanup_order=8,
+        has_exporter=True,
+        has_importer=True,
+        has_transformer=True,
+        batch_size=50,
+    ),
+    "role_user_assignments": ResourceTypeInfo(
+        name="role_user_assignments",
+        endpoint="role_user_assignments/",
+        description="User Role Assignments",
+        migration_order=180,
+        cleanup_order=6,
+        has_exporter=True,
+        has_importer=True,
+        has_transformer=True,
+        batch_size=100,
+    ),
+    "role_team_assignments": ResourceTypeInfo(
+        name="role_team_assignments",
+        endpoint="role_team_assignments/",
+        description="Team Role Assignments",
+        migration_order=185,
+        cleanup_order=5,
+        has_exporter=True,
+        has_importer=True,
+        has_transformer=True,
+        batch_size=100,
+    ),
     # Historical/runtime data (export-only)
     "jobs": ResourceTypeInfo(
         name="jobs",
@@ -345,7 +390,6 @@ MANUAL_MIGRATION_ENDPOINTS = {
     "roles",  # RBAC role assignments (handled separately via RBAC import)
     "applications",  # OAuth applications (manual recreation recommended)
     "tokens",  # OAuth tokens (short-lived, manual recreation)
-    "inventory_sources",  # Inventory sources (manual recreation - tied to dynamic inventories)
 }
 
 

@@ -2149,6 +2149,72 @@ class JobsTransformer(DataTransformer):
         return data
 
 
+class RoleDefinitionTransformer(DataTransformer):
+    """Transformer for role definition resources (AAP 2.6).
+
+    Role definitions exist in both environments and are mapped by name.
+    No dependencies needed.
+    """
+
+    DEPENDENCIES: dict[str, str] = {}
+    REQUIRED_DEPENDENCIES: set[str] = set()
+
+    async def populate_target_id_from_target(
+        self,
+        data: dict[str, Any],
+        target_client: Any,
+        state: MigrationState,
+        source_id: int,
+    ) -> dict[str, Any]:
+        """Query target environment to find matching role_definition by name.
+
+        Args:
+            data: Role definition data (with name field)
+            target_client: AAP target client instance
+            state: Migration state manager for saving mappings
+            source_id: Source role_definition ID
+
+        Returns:
+            Data dict (unchanged, mapping saved to state)
+        """
+        name = data.get("name")
+        if not name:
+            return data
+
+        try:
+            results = await target_client.get(
+                "role_definitions/",
+                params={"name": name},
+            )
+            resources = results.get("results", [])
+
+            if resources:
+                target_id = resources[0]["id"]
+                state.mark_completed(
+                    "role_definitions", source_id, target_id, source_name=name
+                )
+                logger.info(
+                    "role_definition_mapped",
+                    source_id=source_id,
+                    target_id=target_id,
+                    name=name,
+                )
+            else:
+                logger.warning(
+                    "role_definition_not_found",
+                    name=name,
+                    source_id=source_id,
+                )
+        except Exception as e:
+            logger.error(
+                "role_definition_lookup_failed",
+                name=name,
+                error=str(e),
+            )
+
+        return data
+
+
 # =============================================================================
 # Transformer Factory
 # =============================================================================
@@ -2177,6 +2243,10 @@ TRANSFORMER_CLASSES: dict[str, type[DataTransformer]] = {
     "notification_templates": NotificationTemplateTransformer,
     "credential_input_sources": CredentialInputSourceTransformer,
     "jobs": JobsTransformer,
+    "constructed_inventories": InventoryTransformer,
+    "role_definitions": RoleDefinitionTransformer,
+    "role_user_assignments": DataTransformer,
+    "role_team_assignments": DataTransformer,
 }
 
 

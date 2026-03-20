@@ -144,9 +144,24 @@ class ParallelTransformCoordinator:
                                 source_id=resource.get("_source_id") or resource.get("id"),
                             )
                             stats["skipped_pending_deletion"] += 1
-                        elif resource.get("kind") == "smart":
+                        elif (
+                            self.config
+                            and self.config.export.skip_smart_inventories
+                            and resource.get("kind") == "smart"
+                        ):
                             logger.debug(
                                 "skipping_smart_inventory",
+                                resource_type=resource_type,
+                                source_id=resource.get("_source_id") or resource.get("id"),
+                            )
+                            stats["skipped_smart_inventories"] += 1
+                        elif (
+                            self.config
+                            and self.config.export.skip_constructed_inventories
+                            and resource.get("kind") == "constructed"
+                        ):
+                            logger.debug(
+                                "skipping_constructed_inventory",
                                 resource_type=resource_type,
                                 source_id=resource.get("_source_id") or resource.get("id"),
                             )

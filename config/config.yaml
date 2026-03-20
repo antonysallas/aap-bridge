@@ -176,9 +176,10 @@ advanced:
 # Export Configuration
 # ============================================================================
 export:
-  skip_dynamic_hosts: true # DEFAULT: Skip hosts with inventory sources (filter: inventory_sources__isnull=true)
-  skip_smart_inventories: false # CHANGED: Export ALL inventories including those with inventory sources
+  skip_dynamic_hosts: false
+  skip_smart_inventories: false
+  skip_constructed_inventories: false
   skip_inventory_sources: []
   skip_pending_deletion_inventories: true
-  skip_hosts_with_inventory_sources: true
+  skip_hosts_with_inventory_sources: false
   records_per_file: 1000

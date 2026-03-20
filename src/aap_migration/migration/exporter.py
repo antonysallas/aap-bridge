@@ -5,7 +5,9 @@ that use generators for memory-efficient extraction of large datasets.
 """
 
 import asyncio
+import json
 from collections.abc import AsyncGenerator
+from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
 from aap_migration.client.aap_source_client import AAPSourceClient
@@ -509,17 +511,11 @@ class ResourceExporter:
                 message="API filter: inventory_sources__isnull=true (exclude dynamic hosts)",
             )
 
-        if (
-            resource_type == "inventories"
-            and hasattr(self, "skip_smart_inventories")
-            and self.skip_smart_inventories
-        ):
-            params["inventory_sources__isnull"] = "true"
+        if resource_type == "inventories":
             params["pending_deletion"] = "false"
-            params["kind"] = ""
             logger.info(
-                "export_parallel_applying_smart_inventory_filter",
-                message="API filter: inventory_sources__isnull=true&pending_deletion=false&kind=",
+                "export_parallel_applying_inventory_filter",
+                message="API filter: pending_deletion=false (exclude deleted inventories)",
             )
 
         # Apply ID filtering for true checkpoint resume
@@ -807,21 +803,14 @@ class InventoryExporter(ResourceExporter):
         if include_sources:
             await self._load_inventory_sources_cache()
 
-        # Apply smart inventory filtering if enabled
+        # Apply inventory filtering - exclude deleted inventories
         if filters is None:
             filters = {}
-        if self.skip_smart_inventories:
-            # API-level filtering: only export static inventories
-            # - inventory_sources__isnull=true: exclude dynamic inventories (have sources)
-            # - pending_deletion=false: exclude inventories marked for deletion
-            # - kind=: only normal inventories (empty string), excludes smart inventories
-            filters["inventory_sources__isnull"] = "true"
-            filters["pending_deletion"] = "false"
-            filters["kind"] = ""
-            logger.info(
-                "applying_smart_inventory_filter",
-                message="API filter: inventory_sources__isnull=true&pending_deletion=false&kind=",
-            )
+        filters["pending_deletion"] = "false"
+        logger.info(
+            "applying_inventory_filter",
+            message="API filter: pending_deletion=false (exclude deleted inventories)",
+        )
 
         async for inventory in self.export_resources(
             resource_type="inventories",
@@ -1454,6 +1443,171 @@ class SystemJobTemplateExporter(ResourceExporter):
             yield template
 
 
+class RoleDefinitionExporter(ResourceExporter):
+    """Exporter for role definition resources (AAP 2.6).
+
+    Role definitions define the available RBAC roles in AAP 2.6.
+    They are exported to map source roles to target roles.
+    """
+
+    async def export(
+        self, filters: dict[str, Any] | None = None
+    ) -> AsyncGenerator[dict[str, Any], None]:
+        """Export role definitions.
+
+        Args:
+            filters: Optional query parameters for filtering
+
+        Yields:
+            Role definition dictionaries
+        """
+        logger.info("exporting_role_definitions")
+        async for role_def in self.export_resources(
+            resource_type="role_definitions",
+            endpoint="role_definitions/",
+            page_size=self.performance_config.batch_sizes.get("role_definitions", 50),
+            filters=filters,
+        ):
+            yield role_def
+
+
+class RBACExporter(ResourceExporter):
+    """Exporter for RBAC role assignments.
+
+    Reads exported resource files, extracts object_roles from summary_fields,
+    queries /roles/{id}/users/ and /roles/{id}/teams/ to build normalized
+    assignment records.
+    """
+
+    # Resource types that have object_roles in summary_fields
+    RBAC_RESOURCE_TYPES = [
+        "organizations",
+        "teams",
+        "projects",
+        "inventories",
+        "job_templates",
+        "workflow_job_templates",
+        "credentials",
+        "execution_environments",
+        "instance_groups",
+        "notification_templates",
+    ]
+
+    def __init__(
+        self,
+        client: AAPSourceClient,
+        state: MigrationState,
+        performance_config: PerformanceConfig,
+        export_dir: Path | None = None,
+    ):
+        """Initialize RBAC exporter.
+
+        Args:
+            client: AAP source client instance
+            state: Migration state manager
+            performance_config: Performance configuration
+            export_dir: Directory containing exported resource files
+        """
+        super().__init__(client, state, performance_config)
+        self.export_dir = export_dir or Path("exports")
+
+    async def export(
+        self, filters: dict[str, Any] | None = None
+    ) -> AsyncGenerator[dict[str, Any], None]:
+        """Export RBAC role assignments by scanning exported resources.
+
+        Reads exported JSON files, extracts object_roles from summary_fields,
+        and queries the API for users/teams assigned to each role.
+
+        Args:
+            filters: Optional query parameters (unused)
+
+        Yields:
+            Normalized assignment records with fields:
+            - id: synthetic id
+            - resource_type: e.g. "organizations"
+            - resource_source_id: source resource ID
+            - role_key: e.g. "admin_role"
+            - principal_type: "user" or "team"
+            - principal_source_id: source user/team ID
+            - principal_name: username or team name
+        """
+        logger.info("exporting_rbac_assignments", export_dir=str(self.export_dir))
+        assignment_id = 0
+
+        for resource_type in self.RBAC_RESOURCE_TYPES:
+            type_dir = self.export_dir / resource_type
+            if not type_dir.exists():
+                continue
+
+            for json_file in sorted(type_dir.glob(f"{resource_type}_*.json")):
+                try:
+                    with open(json_file) as f:
+                        resources = json.load(f)
+                except Exception as e:
+                    logger.warning(
+                        "rbac_export_file_error",
+                        file=str(json_file),
+                        error=str(e),
+                    )
+                    continue
+
+                for resource in resources:
+                    source_id = resource.get("_source_id") or resource.get("id")
+                    summary = resource.get("summary_fields", {})
+                    object_roles = summary.get("object_roles", {})
+
+                    if not object_roles:
+                        continue
+
+                    for role_key, role_info in object_roles.items():
+                        role_id = role_info.get("id")
+                        if not role_id:
+                            continue
+
+                        # Query users for this role
+                        for principal_type in ["users", "teams"]:
+                            try:
+                                page = 1
+                                while True:
+                                    response = await self.client.get(
+                                        f"roles/{role_id}/{principal_type}/",
+                                        params={"page": page, "page_size": 200},
+                                    )
+                                    results = response.get("results", [])
+
+                                    for principal in results:
+                                        assignment_id += 1
+                                        yield {
+                                            "id": assignment_id,
+                                            "resource_type": resource_type,
+                                            "resource_source_id": source_id,
+                                            "role_key": role_key,
+                                            "principal_type": principal_type.rstrip("s"),
+                                            "principal_source_id": principal.get("id"),
+                                            "principal_name": principal.get(
+                                                "username", principal.get("name")
+                                            ),
+                                        }
+
+                                    if not response.get("next"):
+                                        break
+                                    page += 1
+
+                            except Exception as e:
+                                logger.warning(
+                                    "rbac_role_query_error",
+                                    role_id=role_id,
+                                    principal_type=principal_type,
+                                    error=str(e),
+                                )
+
+        logger.info(
+            "rbac_export_completed",
+            total_assignments=assignment_id,
+        )
+
+
 class ScheduleExporter(ResourceExporter):
     """Exporter for schedule resources.
 
@@ -1793,6 +1947,10 @@ def create_exporter(
         "notification_templates": NotificationTemplateExporter,
         "system_job_templates": SystemJobTemplateExporter,
         "jobs": JobsExporter,
+        "constructed_inventories": InventoryExporter,
+        "role_definitions": RoleDefinitionExporter,
+        "role_user_assignments": RBACExporter,
+        "role_team_assignments": RBACExporter,
     }
 
     exporter_class = exporters.get(resource_type)

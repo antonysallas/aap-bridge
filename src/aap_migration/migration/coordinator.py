@@ -72,6 +72,12 @@ class MigrationCoordinator:
             "batch_size": 100,
         },
         {
+            "name": "constructed_inventories",
+            "description": "Constructed Inventories",
+            "resource_types": ["constructed_inventories"],
+            "batch_size": 100,
+        },
+        {
             "name": "hosts",
             "description": "Hosts (using bulk operations)",
             "resource_types": ["hosts"],
@@ -130,6 +136,24 @@ class MigrationCoordinator:
             "name": "schedules",
             "description": "Schedules",
             "resource_types": ["schedules"],
+            "batch_size": 100,
+        },
+        {
+            "name": "role_definitions",
+            "description": "Role Definitions",
+            "resource_types": ["role_definitions"],
+            "batch_size": 50,
+        },
+        {
+            "name": "role_user_assignments",
+            "description": "User Role Assignments",
+            "resource_types": ["role_user_assignments"],
+            "batch_size": 100,
+        },
+        {
+            "name": "role_team_assignments",
+            "description": "Team Role Assignments",
+            "resource_types": ["role_team_assignments"],
             "batch_size": 100,
         },
     ]

@@ -16,7 +16,6 @@ ignored_endpoints:
     - activity_stream
     - service_index
     - receptor_addresses
-    - role_definitions
 
   # Source-only: Ignored only for source AAP
   source: []

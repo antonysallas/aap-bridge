@@ -902,6 +902,44 @@ class MigrationState:
                 )
                 raise StateError(f"Failed to get mapped ID: {e}") from e
 
+    def get_mapped_id_by_name(
+        self,
+        resource_type: str,
+        source_name: str,
+    ) -> int | None:
+        """
+        Get the target ID for a resource by its source name.
+
+        Useful when resolving references by name rather than source ID,
+        such as mapping role definition names to target IDs.
+
+        Args:
+            resource_type: Type of resource
+            source_name: Name in source system
+
+        Returns:
+            Target ID if mapping exists, None otherwise
+        """
+        with self._lock:
+            try:
+                with get_session(self.database_url) as session:
+                    mapping = (
+                        session.query(IDMapping)
+                        .filter_by(resource_type=resource_type, source_name=source_name)
+                        .first()
+                    )
+
+                    return mapping.target_id if mapping else None
+
+            except Exception as e:
+                logger.error(
+                    "Failed to get mapped ID by name",
+                    resource_type=resource_type,
+                    source_name=source_name,
+                    error=str(e),
+                )
+                raise StateError(f"Failed to get mapped ID by name: {e}") from e
+
     def create_or_update_mapping(
         self,
         resource_type: str,

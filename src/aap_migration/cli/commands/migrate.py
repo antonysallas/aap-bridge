@@ -49,6 +49,7 @@ PHASE1_RESOURCE_TYPES = [
     "credentials",  # PATCH existing (pre-created in target)
     "execution_environments",
     "inventories",
+    "constructed_inventories",
     "inventory_sources",
     "inventory_groups",
     "hosts",
@@ -67,6 +68,9 @@ PHASE3_RESOURCE_TYPES = [
     "job_templates",
     "workflow_job_templates",
     "schedules",
+    "role_definitions",
+    "role_user_assignments",
+    "role_team_assignments",
 ]
 
 async def _map_managed_credential_types(source_client, target_client, state) -> int:

@@ -163,17 +163,11 @@ class ParallelExportCoordinator:
                     "parallel_export_applying_dynamic_host_filter",
                     message="API filter: inventory_sources__isnull=true (exclude dynamic hosts)",
                 )
-            if resource_type == "inventories" and self.export_config.skip_smart_inventories:
-                # API-level filtering: only export static inventories
-                # - inventory_sources__isnull=true: exclude dynamic inventories (have sources)
-                # - pending_deletion=false: exclude inventories marked for deletion
-                # - kind=: only normal inventories (empty string), excludes smart inventories
-                export_filters["inventory_sources__isnull"] = "true"
+            if resource_type == "inventories":
                 export_filters["pending_deletion"] = "false"
-                export_filters["kind"] = ""
                 logger.info(
-                    "parallel_export_applying_smart_inventory_filter",
-                    message="API filter: inventory_sources__isnull=true&pending_deletion=false&kind=",
+                    "parallel_export_applying_inventory_filter",
+                    message="API filter: pending_deletion=false (exclude deleted inventories)",
                 )
 
             # Export with parallel page fetching

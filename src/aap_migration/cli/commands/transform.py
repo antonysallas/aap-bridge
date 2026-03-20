@@ -555,9 +555,24 @@ def transform(
                                             source_name=resource.get("name"),
                                         )
                                         skipped_pending_deletion += 1
-                                    elif resource.get("kind") == "smart":
+                                    elif (
+                                        ctx.config.export.skip_smart_inventories
+                                        and resource.get("kind") == "smart"
+                                    ):
                                         logger.info(
                                             "skipping_smart_inventory",
+                                            resource_type="inventories",
+                                            source_id=resource.get("_source_id")
+                                            or resource.get("id"),
+                                            source_name=resource.get("name"),
+                                        )
+                                        skipped_smart_inventories += 1
+                                    elif (
+                                        ctx.config.export.skip_constructed_inventories
+                                        and resource.get("kind") == "constructed"
+                                    ):
+                                        logger.info(
+                                            "skipping_constructed_inventory",
                                             resource_type="inventories",
                                             source_id=resource.get("_source_id")
                                             or resource.get("id"),
@@ -777,6 +792,32 @@ def transform(
                                         error=str(e),
                                         message="Could not pre-populate ID mappings - import will handle",
                                     )
+
+                            # Split constructed inventories into separate directory
+                            if rtype == "inventories":
+                                constructed_batch = [
+                                    r for r in transformed_batch
+                                    if r.get("kind") == "constructed"
+                                ]
+                                if constructed_batch:
+                                    constructed_dir = output / "constructed_inventories"
+                                    constructed_dir.mkdir(parents=True, exist_ok=True)
+                                    constructed_file = (
+                                        constructed_dir
+                                        / f"constructed_inventories_{output_file_num:04d}.json"
+                                    )
+                                    with open(constructed_file, "w") as f:
+                                        json.dump(constructed_batch, f, indent=2)
+                                    logger.info(
+                                        "constructed_inventories_split",
+                                        count=len(constructed_batch),
+                                        file=str(constructed_file),
+                                    )
+                                    # Remove constructed from regular batch
+                                    transformed_batch = [
+                                        r for r in transformed_batch
+                                        if r.get("kind") != "constructed"
+                                    ]
 
                             # Write transformed batch (preserve same file numbering)
                             output_file_num += 1

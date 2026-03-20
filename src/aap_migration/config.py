@@ -506,7 +506,18 @@ class ExportConfig(BaseModel):
     )
     skip_smart_inventories: bool = Field(
         default=True,
-        description="Skip inventories with sources or pending deletion (filter: inventory_sources__isnull=true&pending_deletion=false&kind=",
+        description=(
+            "Skip smart inventories (kind='smart') during export and transform. "
+            "When false, smart inventories are exported and imported like regular inventories."
+        ),
+    )
+    skip_constructed_inventories: bool = Field(
+        default=True,
+        description=(
+            "Skip constructed inventories (kind='constructed') during export and transform. "
+            "When false, constructed inventories are exported and routed to the "
+            "constructed_inventories/ endpoint on target during import."
+        ),
     )
     skip_inventory_sources: list[str] = Field(
         default_factory=list,
