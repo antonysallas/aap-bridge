@@ -642,8 +642,8 @@ def transform(
                                         skipped=skipped_custom_managed,
                                     )
 
-                            # Filter out dynamic hosts
-                            if rtype == "hosts":
+                            # Filter out dynamic hosts (only when config flag is set)
+                            if rtype == "hosts" and ctx.config.export.skip_dynamic_hosts:
                                 original_count = len(raw_resources)
                                 filtered_resources = []
                                 for resource in raw_resources:
@@ -800,7 +800,7 @@ def transform(
                                     if r.get("kind") == "constructed"
                                 ]
                                 if constructed_batch:
-                                    constructed_dir = output / "constructed_inventories"
+                                    constructed_dir = output_dir / "constructed_inventories"
                                     constructed_dir.mkdir(parents=True, exist_ok=True)
                                     constructed_file = (
                                         constructed_dir

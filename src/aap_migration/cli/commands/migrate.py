@@ -50,12 +50,12 @@ PHASE1_RESOURCE_TYPES = [
     "execution_environments",
     "inventories",
     "constructed_inventories",
-    "inventory_sources",
     "inventory_groups",
     "hosts",
-    "instances",  # After hosts, before instance_groups
-    "instance_groups",  # After instances, before projects
-    "projects",
+    "instances",
+    "instance_groups",
+    "projects",  # Before inventory_sources (SCM sources need project FK)
+    "inventory_sources",  # After projects (source_project dependency)
 ]
 
 # Phase 2: Project SCM Patching + Automation Definitions
