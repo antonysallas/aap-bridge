@@ -339,6 +339,10 @@ READ_ONLY_ENDPOINTS = {
     "unified_job_templates",  # Meta-endpoint (virtual)
     "unified_jobs",  # Meta-endpoint (virtual)
     "receptor_addresses",  # Receptor mesh addresses (infrastructure, read-only)
+    "host_metrics",  # Host usage metrics (auto-generated, read-only)
+    "bulk",  # Bulk API endpoint (operational, not a resource)
+    "analytics",  # Analytics data (read-only)
+    "service_index",  # Service discovery index (read-only)
 }
 
 
@@ -352,6 +356,7 @@ ENDPOINT_TO_RESOURCE_TYPE = {
     # Endpoint name → Resource type name
     "groups": "inventory_groups",  # Exporter expects inventory_groups, API uses groups
     "inventory": "inventories",  # Handle singular form from API discovery
+    "constructed_inventory": "constructed_inventories",  # Singular form from API discovery
     "workflow_job_template_nodes": "workflow_nodes",  # Exporter expects workflow_nodes
 }
 
@@ -376,6 +381,7 @@ RUNTIME_DATA_ENDPOINTS = {
     "notifications",  # Runtime notification instances (historical)
     # System metrics (auto-generated, ephemeral)
     "host_metric_summary_monthly",  # Host usage metrics (auto-expires, ephemeral)
+    "workflow_approvals",  # Workflow approval records (runtime, historical)
     # System job templates (auto-created, not migrated)
 }
 
