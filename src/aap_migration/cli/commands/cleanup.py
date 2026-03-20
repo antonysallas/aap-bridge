@@ -25,7 +25,7 @@ from aap_migration.cli.utils import (
 )
 from aap_migration.client.aap_target_client import AAPTargetClient
 from aap_migration.client.bulk_operations import BulkOperations
-from aap_migration.client.exceptions import PendingDeletionError, ResourceInUseError
+from aap_migration.client.exceptions import NotFoundError, PendingDeletionError, ResourceInUseError
 from aap_migration.config import MigrationConfig
 from aap_migration.migration.database import get_session
 from aap_migration.migration.models import IDMapping, MigrationProgress
@@ -1035,6 +1035,15 @@ async def delete_resources_parallel(
                     resource_type=endpoint,
                 )
                 skipped_count += 1
+
+            except NotFoundError:
+                # Resource already deleted (e.g., cascade-deleted by parent)
+                logger.debug(
+                    f"Skipped {res_name} (already deleted / not found)",
+                    resource_id=res_id,
+                    resource_type=endpoint,
+                )
+                deleted_count += 1  # Count as success - goal achieved
 
             except ResourceInUseError as e:
                 # Resource blocked by jobs even after retries - log details
