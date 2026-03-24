@@ -2149,6 +2149,140 @@ class JobsTransformer(DataTransformer):
         return data
 
 
+class ApplicationTransformer(DataTransformer):
+    """Transformer for OAuth applications with secret management.
+
+    Applications contain sensitive client secrets that should be handled carefully:
+    - Redacts client_secret in transformed output
+    - Marks applications for secret regeneration
+    - Resolves organization dependencies
+    - Preserves all non-sensitive metadata
+    """
+
+    DEPENDENCIES = {
+        "organization": "organizations",
+    }
+    REQUIRED_DEPENDENCIES = {"organization"}
+
+    def _apply_specific_transformations(
+        self, data: dict[str, Any], resource_type: str
+    ) -> dict[str, Any]:
+        """Apply application-specific transformations.
+
+        Args:
+            data: Raw application data
+            resource_type: Should be 'applications'
+
+        Returns:
+            Transformed application data with redacted secret
+        """
+        # Preserve source ID
+        data["_source_id"] = data.get("id")
+
+        # Handle client secret
+        if data.get('_has_client_secret'):
+            # Redact the actual secret value
+            data['client_secret'] = "***REDACTED_WILL_BE_REGENERATED***"
+            # Mark for secret regeneration during import
+            data['_requires_new_secret'] = True
+
+        # Add migration notes
+        data['_migration_notes'] = {
+            'client_secret_action': 'will_be_auto_generated' if data.get('_requires_new_secret') else 'none',
+            'redirect_uris_action': 'review_for_environment',
+            'external_systems_action': 'update_with_new_client_id_secret'
+        }
+
+        return data
+
+
+class SettingsTransformer(DataTransformer):
+    """Transformer for global system settings with categorization.
+
+    Settings contain a mix of safe, environment-specific, and sensitive data.
+    This transformer categorizes them for selective import with review workflow.
+    """
+
+    # Settings don't have dependencies like other resources
+    DEPENDENCIES: dict[str, str] = {}
+    REQUIRED_DEPENDENCIES: set[str] = set()
+
+    # Patterns for identifying sensitive settings
+    SENSITIVE_PATTERNS = [
+        'PASSWORD', 'SECRET', 'KEY', 'TOKEN', 'PRIVATE',
+        'CLIENT_SECRET', 'BIND_PASSWORD', 'SOCIAL_AUTH'
+    ]
+
+    # Patterns for environment-specific settings
+    ENVIRONMENT_PATTERNS = [
+        'URL', 'URI', 'HOST', 'PATH', 'DOMAIN', 'SERVER',
+        'EMAIL_HOST', 'LDAP_SERVER', 'SMTP'
+    ]
+
+    def _apply_specific_transformations(
+        self, data: dict[str, Any], resource_type: str
+    ) -> dict[str, Any]:
+        """Apply settings-specific transformations.
+
+        Categorizes settings into:
+        - safe_to_copy: Non-sensitive, non-environment-specific
+        - review_required: Environment-specific (URLs, paths)
+        - sensitive: Passwords, secrets, API keys
+
+        Args:
+            data: Raw settings data (all settings in one dict)
+            resource_type: Should be 'settings'
+
+        Returns:
+            Categorized settings data
+        """
+        # Extract metadata
+        metadata = data.pop('_migration_metadata', {})
+
+        # Categorize settings
+        categorized = {
+            'safe_to_copy': {},
+            'review_required': {},
+            'sensitive': {},
+            '_migration_metadata': metadata
+        }
+
+        for key, value in data.items():
+            # Skip internal fields
+            if key.startswith('_'):
+                continue
+
+            # Check if sensitive
+            if any(pattern in key for pattern in self.SENSITIVE_PATTERNS):
+                categorized['sensitive'][key] = {
+                    '_original_value_redacted': True,
+                    '_action': 'provide_new_value_manually',
+                    '_placeholder': f'***PROVIDE_{key}***'
+                }
+            # Check if environment-specific
+            elif any(pattern in key for pattern in self.ENVIRONMENT_PATTERNS):
+                categorized['review_required'][key] = {
+                    'source_value': value,
+                    '_action': 'review_and_adapt_for_target_environment'
+                }
+            # Safe to copy
+            else:
+                categorized['safe_to_copy'][key] = value
+
+        # Add summary
+        categorized['_summary'] = {
+            'total_settings': len(data),
+            'safe_to_copy_count': len(categorized['safe_to_copy']),
+            'review_required_count': len(categorized['review_required']),
+            'sensitive_count': len(categorized['sensitive']),
+            'auto_import_percentage': round(
+                len(categorized['safe_to_copy']) / len(data) * 100, 1
+            ) if len(data) > 0 else 0
+        }
+
+        return categorized
+
+
 # =============================================================================
 # Transformer Factory
 # =============================================================================
@@ -2177,6 +2311,8 @@ TRANSFORMER_CLASSES: dict[str, type[DataTransformer]] = {
     "notification_templates": NotificationTemplateTransformer,
     "credential_input_sources": CredentialInputSourceTransformer,
     "jobs": JobsTransformer,
+    "applications": ApplicationTransformer,
+    "settings": SettingsTransformer,
 }
 
 

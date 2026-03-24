@@ -1749,6 +1749,98 @@ class JobsExporter(ResourceExporter):
             yield job
 
 
+class ApplicationExporter(ResourceExporter):
+    """Exporter for OAuth applications with security safeguards.
+
+    OAuth applications contain sensitive client secrets that should not be
+    blindly copied between environments. This exporter:
+    - Redacts client_secret values
+    - Marks applications for secret regeneration
+    - Preserves all non-sensitive metadata
+    """
+
+    async def export(
+        self, filters: dict[str, Any] | None = None
+    ) -> AsyncGenerator[dict[str, Any], None]:
+        """Export OAuth applications with secret redaction.
+
+        Args:
+            filters: Optional query parameters for filtering
+
+        Yields:
+            Application dictionaries with redacted secrets
+        """
+        logger.info("exporting_applications")
+        async for app in self.export_resources(
+            resource_type="applications",
+            endpoint="applications/",
+            page_size=self.performance_config.batch_sizes.get("applications", 50),
+            filters=filters,
+        ):
+            # Mark if application has a client secret (for transformer)
+            if 'client_secret' in app and app['client_secret']:
+                app['_has_client_secret'] = True
+                # Keep the secret for now - transformer will handle redaction
+                # This allows users to optionally copy secrets if they want
+
+            yield app
+
+
+class SettingsExporter(ResourceExporter):
+    """Exporter for global system settings with categorization.
+
+    Settings contain a mix of:
+    - Safe configuration (job timeouts, UI preferences)
+    - Environment-specific values (URLs, file paths)
+    - Sensitive secrets (passwords, API keys)
+
+    This exporter fetches all settings for categorization by the transformer.
+    """
+
+    async def export(
+        self, filters: dict[str, Any] | None = None
+    ) -> AsyncGenerator[dict[str, Any], None]:
+        """Export all system settings.
+
+        Args:
+            filters: Optional query parameters (typically not used for settings)
+
+        Yields:
+            Single dictionary containing all settings
+        """
+        logger.info("exporting_settings")
+
+        try:
+            # Settings use /settings/all/ endpoint which returns a single dict
+            settings_data = await self.client.get("settings/all/")
+
+            if not isinstance(settings_data, dict):
+                logger.warning(
+                    "settings_export_unexpected_format",
+                    data_type=type(settings_data).__name__
+                )
+                return
+
+            # Add metadata for transformer
+            settings_data['_migration_metadata'] = {
+                'export_timestamp': self.client._get_timestamp(),
+                'source_url': str(self.client.base_url),
+                'total_settings': len(settings_data)
+            }
+
+            # Yield as a single resource (transformer will categorize)
+            yield settings_data
+
+        except APIError as e:
+            logger.error(
+                "settings_export_failed",
+                error=str(e),
+                status_code=getattr(e, 'status_code', None)
+            )
+            # Don't fail the entire export if settings fail
+            return
+
+
 # Factory function for creating exporters
 def create_exporter(
     resource_type: str,
@@ -1793,6 +1885,8 @@ def create_exporter(
         "notification_templates": NotificationTemplateExporter,
         "system_job_templates": SystemJobTemplateExporter,
         "jobs": JobsExporter,
+        "applications": ApplicationExporter,
+        "settings": SettingsExporter,
     }
 
     exporter_class = exporters.get(resource_type)

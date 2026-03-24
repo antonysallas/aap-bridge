@@ -79,6 +79,8 @@ def get_importer_dependencies(resource_type: str) -> dict[str, str]:
             JobTemplateImporter,
             LabelImporter,
             NotificationTemplateImporter,
+            ApplicationImporter,
+            SettingsImporter,
             OrganizationImporter,
             ProjectImporter,
             RBACImporter,
@@ -106,6 +108,8 @@ def get_importer_dependencies(resource_type: str) -> dict[str, str]:
             "workflow_job_templates": WorkflowImporter,
             "schedules": ScheduleImporter,
             "notification_templates": NotificationTemplateImporter,
+            "applications": ApplicationImporter,
+            "settings": SettingsImporter,
             "rbac": RBACImporter,
         }
 

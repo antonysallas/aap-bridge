@@ -262,6 +262,28 @@ RESOURCE_REGISTRY: dict[str, ResourceTypeInfo] = {
         has_transformer=False,
         batch_size=100,
     ),
+    "applications": ResourceTypeInfo(
+        name="applications",
+        endpoint="applications/",
+        description="OAuth Applications",
+        migration_order=175,  # After schedules (170)
+        cleanup_order=8,  # Delete before most resources
+        has_exporter=True,
+        has_importer=True,
+        has_transformer=True,  # Redact secrets, resolve org deps
+        batch_size=50,
+    ),
+    "settings": ResourceTypeInfo(
+        name="settings",
+        endpoint="settings/all/",
+        description="Global System Settings",
+        migration_order=180,  # Very late (after everything)
+        cleanup_order=1,  # Never cleanup settings
+        has_exporter=True,
+        has_importer=True,
+        has_transformer=True,  # Categorize safe/review/sensitive
+        batch_size=1,  # Single settings object
+    ),
     # Historical/runtime data (export-only)
     "jobs": ResourceTypeInfo(
         name="jobs",
@@ -341,11 +363,10 @@ RUNTIME_DATA_ENDPOINTS = {
 # Endpoints that require manual migration or special handling
 # These cannot be automatically migrated due to security or architectural constraints
 MANUAL_MIGRATION_ENDPOINTS = {
-    "settings",  # Global system settings (manual review/config required)
     "roles",  # RBAC role assignments (handled separately via RBAC import)
-    "applications",  # OAuth applications (manual recreation recommended)
     "tokens",  # OAuth tokens (short-lived, manual recreation)
     "inventory_sources",  # Inventory sources (manual recreation - tied to dynamic inventories)
+    # NOTE: applications and settings now have automated migration with review workflow
 }
 
 
