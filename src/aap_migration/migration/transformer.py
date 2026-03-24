@@ -2218,7 +2218,7 @@ class SettingsTransformer(DataTransformer):
     # Patterns for environment-specific settings
     ENVIRONMENT_PATTERNS = [
         'URL', 'URI', 'HOST', 'PATH', 'DOMAIN', 'SERVER',
-        'EMAIL_HOST', 'LDAP_SERVER', 'SMTP'
+        'EMAIL_HOST', 'LDAP', 'SMTP'  # LDAP catches all LDAP settings (schema can differ between AAP versions)
     ]
 
     def _apply_specific_transformations(
