@@ -567,10 +567,10 @@ Need Help?
 ## 📚 Related Documentation
 
 - **[CREDENTIAL-FIRST-WORKFLOW.md](CREDENTIAL-FIRST-WORKFLOW.md)** - Complete user guide
-- **[QUICK-START-CREDENTIALS.md](QUICK-START-CREDENTIALS.md)** - Quick reference
-- **[IMPLEMENTATION-COMPLETE.md](IMPLEMENTATION-COMPLETE.md)** - Technical details
-- **[REGRESSION-TEST-RESULTS.md](REGRESSION-TEST-RESULTS.md)** - Test validation
-- **[FULL-MIGRATION-TEST-RESULTS.md](FULL-MIGRATION-TEST-RESULTS.md)** - Full workflow test
+- **[QUICK-START.md](../../QUICK-START.md)** - Quick reference
+- **[IMPLEMENTATION-COMPLETE.md](../development/implementation/IMPLEMENTATION-COMPLETE.md)** - Technical details
+- **[REGRESSION-TEST-RESULTS.md](../development/test-results/REGRESSION-TEST-RESULTS.md)** - Test validation
+- **[FULL-MIGRATION-TEST-RESULTS.md](../development/test-results/FULL-MIGRATION-TEST-RESULTS.md)** - Full workflow test
 
 ---
 
