@@ -7,7 +7,7 @@ migrations
 ## Supported Versions
 
 **Source AAP:**
-- AAP 2.3, 2.4, 2.5 (RPM-based or containerized)
+- AAP 2.4, 2.5 (RPM-based or containerized)
 
 **Target AAP:**
 - AAP 2.5, 2.6 (containerized recommended)
@@ -22,7 +22,7 @@ The tool automatically detects AAP versions and validates compatibility before m
 ### Prerequisites: Running AAP Instances
 
 This migration tool requires **two accessible AAP instances**:
-- **Source AAP** (version 2.3, 2.4, or 2.5)
+- **Source AAP** (version 2.4 or 2.5)
 - **Target AAP** (version 2.5 or 2.6)
 
 #### Quick Health Check
@@ -145,15 +145,25 @@ Step 4: MIGRATION PHASES 3+ - All Other Resources
 ### Quick Start with Credential-First
 
 ```bash
-# Option 1: Check credentials before full migration
+# Step 1: Check credentials before migration
 aap-bridge credentials compare
 # Review: ./reports/credential-comparison.md
 
-# Option 2: Migrate only credentials
+# Step 2: Migrate only credentials (includes dependencies: organizations, credential_types)
 aap-bridge credentials migrate
 
-# Option 3: Full migration (credentials checked automatically)
-aap-bridge migrate full
+# Step 3: Phased migration (recommended approach to avoid issues)
+# Phase 1: Foundation
+aap-bridge migrate -r organizations -r users -r teams --skip-prep
+
+# Phase 2: Credentials (CRITICAL - must come after organizations)
+aap-bridge migrate -r credential_types -r credentials --skip-prep
+
+# Phase 3: Projects & Inventories
+aap-bridge migrate -r projects -r inventories --skip-prep
+
+# Phase 4: Job Templates
+aap-bridge migrate -r job_templates -r workflow_job_templates --skip-prep
 ```
 
 **📚 Documentation:**
@@ -442,7 +452,7 @@ Review and adjust `config/config.yaml` for your environment:
 
 #### Recommended Workflow
 
-The recommended approach is to check credentials first, then run the full migration:
+The recommended approach is to check credentials first, then run phased migration following the dependency order:
 
 ```bash
 # Step 1: Check what credentials are missing
@@ -451,8 +461,18 @@ aap-bridge credentials compare
 # Step 2: Review the credential comparison report
 cat ./reports/credential-comparison.md
 
-# Step 3: Run full migration (credentials will be migrated first automatically)
-aap-bridge migrate full
+# Step 3: Phased migration (following dependency graph to avoid failures)
+# Phase 1: Foundation
+aap-bridge migrate -r organizations -r users -r teams --skip-prep
+
+# Phase 2: Credentials (CRITICAL - must be 100% complete)
+aap-bridge migrate -r credential_types -r credentials --skip-prep
+
+# Phase 3: Projects & Inventories
+aap-bridge migrate -r execution_environments -r projects -r inventories --skip-prep
+
+# Phase 4: Job Templates
+aap-bridge migrate -r job_templates -r workflow_job_templates --skip-prep
 
 # Step 4: Validate migration
 aap-bridge validate all --sample-size 4000
@@ -489,14 +509,24 @@ aap-bridge credentials report [--output ./reports/status.md]
 # Menu-based CLI (interactive)
 aap-bridge
 
-# Full migration with automatic credential-first workflow
-aap-bridge migrate full --config config/config.yaml
+# Phased migration (recommended - follows dependency graph)
+# Phase 1: Foundation
+aap-bridge migrate -r organizations -r users -r teams --skip-prep
 
-# Export from source AAP only
-aap-bridge export all --output exports/
+# Phase 2: Credentials
+aap-bridge migrate -r credential_types -r credentials --skip-prep
 
-# Import to target AAP only
-aap-bridge import inventories --input exports/inventories.json
+# Phase 3: Projects & Inventories
+aap-bridge migrate -r execution_environments -r projects -r inventories --skip-prep
+
+# Phase 4: Job Templates
+aap-bridge migrate -r job_templates -r workflow_job_templates --skip-prep
+
+# Export from source AAP only (for specific resource types)
+aap-bridge export -r inventories --output exports/
+
+# Import to target AAP only (for specific resource types)
+aap-bridge import -r inventories --input exports/
 
 # Validate migration
 aap-bridge validate all --sample-size 4000
@@ -504,7 +534,7 @@ aap-bridge validate all --sample-size 4000
 # View migration report
 aap-bridge report summary
 
-# Migrate RBAC role assignments (separate script)
+# Migrate RBAC role assignments (separate script - after all resources)
 python rbac_migration.py
 ```
 
@@ -517,19 +547,19 @@ The tool provides flexible output modes for different environments:
 ```bash
 
 # Default: Live progress display with clean console output
-aap-bridge migrate full --config config/config.yaml
+aap-bridge migrate -r organizations -r credential_types -r credentials --skip-prep
 
 # Quiet mode: Errors only (for scripting)
-aap-bridge migrate full --config config/config.yaml --quiet
+aap-bridge migrate -r organizations -r credential_types -r credentials --skip-prep --quiet
 
 # Disable progress: For CI/CD environments
-aap-bridge migrate full --config config/config.yaml --disable-progress
+aap-bridge migrate -r organizations -r credential_types -r credentials --skip-prep --disable-progress
 
 # Detailed stats: Show additional metrics
-aap-bridge migrate full --config config/config.yaml --show-stats
+aap-bridge migrate -r organizations -r credential_types -r credentials --skip-prep --show-stats
 
 # Combination: Quiet + no progress for automation
-aap-bridge migrate full --config config/config.yaml --quiet --disable-progress
+aap-bridge migrate -r organizations -r credential_types -r credentials --skip-prep --quiet --disable-progress
 
 ```
 
@@ -547,7 +577,7 @@ aap-bridge migrate full --config config/config.yaml --quiet --disable-progress
 # Configure via environment
 export AAP_BRIDGE__LOGGING__CONSOLE_LEVEL=WARNING
 export AAP_BRIDGE__LOGGING__DISABLE_PROGRESS=true
-aap-bridge migrate full --config config/config.yaml
+aap-bridge migrate -r organizations -r credential_types -r credentials --skip-prep
 
 ```
 
