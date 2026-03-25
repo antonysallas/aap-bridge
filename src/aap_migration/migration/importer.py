@@ -1493,7 +1493,76 @@ class InventorySourceImporter(ResourceImporter):
         Returns:
             List of created inventory source data
         """
-        return await self._import_parallel("inventory_sources", sources, progress_callback)
+        # Extract schedules before import
+        sources_with_schedules = []
+        for source in sources:
+            schedules = source.pop("schedules", None)
+            if schedules:
+                source_id = source.get("_source_id", source.get("id"))
+                sources_with_schedules.append({
+                    "source_inventory_source_id": source_id,
+                    "schedules": schedules,
+                })
+
+        # Import inventory sources
+        results = await self._import_parallel("inventory_sources", sources, progress_callback)
+
+        # Import schedules for successfully imported inventory sources
+        if sources_with_schedules:
+            logger.info(
+                "importing_inventory_source_schedules",
+                total_sources_with_schedules=len(sources_with_schedules),
+            )
+
+            for schedule_data in sources_with_schedules:
+                source_inventory_source_id = schedule_data["source_inventory_source_id"]
+                schedules = schedule_data["schedules"]
+
+                # Get the target inventory source ID from the state mapping
+                target_inventory_source_id = self.state.get_target_id("inventory_sources", source_inventory_source_id)
+                if not target_inventory_source_id:
+                    logger.warning(
+                        "inventory_source_not_found_for_schedule",
+                        source_inventory_source_id=source_inventory_source_id,
+                    )
+                    continue
+
+                # Get inventory source name for logging
+                source_result = next((s for s in results if s.get("id") == target_inventory_source_id), None)
+                source_name = source_result.get("name", "unknown") if source_result else "unknown"
+
+                for schedule in schedules:
+                    schedule_name = schedule.get("name", "unknown")
+
+                    # Remove read-only fields
+                    schedule_to_import = {k: v for k, v in schedule.items() if k not in [
+                        "id", "type", "url", "related", "summary_fields",
+                        "created", "modified", "last_run", "next_run",
+                        "status", "unified_job_template"
+                    ]}
+
+                    try:
+                        result = await self.client.post(
+                            f"inventory_sources/{target_inventory_source_id}/schedules/",
+                            json_data=schedule_to_import,
+                        )
+                        logger.info(
+                            "inventory_source_schedule_imported",
+                            inventory_source_id=target_inventory_source_id,
+                            inventory_source_name=source_name,
+                            schedule_name=schedule_name,
+                            schedule_id=result.get("id"),
+                        )
+                    except Exception as e:
+                        logger.error(
+                            "inventory_source_schedule_import_failed",
+                            inventory_source_id=target_inventory_source_id,
+                            inventory_source_name=source_name,
+                            schedule_name=schedule_name,
+                            error=str(e),
+                        )
+
+        return results
 
 
 class ScheduleImporter(ResourceImporter):
@@ -2612,7 +2681,76 @@ class ProjectImporter(ResourceImporter):
         Returns:
             List of created project data
         """
-        return await self._import_parallel("projects", projects, progress_callback)
+        # Extract schedules before import
+        projects_with_schedules = []
+        for project in projects:
+            schedules = project.pop("schedules", None)
+            if schedules:
+                source_id = project.get("_source_id", project.get("id"))
+                projects_with_schedules.append({
+                    "source_project_id": source_id,
+                    "schedules": schedules,
+                })
+
+        # Import projects
+        results = await self._import_parallel("projects", projects, progress_callback)
+
+        # Import schedules for successfully imported projects
+        if projects_with_schedules:
+            logger.info(
+                "importing_project_schedules",
+                total_projects_with_schedules=len(projects_with_schedules),
+            )
+
+            for schedule_data in projects_with_schedules:
+                source_project_id = schedule_data["source_project_id"]
+                schedules = schedule_data["schedules"]
+
+                # Get the target project ID from the state mapping
+                target_project_id = self.state.get_target_id("projects", source_project_id)
+                if not target_project_id:
+                    logger.warning(
+                        "project_not_found_for_schedule",
+                        source_project_id=source_project_id,
+                    )
+                    continue
+
+                # Get project name for logging
+                project_result = next((p for p in results if p.get("id") == target_project_id), None)
+                project_name = project_result.get("name", "unknown") if project_result else "unknown"
+
+                for schedule in schedules:
+                    schedule_name = schedule.get("name", "unknown")
+
+                    # Remove read-only fields
+                    schedule_to_import = {k: v for k, v in schedule.items() if k not in [
+                        "id", "type", "url", "related", "summary_fields",
+                        "created", "modified", "last_run", "next_run",
+                        "status", "unified_job_template"
+                    ]}
+
+                    try:
+                        result = await self.client.post(
+                            f"projects/{target_project_id}/schedules/",
+                            json_data=schedule_to_import,
+                        )
+                        logger.info(
+                            "project_schedule_imported",
+                            project_id=target_project_id,
+                            project_name=project_name,
+                            schedule_name=schedule_name,
+                            schedule_id=result.get("id"),
+                        )
+                    except Exception as e:
+                        logger.error(
+                            "project_schedule_import_failed",
+                            project_id=target_project_id,
+                            project_name=project_name,
+                            schedule_name=schedule_name,
+                            error=str(e),
+                        )
+
+        return results
 
 
 async def wait_for_project_sync(
@@ -2801,12 +2939,16 @@ class JobTemplateImporter(ResourceImporter):
         success_count = 0
         failed_count = 0
         skipped_count = 0
+        templates_with_schedules = []  # Collect templates that have schedules to create
 
         for template in templates:
             source_id = template.pop("_source_id", template.get("id"))
 
             # Extract credentials for post-creation association
             credentials = template.pop("credentials", [])
+
+            # Extract schedules for separate import
+            schedules = template.pop("schedules", None)
 
             # Clean up EE markers
             if template.get("_needs_execution_environment"):
@@ -2837,6 +2979,15 @@ class JobTemplateImporter(ResourceImporter):
                             target_id, credentials, template.get("name")
                         )
 
+                    # Store schedules for later import
+                    if schedules:
+                        templates_with_schedules.append({
+                            "source_template_id": source_id,
+                            "template_id": target_id,
+                            "template_name": result.get("name", "unknown"),
+                            "schedules": schedules,
+                        })
+
                     results.append(result)
                     success_count += 1
                 else:
@@ -2853,6 +3004,50 @@ class JobTemplateImporter(ResourceImporter):
 
             if progress_callback:
                 progress_callback(success_count, failed_count, skipped_count)
+
+        # Import schedules
+        if templates_with_schedules:
+            logger.info(
+                "importing_job_template_schedules",
+                total_templates_with_schedules=len(templates_with_schedules),
+            )
+
+            for schedule_data in templates_with_schedules:
+                source_template_id = schedule_data["source_template_id"]
+                template_id = schedule_data["template_id"]
+                template_name = schedule_data["template_name"]
+                schedules = schedule_data["schedules"]
+
+                for schedule in schedules:
+                    schedule_name = schedule.get("name", "unknown")
+
+                    # Remove read-only fields
+                    schedule_to_import = {k: v for k, v in schedule.items() if k not in [
+                        "id", "type", "url", "related", "summary_fields",
+                        "created", "modified", "last_run", "next_run",
+                        "status", "unified_job_template"
+                    ]}
+
+                    try:
+                        result = await self.client.post(
+                            f"job_templates/{template_id}/schedules/",
+                            json_data=schedule_to_import,
+                        )
+                        logger.info(
+                            "job_template_schedule_imported",
+                            template_id=template_id,
+                            template_name=template_name,
+                            schedule_name=schedule_name,
+                            schedule_id=result.get("id"),
+                        )
+                    except Exception as e:
+                        logger.error(
+                            "job_template_schedule_import_failed",
+                            template_id=template_id,
+                            template_name=template_name,
+                            schedule_name=schedule_name,
+                            error=str(e),
+                        )
 
         return results
 
@@ -3414,7 +3609,76 @@ class SystemJobTemplateImporter(ResourceImporter):
         progress_callback: Callable[[int, int, int], None] | None = None,
     ) -> list[dict[str, Any]]:
         """Import multiple system job templates (mapping only)."""
-        return await self._import_parallel("system_job_templates", templates, progress_callback)
+        # Extract schedules before import
+        templates_with_schedules = []
+        for template in templates:
+            schedules = template.pop("schedules", None)
+            if schedules:
+                source_id = template.get("_source_id", template.get("id"))
+                templates_with_schedules.append({
+                    "source_template_id": source_id,
+                    "schedules": schedules,
+                })
+
+        # Import (map) system job templates
+        results = await self._import_parallel("system_job_templates", templates, progress_callback)
+
+        # Import schedules for successfully mapped system job templates
+        if templates_with_schedules:
+            logger.info(
+                "importing_system_job_template_schedules",
+                total_templates_with_schedules=len(templates_with_schedules),
+            )
+
+            for schedule_data in templates_with_schedules:
+                source_template_id = schedule_data["source_template_id"]
+                schedules = schedule_data["schedules"]
+
+                # Get the target system job template ID from the state mapping
+                target_template_id = self.state.get_target_id("system_job_templates", source_template_id)
+                if not target_template_id:
+                    logger.warning(
+                        "system_job_template_not_found_for_schedule",
+                        source_template_id=source_template_id,
+                    )
+                    continue
+
+                # Get system job template name for logging
+                template_result = next((t for t in results if t.get("id") == target_template_id), None)
+                template_name = template_result.get("name", "unknown") if template_result else "unknown"
+
+                for schedule in schedules:
+                    schedule_name = schedule.get("name", "unknown")
+
+                    # Remove read-only fields
+                    schedule_to_import = {k: v for k, v in schedule.items() if k not in [
+                        "id", "type", "url", "related", "summary_fields",
+                        "created", "modified", "last_run", "next_run",
+                        "status", "unified_job_template"
+                    ]}
+
+                    try:
+                        result = await self.client.post(
+                            f"system_job_templates/{target_template_id}/schedules/",
+                            json_data=schedule_to_import,
+                        )
+                        logger.info(
+                            "system_job_template_schedule_imported",
+                            template_id=target_template_id,
+                            template_name=template_name,
+                            schedule_name=schedule_name,
+                            schedule_id=result.get("id"),
+                        )
+                    except Exception as e:
+                        logger.error(
+                            "system_job_template_schedule_import_failed",
+                            template_id=target_template_id,
+                            template_name=template_name,
+                            schedule_name=schedule_name,
+                            error=str(e),
+                        )
+
+        return results
 
 
 class CredentialInputSourceImporter(ResourceImporter):

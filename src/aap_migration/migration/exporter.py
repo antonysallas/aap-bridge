@@ -892,6 +892,26 @@ class InventorySourceExporter(ResourceExporter):
             page_size=self.performance_config.batch_sizes.get("inventory_sources", 200),
             filters=filters,
         ):
+            # Fetch schedules
+            try:
+                schedules_response = await self.client.get(
+                    f"inventory_sources/{source['id']}/schedules/"
+                )
+                schedules = schedules_response.get("results", [])
+                if schedules:
+                    source["schedules"] = schedules
+                    logger.debug(
+                        "inventory_source_schedules_fetched",
+                        inventory_source_id=source["id"],
+                        schedule_count=len(schedules),
+                    )
+            except Exception as e:
+                logger.warning(
+                    "failed_to_fetch_inventory_source_schedules",
+                    inventory_source_id=source["id"],
+                    error=str(e),
+                )
+
             yield source
 
 
@@ -1267,6 +1287,26 @@ class ProjectExporter(ResourceExporter):
             page_size=self.performance_config.batch_sizes.get("projects", 50),
             filters=filters,
         ):
+            # Fetch schedules
+            try:
+                schedules_response = await self.client.get(
+                    f"projects/{project['id']}/schedules/"
+                )
+                schedules = schedules_response.get("results", [])
+                if schedules:
+                    project["schedules"] = schedules
+                    logger.debug(
+                        "project_schedules_fetched",
+                        project_id=project["id"],
+                        schedule_count=len(schedules),
+                    )
+            except Exception as e:
+                logger.warning(
+                    "failed_to_fetch_project_schedules",
+                    project_id=project["id"],
+                    error=str(e),
+                )
+
             yield project
 
 
@@ -1326,6 +1366,26 @@ class JobTemplateExporter(ResourceExporter):
                         )
                         template["_credentials"] = []
 
+            # Fetch schedules
+            try:
+                schedules_response = await self.client.get(
+                    f"job_templates/{template['id']}/schedules/"
+                )
+                schedules = schedules_response.get("results", [])
+                if schedules:
+                    template["schedules"] = schedules
+                    logger.debug(
+                        "job_template_schedules_fetched",
+                        job_template_id=template["id"],
+                        schedule_count=len(schedules),
+                    )
+            except Exception as e:
+                logger.warning(
+                    "failed_to_fetch_job_template_schedules",
+                    job_template_id=template["id"],
+                    error=str(e),
+                )
+
             yield template
 
     async def export_parallel(
@@ -1375,6 +1435,26 @@ class JobTemplateExporter(ResourceExporter):
                         error=str(e),
                     )
                     template["_credentials"] = []
+
+            # Fetch schedules
+            try:
+                schedules_response = await self.client.get(
+                    f"job_templates/{template['id']}/schedules/"
+                )
+                schedules = schedules_response.get("results", [])
+                if schedules:
+                    template["schedules"] = schedules
+                    logger.debug(
+                        "job_template_schedules_fetched",
+                        job_template_id=template["id"],
+                        schedule_count=len(schedules),
+                    )
+            except Exception as e:
+                logger.warning(
+                    "failed_to_fetch_job_template_schedules",
+                    job_template_id=template["id"],
+                    error=str(e),
+                )
 
             yield template
 
@@ -1640,6 +1720,26 @@ class SystemJobTemplateExporter(ResourceExporter):
             page_size=self.performance_config.batch_sizes.get("system_job_templates", 50),
             filters=filters,
         ):
+            # Fetch schedules
+            try:
+                schedules_response = await self.client.get(
+                    f"system_job_templates/{template['id']}/schedules/"
+                )
+                schedules = schedules_response.get("results", [])
+                if schedules:
+                    template["schedules"] = schedules
+                    logger.debug(
+                        "system_job_template_schedules_fetched",
+                        system_job_template_id=template["id"],
+                        schedule_count=len(schedules),
+                    )
+            except Exception as e:
+                logger.warning(
+                    "failed_to_fetch_system_job_template_schedules",
+                    system_job_template_id=template["id"],
+                    error=str(e),
+                )
+
             yield template
 
 
