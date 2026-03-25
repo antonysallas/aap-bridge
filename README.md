@@ -618,19 +618,170 @@ aap-bridge migrate resume --checkpoint inventories_batch_50
 
 The tool tracks all migrated resources in a state database, ensuring that running the migration multiple times is safe and won't create duplicates.
 
-## Migration Order
+## Migration Order and Dependencies
 
-The tool migrates resources in the correct dependency order:
+⚠️ **CRITICAL**: Resources MUST be migrated in the correct dependency order to avoid failures.
 
-1. **Phase 1**: Organizations, Labels, Users, Teams
-2. **Phase 2**: Credential Types, Credentials
-3. **Phase 3**: Projects (with sync), Execution Environments
-4. **Phase 4**: Inventories (bulk operations, including dynamic inventories)
-5. **Phase 5**: Inventory Sources (SCM configuration for dynamic inventories)
-6. **Phase 6**: Hosts (bulk operations, 200/batch - AAP maximum)
-7. **Phase 7**: Schedules (including inventory source schedules)
-8. **Phase 8**: Job Templates, Workflows
-9. **Phase 9**: RBAC role assignments (via separate `rbac_migration.py` script)
+### Dependency Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                   CORRECT MIGRATION DEPENDENCY ORDER                    │
+└─────────────────────────────────────────────────────────────────────────┘
+
+PHASE 1: FOUNDATION (No Dependencies)
+┌────────────────────────────────────────┐
+│  1. Organizations                      │  ← START HERE (Required by almost everything)
+│  2. Users                              │  ← Independent, can run in parallel with orgs
+│  3. Labels                             │  ← Independent
+└────────────────────────────────────────┘
+                    ↓
+PHASE 2: TEAMS (Requires Organizations)
+┌────────────────────────────────────────┐
+│  4. Teams                              │  ← Requires: Organizations
+└────────────────────────────────────────┘
+                    ↓
+PHASE 3: EXECUTION ENVIRONMENTS (Independent)
+┌────────────────────────────────────────┐
+│  5. Execution Environments             │  ← Can run after Phase 1 or in parallel
+└────────────────────────────────────────┘
+                    ↓
+PHASE 4: CREDENTIALS (CRITICAL - Requires Organizations & Credential Types)
+┌────────────────────────────────────────┐
+│  6. Credential Types (MUST BE FIRST)   │  ← Required by: Credentials
+│     - Migrate all managed types        │
+│     - Migrate all custom types         │
+└────────────────────────────────────────┘
+                    ↓
+┌────────────────────────────────────────┐
+│  7. Credentials (MUST BE SECOND)       │  ← Requires: Organizations, Credential Types
+│     ⚠️ 100% completion required        │
+│     before proceeding                  │
+└────────────────────────────────────────┘
+                    ↓
+PHASE 5: PROJECTS & INVENTORIES (Require Credentials)
+┌────────────────────────────────────────┐
+│  8. Projects                           │  ← Requires: Organizations, Credentials
+│     (with automatic sync)              │     (for SCM authentication)
+└────────────────────────────────────────┘
+                    ↓
+┌────────────────────────────────────────┐
+│  9. Inventories                        │  ← Requires: Organizations
+│     (static & dynamic)                 │
+└────────────────────────────────────────┘
+                    ↓
+┌────────────────────────────────────────┐
+│  10. Inventory Sources                 │  ← Requires: Inventories, Projects
+│      (SCM configuration)               │     Credentials (for SCM auth)
+└────────────────────────────────────────┘
+                    ↓
+┌────────────────────────────────────────┐
+│  11. Hosts (bulk operations)           │  ← Requires: Inventories
+│      (200/batch - AAP maximum)         │
+└────────────────────────────────────────┘
+                    ↓
+PHASE 6: SCHEDULES
+┌────────────────────────────────────────┐
+│  12. Schedules                         │  ← Requires: Projects, Inventory Sources
+│      (including inventory source)      │     Job Templates
+└────────────────────────────────────────┘
+                    ↓
+PHASE 7: JOB TEMPLATES & WORKFLOWS (Require Everything Above)
+┌────────────────────────────────────────┐
+│  13. Job Templates                     │  ← Requires: Organizations, Projects,
+│                                        │     Inventories, Credentials,
+│                                        │     Execution Environments
+└────────────────────────────────────────┘
+                    ↓
+┌────────────────────────────────────────┐
+│  14. Workflow Job Templates            │  ← Requires: Job Templates
+│      & Workflow Nodes                  │
+└────────────────────────────────────────┘
+                    ↓
+PHASE 8: ACCESS CONTROL (Final Step)
+┌────────────────────────────────────────┐
+│  15. RBAC Role Assignments             │  ← Requires: ALL resources above
+│      (via rbac_migration.py)           │     to exist first
+└────────────────────────────────────────┘
+```
+
+### Critical Dependency Rules
+
+🔴 **MUST MIGRATE IN ORDER:**
+1. **Organizations → Credential Types → Credentials** (This sequence is MANDATORY)
+2. **Credentials → Projects/Inventories** (Projects & inventories need credentials)
+3. **Job Templates LAST** (They depend on almost everything)
+
+⚠️ **Common Mistakes to Avoid:**
+- ❌ Migrating credentials before credential types → **WILL FAIL** (missing credential type mappings)
+- ❌ Migrating credentials before organizations → **WILL FAIL** (missing organization references)
+- ❌ Migrating job templates before credentials → **WILL FAIL** (missing credential dependencies)
+- ❌ Migrating RBAC before resources exist → **WILL FAIL** (no resources to assign roles to)
+
+✅ **Correct Phased Migration Example:**
+
+```bash
+# Phase 1: Foundation
+aap-bridge migrate -r organizations -r users -r teams --skip-prep
+
+# Verify Phase 1 completed successfully
+sqlite3 migration_state.db "SELECT resource_type, COUNT(*) FROM id_mappings GROUP BY resource_type;"
+
+# Phase 2: Credentials (CRITICAL - Must come after organizations)
+aap-bridge migrate -r credential_types -r credentials --skip-prep
+
+# Verify Phase 2 completed successfully (should show 100% success)
+sqlite3 migration_state.db "SELECT resource_type, COUNT(*) FROM id_mappings WHERE resource_type IN ('credential_types', 'credentials') GROUP BY resource_type;"
+
+# Phase 3: Projects & Inventories (Now safe - credentials exist)
+aap-bridge migrate -r projects -r inventories --skip-prep
+
+# Phase 4: Job Templates (Now safe - all dependencies exist)
+aap-bridge migrate -r job_templates -r workflow_job_templates --skip-prep
+
+# Phase 5: RBAC (Final step)
+python rbac_migration.py
+```
+
+### Why This Order Matters
+
+**Organizations First:**
+- Organizations are referenced by credentials, projects, inventories, job templates
+- Without organizations, most resources will fail to import
+
+**Credential Types Before Credentials:**
+- Credentials reference credential types by ID
+- Managed credential types must be looked up and mapped in target AAP
+- Custom credential types must be created before credentials can use them
+
+**Credentials Before Projects/Inventories:**
+- Projects need credentials for SCM authentication
+- Inventory sources need credentials for dynamic inventory sync
+- Without credentials, projects/inventories will import but won't be functional
+
+**Job Templates Last:**
+- Job templates reference: organizations, projects, inventories, credentials, execution environments
+- All dependencies must exist before job templates can be created
+
+### Dependency Reference Table
+
+| Resource Type | Requires (Dependencies) | Required By |
+|--------------|-------------------------|-------------|
+| Organizations | None | Teams, Credentials, Projects, Inventories, Job Templates |
+| Users | None | Teams, RBAC |
+| Labels | None | Various resources |
+| Teams | Organizations | RBAC |
+| Execution Environments | Organizations (optional) | Job Templates |
+| **Credential Types** | None | **Credentials** |
+| **Credentials** | **Organizations, Credential Types** | **Projects, Inventory Sources, Job Templates** |
+| Projects | Organizations, Credentials (for SCM) | Inventory Sources, Job Templates |
+| Inventories | Organizations | Hosts, Inventory Sources, Job Templates |
+| Inventory Sources | Inventories, Projects, Credentials | Schedules |
+| Hosts | Inventories | Job Templates |
+| Schedules | Projects, Inventory Sources, Job Templates | None |
+| Job Templates | Organizations, Projects, Inventories, Credentials, Execution Environments | Workflows |
+| Workflow Job Templates | Job Templates | None |
+| RBAC | All resources above | None |
 
 ## Known Issues and Limitations
 
