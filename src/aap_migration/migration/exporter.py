@@ -1441,6 +1441,56 @@ class WorkflowExporter(ResourceExporter):
                         error=str(e),
                     )
 
+            # Fetch schedules
+            try:
+                schedules_response = await self.client.get(
+                    f"workflow_job_templates/{workflow['id']}/schedules/"
+                )
+                schedules = schedules_response.get("results", [])
+                if schedules:
+                    workflow["schedules"] = schedules
+                    logger.debug(
+                        "workflow_schedules_fetched",
+                        workflow_id=workflow["id"],
+                        schedule_count=len(schedules),
+                    )
+            except Exception as e:
+                logger.warning(
+                    "failed_to_fetch_workflow_schedules",
+                    workflow_id=workflow["id"],
+                    error=str(e),
+                )
+
+            # Fetch notification template associations
+            notification_types = ["started", "success", "error", "approvals"]
+            notifications = {}
+            for notif_type in notification_types:
+                try:
+                    notif_response = await self.client.get(
+                        f"workflow_job_templates/{workflow['id']}/notification_templates_{notif_type}/"
+                    )
+                    notif_templates = notif_response.get("results", [])
+                    if notif_templates:
+                        # Store just the IDs for association
+                        notifications[f"notification_templates_{notif_type}"] = [
+                            nt["id"] for nt in notif_templates
+                        ]
+                except Exception as e:
+                    logger.warning(
+                        f"failed_to_fetch_workflow_notifications_{notif_type}",
+                        workflow_id=workflow["id"],
+                        error=str(e),
+                    )
+
+            if notifications:
+                workflow["notifications"] = notifications
+                total_notifs = sum(len(v) for v in notifications.values())
+                logger.debug(
+                    "workflow_notifications_fetched",
+                    workflow_id=workflow["id"],
+                    notification_count=total_notifs,
+                )
+
             yield workflow
 
     async def export_parallel(
@@ -1510,6 +1560,56 @@ class WorkflowExporter(ResourceExporter):
                         workflow_id=workflow["id"],
                         error=str(e),
                     )
+
+            # Fetch schedules
+            try:
+                schedules_response = await self.client.get(
+                    f"workflow_job_templates/{workflow['id']}/schedules/"
+                )
+                schedules = schedules_response.get("results", [])
+                if schedules:
+                    workflow["schedules"] = schedules
+                    logger.debug(
+                        "workflow_schedules_fetched",
+                        workflow_id=workflow["id"],
+                        schedule_count=len(schedules),
+                    )
+            except Exception as e:
+                logger.warning(
+                    "failed_to_fetch_workflow_schedules",
+                    workflow_id=workflow["id"],
+                    error=str(e),
+                )
+
+            # Fetch notification template associations
+            notification_types = ["started", "success", "error", "approvals"]
+            notifications = {}
+            for notif_type in notification_types:
+                try:
+                    notif_response = await self.client.get(
+                        f"workflow_job_templates/{workflow['id']}/notification_templates_{notif_type}/"
+                    )
+                    notif_templates = notif_response.get("results", [])
+                    if notif_templates:
+                        # Store just the IDs for association
+                        notifications[f"notification_templates_{notif_type}"] = [
+                            nt["id"] for nt in notif_templates
+                        ]
+                except Exception as e:
+                    logger.warning(
+                        f"failed_to_fetch_workflow_notifications_{notif_type}",
+                        workflow_id=workflow["id"],
+                        error=str(e),
+                    )
+
+            if notifications:
+                workflow["notifications"] = notifications
+                total_notifs = sum(len(v) for v in notifications.values())
+                logger.debug(
+                    "workflow_notifications_fetched",
+                    workflow_id=workflow["id"],
+                    notification_count=total_notifs,
+                )
 
             yield workflow
 

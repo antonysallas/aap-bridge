@@ -2941,8 +2941,10 @@ class WorkflowImporter(ResourceImporter):
         skipped_count = 0
         all_pending_nodes = []  # Collect all nodes for batch import
         workflows_with_surveys = []  # Collect workflows that have surveys to apply
+        workflows_with_schedules = []  # Collect workflows that have schedules to create
+        workflows_with_notifications = []  # Collect workflows that have notification associations
 
-        # Phase 1: Import workflows and collect nodes/surveys
+        # Phase 1: Import workflows and collect nodes/surveys/schedules/notifications
         for workflow in workflows:
             source_id = workflow.pop("_source_id", workflow.get("id"))
 
@@ -2951,6 +2953,12 @@ class WorkflowImporter(ResourceImporter):
 
             # Extract survey spec for separate import (must be POSTed after workflow creation)
             survey_spec = workflow.pop("survey_spec", None)
+
+            # Extract schedules for separate import
+            schedules = workflow.pop("schedules", None)
+
+            # Extract notification associations for separate import
+            notifications = workflow.pop("notifications", None)
 
             result = await self.import_resource(
                 resource_type="workflow_job_templates",
@@ -2973,6 +2981,23 @@ class WorkflowImporter(ResourceImporter):
                         "workflow_id": result["id"],
                         "workflow_name": result.get("name", "unknown"),
                         "survey_spec": survey_spec,
+                    })
+
+                # Store schedules for later import
+                if schedules:
+                    workflows_with_schedules.append({
+                        "source_workflow_id": source_id,
+                        "workflow_id": result["id"],
+                        "workflow_name": result.get("name", "unknown"),
+                        "schedules": schedules,
+                    })
+
+                # Store notification associations for later import
+                if notifications:
+                    workflows_with_notifications.append({
+                        "workflow_id": result["id"],
+                        "workflow_name": result.get("name", "unknown"),
+                        "notifications": notifications,
                     })
 
                 results.append(result)
@@ -3058,6 +3083,99 @@ class WorkflowImporter(ResourceImporter):
                         workflow_name=workflow_name,
                         error=str(e),
                     )
+
+        # Phase 5: Import schedules
+        if workflows_with_schedules:
+            logger.info(
+                "importing_workflow_schedules",
+                total_workflows_with_schedules=len(workflows_with_schedules),
+            )
+
+            for schedule_data in workflows_with_schedules:
+                source_workflow_id = schedule_data["source_workflow_id"]
+                workflow_id = schedule_data["workflow_id"]
+                workflow_name = schedule_data["workflow_name"]
+                schedules = schedule_data["schedules"]
+
+                for schedule in schedules:
+                    schedule_name = schedule.get("name", "unknown")
+
+                    # Remove read-only fields
+                    schedule_to_import = {k: v for k, v in schedule.items() if k not in [
+                        "id", "type", "url", "related", "summary_fields",
+                        "created", "modified", "last_run", "next_run",
+                        "status", "unified_job_template"
+                    ]}
+
+                    try:
+                        result = await self.client.post(
+                            f"workflow_job_templates/{workflow_id}/schedules/",
+                            json_data=schedule_to_import,
+                        )
+                        logger.info(
+                            "workflow_schedule_imported",
+                            workflow_id=workflow_id,
+                            workflow_name=workflow_name,
+                            schedule_name=schedule_name,
+                            schedule_id=result.get("id"),
+                        )
+                    except Exception as e:
+                        logger.error(
+                            "workflow_schedule_import_failed",
+                            workflow_id=workflow_id,
+                            workflow_name=workflow_name,
+                            schedule_name=schedule_name,
+                            error=str(e),
+                        )
+
+        # Phase 6: Associate notification templates
+        if workflows_with_notifications:
+            logger.info(
+                "associating_workflow_notifications",
+                total_workflows_with_notifications=len(workflows_with_notifications),
+            )
+
+            for notif_data in workflows_with_notifications:
+                workflow_id = notif_data["workflow_id"]
+                workflow_name = notif_data["workflow_name"]
+                notifications = notif_data["notifications"]
+
+                for notif_type, source_notif_ids in notifications.items():
+                    for source_notif_id in source_notif_ids:
+                        # Map notification template ID from source to target
+                        target_notif_id = self.state.get_target_id("notification_templates", source_notif_id)
+
+                        if not target_notif_id:
+                            logger.warning(
+                                "notification_template_not_migrated",
+                                workflow_id=workflow_id,
+                                workflow_name=workflow_name,
+                                source_notif_id=source_notif_id,
+                                notif_type=notif_type,
+                            )
+                            continue
+
+                        try:
+                            await self.client.post(
+                                f"workflow_job_templates/{workflow_id}/{notif_type}/",
+                                json_data={"id": target_notif_id},
+                            )
+                            logger.info(
+                                "workflow_notification_associated",
+                                workflow_id=workflow_id,
+                                workflow_name=workflow_name,
+                                notification_id=target_notif_id,
+                                notif_type=notif_type,
+                            )
+                        except Exception as e:
+                            logger.error(
+                                "workflow_notification_association_failed",
+                                workflow_id=workflow_id,
+                                workflow_name=workflow_name,
+                                notification_id=target_notif_id,
+                                notif_type=notif_type,
+                                error=str(e),
+                            )
 
         return results
 
