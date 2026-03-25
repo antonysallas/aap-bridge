@@ -1657,10 +1657,8 @@ class WorkflowNodeImporter(ResourceImporter):
                     # Remove the field if we can't resolve it
                     resolved.pop("unified_job_template")
 
-            # Remove workflow_job_template from data (it's part of the URL)
-            resolved.pop("workflow_job_template", None)
-
-            # Remove source workflow ID tracking field
+            # Keep workflow_job_template in data (it's required for POST even though it's in the URL)
+            # Just remove the source workflow ID tracking field
             resolved.pop("_source_workflow_id", None)
 
             # Remove edge fields (will be handled separately)
@@ -1668,11 +1666,27 @@ class WorkflowNodeImporter(ResourceImporter):
             resolved.pop("failure_nodes", None)
             resolved.pop("always_nodes", None)
 
+            # Remove read-only/metadata fields that shouldn't be in POST
+            read_only_fields = [
+                "id", "type", "url", "related", "summary_fields",
+                "created", "modified", "natural_key"
+            ]
+            for field in read_only_fields:
+                resolved.pop(field, None)
+
             # Remove None values
             resolved = {k: v for k, v in resolved.items() if v is not None}
 
             # Use nested endpoint
             nested_endpoint = f"workflow_job_templates/{workflow_target_id}/workflow_nodes/"
+
+            # Log the data being sent for debugging
+            logger.debug(
+                "workflow_node_create_attempt",
+                endpoint=nested_endpoint,
+                data_keys=list(resolved.keys()),
+                data=resolved,
+            )
 
             # Create the node using the nested endpoint
             result = await self.client.post(nested_endpoint, data=resolved)
