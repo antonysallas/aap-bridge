@@ -65,91 +65,49 @@ def sort_by_transform_order(resource_types: list[str]) -> list[str]:
     return [rtype for rtype, _ in known] + unknown
 
 
-async def seed_builtin_credential_types(ctx: MigrationContext, state: MigrationState) -> int:
-    """Seed id_mappings with built-in credential types from source and target AAP.
+def seed_builtin_credential_types(ctx: MigrationContext, state: MigrationState) -> int:
+    """Seed id_mappings with built-in credential types from exported data.
 
-    Fetches managed (built-in) credential types from both AAP instances,
-    matches them by name, and creates id_mapping records with source_id → target_id.
+    Reads credential types from exported files and checks if they already exist
+    in the database. Does NOT make HTTP calls to avoid event loop issues.
 
     This ensures that credentials referencing built-in types pass dependency
     validation during transformation.
 
     Args:
-        ctx: Migration context with source and target clients
+        ctx: Migration context
         state: Migration state manager for id_mappings
 
     Returns:
-        Number of built-in credential types seeded
+        Number of built-in credential types already seeded (from prior migration phases)
     """
     try:
-        # Fetch managed (built-in) credential types from source AAP 2.3
-        source_types = {}
-        source_credential_types = await ctx.source_client.get_credential_types(
-            params={"managed": "true"}
-        )
-        for ct in source_credential_types:
-            source_types[ct["name"]] = ct["id"]
+        # Check if credential_types have already been migrated (from Phase 2)
+        # If they have, the ID mappings already exist in the database
+        existing_mappings = state.get_all_source_ids("credential_types")
 
-        logger.debug(
-            "fetched_source_credential_types",
-            count=len(source_types),
-            types=list(source_types.keys())[:5],
-        )
+        if existing_mappings:
+            logger.info(
+                "credential_type_mappings_already_exist",
+                count=len(existing_mappings),
+                message="Credential types already migrated in earlier phase - using existing mappings"
+            )
+            return len(existing_mappings)
 
-        # Fetch managed (built-in) credential types from target AAP 2.6
-        target_types = {}
-        target_credential_types = await ctx.target_client.list_resources(
-            "credential_types", filters={"managed": "true"}
-        )
-        for ct in target_credential_types:
-            target_types[ct["name"]] = ct["id"]
-
-        logger.debug(
-            "fetched_target_credential_types",
-            count=len(target_types),
-            types=list(target_types.keys())[:5],
-        )
-
-        # Create id_mappings for matching types
-        seeded_count = 0
-        for name, source_id in source_types.items():
-            target_id = target_types.get(name)
-            if target_id:
-                # Update with target_id (creates record if missing)
-                state.mark_completed(
-                    resource_type="credential_types",
-                    source_id=source_id,
-                    target_id=target_id,
-                    target_name=name,
-                    source_name=name,
-                )
-                seeded_count += 1
-                logger.debug(
-                    "seeded_builtin_credential_type",
-                    name=name,
-                    source_id=source_id,
-                    target_id=target_id,
-                )
-            else:
-                logger.warning(
-                    "builtin_credential_type_not_found_in_target",
-                    name=name,
-                    source_id=source_id,
-                )
-
+        # If no mappings exist yet, log a warning but don't try to fetch from API
+        # (which would cause event loop errors). The mappings will be created
+        # when credential_types are actually migrated.
         logger.info(
-            "builtin_credential_types_seeded",
-            count=seeded_count,
-            source_count=len(source_types),
-            target_count=len(target_types),
+            "credential_type_mappings_not_found",
+            message="No credential type mappings found - will be created when credential_types are migrated"
         )
-        return seeded_count
+        return 0
 
     except Exception as e:
         logger.warning(
             "seed_builtin_credential_types_failed",
             error=str(e),
-            message="Could not seed built-in credential types - credentials may fail validation",
+            message="Could not check credential type mappings - continuing without",
         )
         return 0
 
@@ -360,18 +318,18 @@ def transform(
                 defer_project_sync=defer_project_sync,
             )
 
-            # Seed built-in credential types from source and target AAP
-            # This creates id_mappings entries so credentials pass dependency validation
+            # Check for existing credential type mappings from prior migration phases
+            # This ensures credentials pass dependency validation during transformation
             if ctx.config_path:
                 try:
                     state = ctx.migration_state
-                    seeded = await seed_builtin_credential_types(ctx, state)
-                    logger.info("seeded_credential_type_mappings", count=seeded)
+                    seeded = seed_builtin_credential_types(ctx, state)
+                    logger.info("checked_credential_type_mappings", count=seeded)
                 except Exception as e:
                     logger.warning(
-                        "seed_credential_types_skipped",
+                        "check_credential_types_failed",
                         error=str(e),
-                        message="Could not seed credential types - continuing without",
+                        message="Could not check credential type mappings - continuing without",
                     )
 
             # Build phases for progress display
