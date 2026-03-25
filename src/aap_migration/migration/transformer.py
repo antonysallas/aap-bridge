@@ -1024,7 +1024,12 @@ class CredentialTransformer(DataTransformer):
         self.external_credential_type_ids: set[int] | None = None
 
     def _load_external_credential_types(self) -> None:
-        """Load IDs of external credential types from export files."""
+        """Load IDs of external credential types from export files.
+
+        Tracks custom (managed=False) external credential types that must be
+        created before credentials can use them. Managed external types (like
+        HashiCorp Vault Secret Lookup) are built-in and don't need this check.
+        """
         self.external_credential_type_ids = set()
         if not self.input_dir:
             return
@@ -1038,7 +1043,9 @@ class CredentialTransformer(DataTransformer):
                 with open(json_file) as f:
                     types = json.load(f)
                     for ct in types:
-                        if ct.get("kind") == "external":
+                        # Only track CUSTOM external types (managed=False)
+                        # Managed external types (like HashiCorp Vault) are built-in
+                        if ct.get("kind") == "external" and not ct.get("managed"):
                             # Use _source_id if available, otherwise id
                             source_id = ct.get("_source_id") or ct.get("id")
                             if source_id:
@@ -1048,6 +1055,80 @@ class CredentialTransformer(DataTransformer):
                     "failed_to_load_external_credential_types",
                     file=str(json_file),
                     error=str(e),
+                )
+
+    def _apply_credential_type_field_mappings(
+        self, data: dict[str, Any], source_id: int
+    ) -> None:
+        """Apply credential type-specific field mappings for AAP version compatibility.
+
+        Handles schema differences between AAP versions for specific credential types.
+        For example, HashiCorp Vault Secret Lookup has different fields in AAP 2.4 vs 2.6.
+
+        Args:
+            data: Credential data (modified in place)
+            source_id: Source credential ID
+        """
+        if "inputs" not in data or not isinstance(data["inputs"], dict):
+            return
+
+        # Get credential type name to determine mapping
+        cred_type_id = data.get("credential_type")
+        if not cred_type_id or not self.state:
+            return
+
+        # Get source credential type name
+        # First try to get it from the database mappings
+        cred_type_name = None
+        try:
+            # Query id_mappings for credential_type source_name
+            mapping_info = self.state.get_id_mapping("credential_types", cred_type_id)
+            if mapping_info:
+                cred_type_name = mapping_info.get("source_name")
+        except Exception:
+            pass
+
+        # If we couldn't get the name from state, try summary_fields
+        if not cred_type_name and "summary_fields" in data:
+            cred_type_info = data.get("summary_fields", {}).get("credential_type", {})
+            if isinstance(cred_type_info, dict):
+                cred_type_name = cred_type_info.get("name")
+
+        if not cred_type_name:
+            return
+
+        # HashiCorp Vault Secret Lookup: AAP 2.4 → 2.6 field mapping
+        if cred_type_name == "HashiCorp Vault Secret Lookup":
+            inputs = data["inputs"]
+            removed_fields = []
+
+            # AAP 2.6 doesn't accept these fields - remove them
+            fields_to_remove = [
+                "api_version",      # API version selection removed in 2.6
+                "namespace",        # Namespace handling changed
+                "role_id",          # AppRole auth changed
+                "secret_id",        # AppRole auth changed
+                "default_auth_path", # Auth path handling changed
+                "kubernetes_role",  # Kubernetes auth changed
+                "username",         # User auth changed
+                "password",         # User auth changed
+            ]
+
+            for field in fields_to_remove:
+                if field in inputs:
+                    removed_fields.append(field)
+                    del inputs[field]
+
+            if removed_fields:
+                logger.warning(
+                    "hashicorp_vault_fields_removed",
+                    resource_type="credentials",
+                    source_id=source_id,
+                    source_name=data.get("name"),
+                    removed_fields=removed_fields,
+                    message="Removed incompatible HashiCorp Vault fields for AAP 2.6 - "
+                            "credential will be created with basic auth (url, token, cacert). "
+                            "Advanced auth methods (AppRole, Kubernetes, namespace) must be reconfigured manually.",
                 )
 
     def _apply_specific_transformations(
@@ -1155,6 +1236,9 @@ class CredentialTransformer(DataTransformer):
                     source_name=data.get("name"),
                     message="credential_type field is REQUIRED but missing - import will fail",
                 )
+
+        # Apply credential type-specific input field mappings (e.g., HashiCorp Vault)
+        self._apply_credential_type_field_mappings(data, source_id)
 
         # Handle encrypted fields - generate temporary values so creation succeeds
         if "inputs" in data:
@@ -1746,7 +1830,13 @@ class CredentialTypeTransformer(DataTransformer):
             resources = results.get("results", [])
             if resources and len(resources) > 0:
                 target_id = resources[0]["id"]
-                state.mark_completed("credential_types", source_id, target_id, source_name=name)
+                # Save to id_mappings table so credentials can find it
+                state.save_id_mapping(
+                    resource_type="credential_types",
+                    source_id=source_id,
+                    target_id=target_id,
+                    source_name=name,
+                )
                 logger.info(
                     "credential_type_mapped_from_target",
                     name=name,

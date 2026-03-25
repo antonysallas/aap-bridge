@@ -894,6 +894,51 @@ class MigrationState:
                 )
                 raise StateError(f"Failed to get mapped ID: {e}") from e
 
+    def get_id_mapping(
+        self,
+        resource_type: str,
+        source_id: int,
+    ) -> dict[str, Any] | None:
+        """
+        Get the full ID mapping information for a source resource.
+
+        Args:
+            resource_type: Type of resource
+            source_id: Source system resource ID
+
+        Returns:
+            Dictionary with mapping info (source_id, target_id, source_name, target_name)
+            or None if no mapping exists
+        """
+        with self._lock:
+            try:
+                with get_session(self.database_url) as session:
+                    mapping = (
+                        session.query(IDMapping)
+                        .filter_by(resource_type=resource_type, source_id=source_id)
+                        .first()
+                    )
+
+                    if not mapping:
+                        return None
+
+                    return {
+                        "source_id": mapping.source_id,
+                        "target_id": mapping.target_id,
+                        "source_name": mapping.source_name,
+                        "target_name": mapping.target_name,
+                        "resource_type": mapping.resource_type,
+                    }
+
+            except Exception as e:
+                logger.error(
+                    "Failed to get ID mapping",
+                    resource_type=resource_type,
+                    source_id=source_id,
+                    error=str(e),
+                )
+                raise StateError(f"Failed to get ID mapping: {e}") from e
+
     def create_or_update_mapping(
         self,
         resource_type: str,
