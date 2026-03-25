@@ -365,7 +365,7 @@ RUNTIME_DATA_ENDPOINTS = {
 MANUAL_MIGRATION_ENDPOINTS = {
     "roles",  # RBAC role assignments (handled separately via RBAC import)
     "tokens",  # OAuth tokens (short-lived, manual recreation)
-    "inventory_sources",  # Inventory sources (manual recreation - tied to dynamic inventories)
+    # NOTE: inventory_sources now supported with automated migration (removed 2026-03-25)
     # NOTE: applications and settings now have automated migration with review workflow
 }
 
