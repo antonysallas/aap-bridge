@@ -375,6 +375,8 @@ aap-bridge credentials compare
 cat ./reports/credential-comparison.md
 
 # Step 3: Phased migration (following dependency graph to avoid failures)
+# NOTE: If you encounter asyncio errors, use the manual three-step process shown below
+
 # Phase 1: Foundation
 aap-bridge migrate -r organizations -r users -r teams --skip-prep
 
@@ -393,6 +395,51 @@ aap-bridge validate all --sample-size 4000
 # Step 5: Migrate RBAC role assignments (after main migration)
 python rbac_migration.py
 ```
+
+**⚠️ Workaround: Manual Three-Step Migration (Use if `migrate` command fails)**
+
+If the `migrate` command fails with asyncio errors, run each phase separately:
+
+```bash
+# Phase 1: Foundation (organizations, users, teams)
+# Step 1: Export
+aap-bridge export -r organizations -r users -r teams
+
+# Step 2: Transform
+aap-bridge transform -r organizations -r users -r teams
+
+# Step 3: Import
+aap-bridge import -r organizations -r users -r teams --yes
+
+# Phase 2: Credentials
+aap-bridge export -r credential_types -r credentials
+aap-bridge transform -r credential_types -r credentials
+aap-bridge import -r credential_types -r credentials --yes
+
+# Phase 3: Projects & Inventories
+aap-bridge export -r execution_environments -r projects -r inventories
+aap-bridge transform -r execution_environments -r projects -r inventories
+aap-bridge import -r execution_environments -r projects -r inventories --yes
+
+# Phase 4: Job Templates
+aap-bridge export -r job_templates -r workflow_job_templates
+aap-bridge transform -r job_templates -r workflow_job_templates
+aap-bridge import -r job_templates -r workflow_job_templates --yes
+```
+
+**Understanding `--skip-prep`:**
+
+The `--skip-prep` flag skips the schema discovery phase. Use it when:
+- ✅ You've already run schema prep once (schemas already exist in `schemas/` directory)
+- ✅ Running subsequent migration phases after Phase 1
+- ✅ Re-running migrations in the same session
+
+Don't use `--skip-prep` when:
+- ❌ First time running the migration (no schemas exist yet)
+- ❌ Schema files were deleted or need to be regenerated
+- ❌ AAP instances were upgraded and schemas may have changed
+
+**Note:** The `export`, `transform`, and `import` commands don't use `--skip-prep` because they don't perform schema discovery.
 
 #### Credential Management Commands
 
