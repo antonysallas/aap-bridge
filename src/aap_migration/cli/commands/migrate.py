@@ -298,24 +298,39 @@ def _run_migration_workflow(
         # Patch Projects + Import Phase 3 resources
         echo_info("Phase 2 (Patching + Automation Import): Patching Projects and Importing Automation Definitions...")
 
-        async def run_patch_and_import():
-            # Call import_cmd with phase2 to trigger combined logic
-            import_ctx.invoke(
-                import_cmd,
-                input_dir=xformed_dir,
-                force=force,
-                resume=resume,
-                dry_run=False,
-                skip_dependencies=False,
-                check_dependencies=False,
-                force_reimport=False,
-                phase="phase2",
-            )
-        try:
-            asyncio.run(run_patch_and_import())
-        except RuntimeError:
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(run_patch_and_import())
+        # CRITICAL: Reinitialize HTTP clients before phase2
+        # If phase1 was run previously, its event loop closed and clients are invalid
+        from aap_migration.client.aap_target_client import AAPTargetClient
+        from aap_migration.client.aap_source_client import AAPSourceClient
+        ctx._target_client = AAPTargetClient(
+            config=ctx.config.target,
+            rate_limit=ctx.config.performance.rate_limit,
+            log_payloads=ctx.config.logging.log_payloads,
+            max_payload_size=ctx.config.logging.max_payload_size,
+            max_connections=ctx.config.performance.http_max_connections,
+            max_keepalive_connections=ctx.config.performance.http_max_keepalive_connections,
+        )
+        ctx._source_client = AAPSourceClient(
+            config=ctx.config.source,
+            rate_limit=ctx.config.performance.rate_limit,
+            log_payloads=ctx.config.logging.log_payloads,
+            max_payload_size=ctx.config.logging.max_payload_size,
+            max_connections=ctx.config.performance.http_max_connections,
+            max_keepalive_connections=ctx.config.performance.http_max_keepalive_connections,
+        )
+
+        # Call import_cmd with phase2 to trigger combined logic
+        import_ctx.invoke(
+            import_cmd,
+            input_dir=xformed_dir,
+            force=force,
+            resume=resume,
+            dry_run=False,
+            skip_dependencies=False,
+            check_dependencies=False,
+            force_reimport=False,
+            phase="phase2",
+        )
 
     else:  # phase == "all"
         # 1. Import Phase 1
@@ -324,6 +339,20 @@ def _run_migration_workflow(
 
         # 2. Patch Projects (Phase 2 logic)
         echo_info("Phase 2 (Patching): Patching Projects with SCM details...")
+
+        # CRITICAL: Reinitialize HTTP client before patch phase
+        # The previous import phase closed its event loop, making the existing
+        # client's connection pool invalid. We need a fresh client for this new
+        # asyncio.run() context.
+        from aap_migration.client.aap_target_client import AAPTargetClient
+        ctx._target_client = AAPTargetClient(
+            config=ctx.config.target,
+            rate_limit=ctx.config.performance.rate_limit,
+            log_payloads=ctx.config.logging.log_payloads,
+            max_payload_size=ctx.config.logging.max_payload_size,
+            max_connections=ctx.config.performance.http_max_connections,
+            max_keepalive_connections=ctx.config.performance.http_max_keepalive_connections,
+        )
 
         async def run_patch():
             await patch_project_scm_details(
@@ -341,6 +370,26 @@ def _run_migration_workflow(
         click.echo()
 
         # 3. Import Phase 3 - Pass "phase3" to trigger the batch_precheck fix
+        # CRITICAL: Reinitialize HTTP clients before Phase 3 import
+        # The patch phase closed its event loop, making clients invalid
+        from aap_migration.client.aap_source_client import AAPSourceClient
+        ctx._target_client = AAPTargetClient(
+            config=ctx.config.target,
+            rate_limit=ctx.config.performance.rate_limit,
+            log_payloads=ctx.config.logging.log_payloads,
+            max_payload_size=ctx.config.logging.max_payload_size,
+            max_connections=ctx.config.performance.http_max_connections,
+            max_keepalive_connections=ctx.config.performance.http_max_keepalive_connections,
+        )
+        ctx._source_client = AAPSourceClient(
+            config=ctx.config.source,
+            rate_limit=ctx.config.performance.rate_limit,
+            log_payloads=ctx.config.logging.log_payloads,
+            max_payload_size=ctx.config.logging.max_payload_size,
+            max_connections=ctx.config.performance.http_max_connections,
+            max_keepalive_connections=ctx.config.performance.http_max_keepalive_connections,
+        )
+
         types3 = [t for t in resource_types if t in PHASE3_RESOURCE_TYPES]
         run_import(types3, "Automation Definitions", import_phase="phase3")
 

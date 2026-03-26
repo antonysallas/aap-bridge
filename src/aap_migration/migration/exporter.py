@@ -285,9 +285,9 @@ class ResourceExporter:
             resume_from_id=self._resume_from_id,
         )
 
-        # Load existing mappings cache ONCE before starting export
-        # This enables efficient O(1) resume checks instead of N database queries
-        self._load_existing_mappings_cache(resource_type)
+        # NOTE: Removed existing mappings cache loading for phased migration support
+        # Export now exports ALL resources; import handles idempotency via ID mappings
+        # self._load_existing_mappings_cache(resource_type)  # DISABLED
 
         total_fetched = 0
         export_stopped_early = False
@@ -455,16 +455,13 @@ class ResourceExporter:
             self.stats["skipped_count"] += 1
             return None
 
-        # Check if already exported (for resume capability)
-        # Use in-memory cache for O(1) lookup instead of database query
-        if (resource_type, resource["id"]) in self._existing_mappings_cache:
-            logger.debug(
-                "resource_already_exported",
-                resource_type=resource_type,
-                source_id=resource["id"],
-            )
-            self.stats["skipped_count"] += 1
-            return None
+        # CRITICAL: Do NOT skip resources based on ID mappings in database
+        # ID mappings indicate resources were IMPORTED, not exported
+        # For phased migration (e.g., Phase 1: orgs, Phase 2: users):
+        #   - Phase 1 imports orgs → creates ID mappings in DB
+        #   - Phase 2 must still EXPORT orgs (even though they have mappings)
+        #   - Import phase will skip re-importing using ID mappings (idempotency)
+        # Skipping export based on mappings breaks phased migration!
 
         return resource
 
@@ -542,8 +539,8 @@ class ResourceExporter:
             filters=filters,
         )
 
-        # Load existing mappings cache ONCE before starting export
-        self._load_existing_mappings_cache(resource_type)
+        # NOTE: Removed existing mappings cache loading for phased migration support
+        # self._load_existing_mappings_cache(resource_type)  # DISABLED
 
         total_fetched = 0
 

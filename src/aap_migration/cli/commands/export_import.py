@@ -1008,11 +1008,13 @@ def import_cmd(
         types_to_import = [t for t in types_to_import if t in PHASE3_RESOURCE_TYPES]
 
     # Force re-import: Clear import progress and reset target_ids
+    # IMPORTANT: Only clear requested types, NOT their dependencies
+    # Dependencies may already be imported and should not be cleared
     if force_reimport:
         click.echo()
         echo_warning("Force re-import enabled - clearing import progress...")
 
-        for rtype in types_to_import:
+        for rtype in requested_types:  # Only clear explicitly requested types
             # Clear migration_progress records (removes import status tracking)
             cleared_count = ctx.migration_state.clear_progress(rtype)
 

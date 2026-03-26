@@ -587,6 +587,9 @@ class MigrationState:
         """
         Mark a resource migration as completed.
 
+        Updates BOTH migration_progress and id_mappings in a single transaction
+        to maintain consistency.
+
         Args:
             resource_type: Type of resource
             source_id: Source system resource ID
@@ -600,6 +603,7 @@ class MigrationState:
         with self._lock:
             try:
                 with get_session(self.database_url) as session:
+                    # Update migration_progress
                     progress = (
                         session.query(MigrationProgress)
                         .filter_by(resource_type=resource_type, source_id=source_id)
@@ -638,17 +642,35 @@ class MigrationState:
                         progress.target_id = target_id
                         progress.completed_at = datetime.now(UTC)
 
-                    session.commit()
-
-                    # Create ID mapping
-                    self.save_id_mapping(
-                        resource_type=resource_type,
-                        source_id=source_id,
-                        target_id=target_id,
-                        source_name=progress.source_name,
-                        target_name=target_name,
-                        migration_progress_id=progress.id,
+                    # Update or create ID mapping IN THE SAME TRANSACTION
+                    mapping = (
+                        session.query(IDMapping)
+                        .filter_by(resource_type=resource_type, source_id=source_id)
+                        .first()
                     )
+
+                    if mapping:
+                        # Update existing mapping
+                        mapping.target_id = target_id
+                        if target_name:
+                            mapping.target_name = target_name
+                        if progress.source_name:
+                            mapping.source_name = progress.source_name
+                        mapping.migration_progress_id = progress.id
+                    else:
+                        # Create new mapping
+                        mapping = IDMapping(
+                            resource_type=resource_type,
+                            source_id=source_id,
+                            target_id=target_id,
+                            source_name=progress.source_name,
+                            target_name=target_name,
+                            migration_progress_id=progress.id,
+                        )
+                        session.add(mapping)
+
+                    # Commit both updates in single transaction
+                    session.commit()
 
                     logger.info(
                         "Marked resource as completed",
@@ -1253,6 +1275,9 @@ class MigrationState:
         """
         Clear migration progress records to allow fresh re-export.
 
+        Also resets target_id in id_mappings to maintain consistency.
+        This ensures both tables stay synchronized.
+
         Args:
             resource_type: Optional resource type to clear (None = all types)
 
@@ -1262,21 +1287,35 @@ class MigrationState:
         with self._lock:
             try:
                 with get_session(self.database_url) as session:
-                    query = session.query(MigrationProgress)
-
+                    # Delete migration_progress records
+                    progress_query = session.query(MigrationProgress)
                     if resource_type:
-                        query = query.filter(MigrationProgress.resource_type == resource_type)
+                        progress_query = progress_query.filter(
+                            MigrationProgress.resource_type == resource_type
+                        )
+                    progress_count = progress_query.delete(synchronize_session=False)
 
-                    count = query.delete(synchronize_session=False)
+                    # Reset target_id in id_mappings to maintain consistency
+                    mapping_query = session.query(IDMapping)
+                    if resource_type:
+                        mapping_query = mapping_query.filter(
+                            IDMapping.resource_type == resource_type
+                        )
+                    mapping_count = mapping_query.update(
+                        {"target_id": None, "target_name": None},
+                        synchronize_session=False,
+                    )
+
                     session.commit()
 
                     logger.info(
-                        "Cleared migration progress",
+                        "Cleared migration progress and reset mappings",
                         resource_type=resource_type or "all",
-                        count=count,
+                        progress_cleared=progress_count,
+                        mappings_reset=mapping_count,
                     )
 
-                    return count
+                    return progress_count
 
             except Exception as e:
                 logger.error(
@@ -1293,6 +1332,8 @@ class MigrationState:
         This allows re-import without re-export. The source_id mappings
         created during export are preserved, only target_id is cleared.
 
+        Updates BOTH migration_progress and id_mappings to maintain consistency.
+
         Use case: When import fails and you want to retry importing,
         but don't want to re-run the export process.
 
@@ -1308,24 +1349,34 @@ class MigrationState:
         with self._lock:
             try:
                 with get_session(self.database_url) as session:
-                    query = session.query(IDMapping).filter(
+                    # Reset target_id in id_mappings
+                    mapping_query = session.query(IDMapping).filter(
                         IDMapping.resource_type == resource_type
                     )
-
-                    # Update target_id and target_name to NULL
-                    count = query.update(
+                    mapping_count = mapping_query.update(
                         {"target_id": None, "target_name": None},
                         synchronize_session=False,
                     )
+
+                    # Reset target_id in migration_progress to maintain consistency
+                    progress_query = session.query(MigrationProgress).filter(
+                        MigrationProgress.resource_type == resource_type
+                    )
+                    progress_count = progress_query.update(
+                        {"target_id": None, "status": "pending"},
+                        synchronize_session=False,
+                    )
+
                     session.commit()
 
                     logger.info(
-                        "Reset target IDs",
+                        "Reset target IDs and progress status",
                         resource_type=resource_type,
-                        count=count,
+                        mappings_reset=mapping_count,
+                        progress_reset=progress_count,
                     )
 
-                    return count
+                    return mapping_count
 
             except Exception as e:
                 logger.error(

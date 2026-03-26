@@ -326,6 +326,111 @@ class ResourceImporter:
         # Use class-level DEPENDENCIES or return empty dict
         return self.DEPENDENCIES
 
+    async def _handle_project_manual_to_scm_transition(
+        self, resource_type: str, source_id: int, existing: dict[str, Any], data: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        """Handle transition from Manual to SCM project type.
+
+        AAP requires a two-step update when converting Manual projects to SCM:
+        1. Set scm_type and scm_url (basic SCM configuration)
+        2. Set scm_update_on_launch and other SCM options
+
+        Args:
+            resource_type: Type of resource ('projects')
+            source_id: Source resource ID
+            existing: Existing project in target AAP
+            data: New project data with SCM configuration
+
+        Returns:
+            Updated resource or None on failure
+        """
+        existing_scm_type = existing.get("scm_type") or ""
+        new_scm_type = data.get("scm_type") or ""
+
+        # Log for debugging
+        logger.debug(
+            "checking_project_scm_transition",
+            source_id=source_id,
+            existing_scm_type=repr(existing_scm_type),
+            new_scm_type=repr(new_scm_type),
+            is_manual=existing_scm_type in ("", None),
+            is_scm=new_scm_type not in ("", None),
+        )
+
+        # Check if this is a Manual → SCM transition
+        # Manual projects have scm_type as empty string or None
+        if existing_scm_type in ("", None) and new_scm_type not in ("", None):
+            logger.info(
+                "project_manual_to_scm_transition",
+                resource_type=resource_type,
+                source_id=source_id,
+                existing_type="manual",
+                new_type=new_scm_type,
+            )
+
+            # Step 1: Update with basic SCM fields only
+            # Include credential if present (required for private repos)
+            basic_scm_data = {
+                "scm_type": data.get("scm_type"),
+                "scm_url": data.get("scm_url"),
+                "scm_branch": data.get("scm_branch", ""),
+            }
+
+            # Add credential if present
+            if "credential" in data:
+                basic_scm_data["credential"] = data["credential"]
+
+            # Remove None values
+            basic_scm_data = {k: v for k, v in basic_scm_data.items() if v is not None}
+
+            try:
+                logger.info(
+                    "project_update_step1_basic_scm",
+                    resource_type=resource_type,
+                    source_id=source_id,
+                    fields=list(basic_scm_data.keys()),
+                )
+                await self.client.update_resource(resource_type, existing["id"], basic_scm_data)
+
+                # Step 2: Update with SCM options
+                scm_options = {
+                    "scm_clean": data.get("scm_clean"),
+                    "scm_delete_on_update": data.get("scm_delete_on_update"),
+                    "scm_update_on_launch": data.get("scm_update_on_launch"),
+                    "scm_update_cache_timeout": data.get("scm_update_cache_timeout"),
+                }
+
+                # Remove None values
+                scm_options = {k: v for k, v in scm_options.items() if v is not None}
+
+                if scm_options:
+                    logger.info(
+                        "project_update_step2_scm_options",
+                        resource_type=resource_type,
+                        source_id=source_id,
+                        fields=list(scm_options.keys()),
+                    )
+                    updated = await self.client.update_resource(
+                        resource_type, existing["id"], scm_options
+                    )
+                    return updated
+                else:
+                    # If no options to set, fetch the updated resource from step 1
+                    result = await self.client.get(f"{resource_type}/{existing['id']}/")
+                    return result
+
+            except Exception as e:
+                logger.error(
+                    "project_manual_to_scm_transition_failed",
+                    resource_type=resource_type,
+                    source_id=source_id,
+                    error=str(e),
+                )
+                raise
+
+        # Not a Manual → SCM transition, return None to indicate no special handling
+        return None
+
     async def _handle_conflict(
         self, resource_type: str, source_id: int, data: dict[str, Any]
     ) -> dict[str, Any] | None:
@@ -374,6 +479,40 @@ class ResourceImporter:
                         source_id=source_id,
                         reason="Resources differ",
                     )
+
+                    # Special handling for projects: Manual → SCM transition
+                    if resource_type == "projects":
+                        manual_to_scm_result = await self._handle_project_manual_to_scm_transition(
+                            resource_type, source_id, existing, data
+                        )
+                        if manual_to_scm_result:
+                            # Transition handled successfully
+                            self.state.mark_completed(
+                                resource_type=resource_type,
+                                source_id=source_id,
+                                target_id=manual_to_scm_result["id"],
+                                target_name=manual_to_scm_result.get("name"),
+                            )
+                            return manual_to_scm_result
+
+                        # For manual projects, clear SCM options to prevent validation errors
+                        # AAP rejects updates that leave scm_update_on_launch=true on manual projects
+                        if data.get("scm_type") in ("", None):
+                            logger.debug(
+                                "clearing_scm_options_for_manual_project",
+                                source_id=source_id,
+                                existing_scm_update=existing.get("scm_update_on_launch"),
+                            )
+                            # Explicitly clear SCM options that don't apply to manual projects
+                            data = {
+                                **data,
+                                "scm_update_on_launch": False,
+                                "scm_clean": False,
+                                "scm_delete_on_update": False,
+                                "scm_update_cache_timeout": 0,
+                            }
+
+                    # Standard update (or no special handling needed)
                     updated = await self.client.update_resource(resource_type, existing["id"], data)
                     self.state.mark_completed(
                         resource_type=resource_type,
@@ -1561,6 +1700,40 @@ class InventorySourceImporter(ResourceImporter):
                             schedule_name=schedule_name,
                             error=str(e),
                         )
+
+        # Automatically trigger sync for all successfully imported inventory sources
+        if results:
+            logger.info(
+                "triggering_inventory_source_syncs",
+                total_inventory_sources=len(results),
+            )
+
+            for result in results:
+                inventory_source_id = result.get("id")
+                inventory_source_name = result.get("name", "unknown")
+
+                if not inventory_source_id:
+                    continue
+
+                try:
+                    # Trigger sync via POST to /inventory_sources/{id}/update/
+                    sync_result = await self.client.post(
+                        f"inventory_sources/{inventory_source_id}/update/",
+                        json_data={},
+                    )
+                    logger.info(
+                        "inventory_source_sync_triggered",
+                        inventory_source_id=inventory_source_id,
+                        inventory_source_name=inventory_source_name,
+                        inventory_update_id=sync_result.get("id"),
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "inventory_source_sync_failed",
+                        inventory_source_id=inventory_source_id,
+                        inventory_source_name=inventory_source_name,
+                        error=str(e),
+                    )
 
         return results
 
