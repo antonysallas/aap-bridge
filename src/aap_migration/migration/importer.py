@@ -4261,6 +4261,16 @@ class SettingsImporter(ResourceImporter):
         report_lines = []
         report_lines.append("# Settings Migration Review Report\n\n")
 
+        # Add LDAP warning for AAP 2.6
+        report_lines.append("⚠️ **LDAP Settings in AAP 2.6:** LDAP settings are imported to Controller API. ")
+        report_lines.append("In AAP 2.6, LDAP authentication may be managed by Platform Gateway. ")
+        report_lines.append("After migration, verify LDAP authentication works:\n")
+        report_lines.append("1. Test LDAP login with a test user\n")
+        report_lines.append("2. Manually enter `AUTH_LDAP_BIND_PASSWORD` (not migrated for security)\n")
+        report_lines.append("3. If LDAP login fails, configure LDAP via Platform Gateway (Settings → Authentication in UI)\n")
+        report_lines.append("4. See README.md 'Post-Migration: Verify LDAP Authentication' section for details\n\n")
+        report_lines.append("---\n\n")
+
         if review_required:
             report_lines.append("## ⚠️  Environment-Specific Settings (Review Required)\n\n")
             report_lines.append("These settings contain URLs, paths, or hostnames that may differ between environments:\n\n")

@@ -214,6 +214,15 @@ aap-bridge migrate -r settings --skip-prep
 
 **Important:** Settings are environment-specific. Review before applying to ensure they match your target environment.
 
+**⚠️ LDAP Settings in AAP 2.6:**
+After migrating settings, you MUST verify LDAP authentication:
+1. Test LDAP login with a test user
+2. Manually enter `AUTH_LDAP_BIND_PASSWORD` (not migrated for security)
+3. In AAP 2.6, LDAP may be managed by Platform Gateway - verify via UI
+4. If LDAP login fails, check Settings → Authentication in AAP 2.6 UI
+
+See "Post-Migration Verification" section below for detailed steps.
+
 ### Phase 9: RBAC (Optional)
 
 ```bash
@@ -365,6 +374,63 @@ aap-bridge transform -r organizations -r users -r teams
 # Import Phase 1
 aap-bridge import -r organizations -r users -r teams
 ```
+
+## Post-Migration Verification
+
+### Verify LDAP Authentication (AAP 2.6)
+
+**Critical for environments using LDAP authentication:**
+
+After completing Phase 8 (Settings migration), verify LDAP authentication works in AAP 2.6.
+
+**Step 1: Test LDAP Login**
+```bash
+# Try logging in to AAP 2.6 with an LDAP user account
+# Use AAP 2.6 web UI login page
+```
+
+**Step 2: Enter LDAP Bind Password (Required)**
+```bash
+# AUTH_LDAP_BIND_PASSWORD is NOT migrated for security
+# You must manually enter it:
+
+# Option 1: Via AAP 2.6 UI
+# Navigate to: Settings → Authentication → LDAP
+# Enter the bind password
+
+# Option 2: Via API
+curl -sk -X PATCH -H "Authorization: Bearer $TOKEN" \
+  "https://target-aap/api/controller/v2/settings/all/" \
+  -d '{"AUTH_LDAP_BIND_PASSWORD": "your-actual-bind-password"}'
+```
+
+**Step 3: Verify LDAP Settings Location**
+```bash
+# In AAP 2.6, LDAP may be in Gateway or Controller
+# Check both locations:
+
+# Check Controller (where migration puts them)
+curl -sk -H "Authorization: Bearer $TOKEN" \
+  https://target-aap/api/controller/v2/settings/ldap/ | jq .
+
+# Check Gateway (AAP 2.6 Platform Gateway)
+curl -sk -H "Authorization: Bearer $TOKEN" \
+  https://target-aap/api/gateway/v1/settings/authentication/ | jq .
+```
+
+**Step 4: If LDAP Login Fails**
+- Check AAP 2.6 UI: Settings → Authentication
+- LDAP settings may need to be configured via Platform Gateway
+- Review `SETTINGS-REVIEW-REPORT.md` for all LDAP settings
+- Verify LDAP server URI is correct for target environment
+- Check LDAP group search and organization mappings
+
+**Quick Checklist:**
+- [ ] LDAP bind password entered
+- [ ] Test LDAP user can log in
+- [ ] LDAP group mappings work correctly
+- [ ] LDAP organization mappings are correct
+- [ ] LDAP settings visible in AAP 2.6 UI
 
 ## Performance Tuning
 

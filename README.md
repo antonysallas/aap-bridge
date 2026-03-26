@@ -412,6 +412,11 @@ aap-bridge migrate -r applications --skip-prep
 # Phase 9: Settings (Optional - review before applying)
 aap-bridge migrate -r settings --skip-prep
 
+# IMPORTANT: After settings migration, verify LDAP authentication
+# In AAP 2.6, LDAP settings may be managed by Platform Gateway.
+# Test LDAP login and manually enter AUTH_LDAP_BIND_PASSWORD if needed.
+# See Post-Migration Verification section below for details.
+
 # Step 4: Validate migration
 aap-bridge validate all --sample-size 4000
 
@@ -511,6 +516,49 @@ Don't use `--skip-prep` when:
 - ❌ AAP instances were upgraded and schemas may have changed
 
 **Note:** The `export`, `transform`, and `import` commands don't use `--skip-prep` because they don't perform schema discovery.
+
+#### Post-Migration: Verify LDAP Authentication (AAP 2.6)
+
+**⚠️ Important for AAP 2.6 LDAP Settings:**
+
+In AAP 2.6, LDAP authentication settings may be managed by Platform Gateway instead of Controller. The current migration imports all settings to Controller (`/api/controller/v2/settings/all/`).
+
+**After settings migration, verify LDAP authentication works:**
+
+```bash
+# 1. Test LDAP login with a test user
+# Try logging in to AAP 2.6 with an LDAP user account
+
+# 2. If login fails, check where LDAP settings are configured
+# Option A: Check Controller settings
+curl -sk -H "Authorization: Bearer $TOKEN" \
+  https://target-aap/api/controller/v2/settings/ldap/
+
+# Option B: Check Gateway settings (AAP 2.6)
+curl -sk -H "Authorization: Bearer $TOKEN" \
+  https://target-aap/api/gateway/v1/settings/authentication/
+
+# 3. Manually enter LDAP bind password (required)
+# Via AAP 2.6 UI: Settings → Authentication → LDAP
+# Enter AUTH_LDAP_BIND_PASSWORD value
+
+# 4. If LDAP still doesn't work, manually configure via Gateway
+# Use AAP 2.6 UI: Settings → Authentication → Configure LDAP
+# Or use Gateway API to update LDAP settings
+```
+
+**LDAP Settings Checklist:**
+- [ ] Test LDAP login with test user
+- [ ] Verify LDAP settings are present (Controller or Gateway)
+- [ ] Manually enter `AUTH_LDAP_BIND_PASSWORD` (not migrated for security)
+- [ ] Test LDAP authentication again
+- [ ] Verify LDAP group mappings work
+- [ ] Check LDAP organization mappings
+
+**Troubleshooting:**
+- If LDAP settings appear in Controller but authentication fails → May need to configure in Gateway
+- Check `SETTINGS-REVIEW-REPORT.md` for all LDAP-related settings
+- Consult AAP 2.6 documentation for Platform Gateway authentication configuration
 
 #### Credential Management Commands
 
