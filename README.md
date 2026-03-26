@@ -453,6 +453,54 @@ python rbac_migration.py
 
 **Note:** RBAC role assignments are migrated using a separate Python script (`rbac_migration.py`) after the main migration completes. This ensures all resources exist before assigning roles. See [USER-GUIDE.md](USER-GUIDE.md) for detailed RBAC migration instructions.
 
+#### Workaround: Manual Three-Step Migration
+
+**⚠️ If `aap-bridge migrate -r <resource>` fails with asyncio or event loop errors, use the manual three-step process:**
+
+The migration process consists of three separate phases that can be executed independently:
+
+```bash
+# Step 1: Export from source AAP
+aap-bridge export -r organizations
+
+# Step 2: Transform to target format
+aap-bridge transform -r organizations
+
+# Step 3: Import to target AAP
+aap-bridge import -r organizations
+```
+
+**When to use manual three-step process:**
+- ✅ Asyncio event loop errors
+- ✅ Connection timeouts during combined operation
+- ✅ Need to inspect transformed data before import
+- ✅ Debugging specific migration phases
+- ✅ Split operations across different time windows
+
+**Example: Complete Phase 1 using manual process**
+
+```bash
+# Export all Phase 1 resources
+aap-bridge export -r organizations -r users -r teams
+
+# Transform all Phase 1 resources
+aap-bridge transform -r organizations -r users -r teams
+
+# Import all Phase 1 resources
+aap-bridge import -r organizations -r users -r teams
+```
+
+**Why this works:**
+- Each command uses a separate event loop lifecycle
+- Avoids asyncio cleanup issues
+- Allows inspection of exports/ and xformed/ directories between steps
+- Provides better error isolation
+
+**File locations:**
+- Exported data: `exports/<resource_type>/`
+- Transformed data: `xformed/<resource_type>/`
+- State database: `migration_state.db`
+
 #### Output Control
 
 The tool provides flexible output modes for different environments:

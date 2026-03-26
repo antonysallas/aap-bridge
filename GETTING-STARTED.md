@@ -333,6 +333,39 @@ sqlite3 migration_state.db "SELECT source_id, target_id FROM id_mappings WHERE r
 # Resources → Inventories → [Select Inventory] → Sources → Check sync status
 ```
 
+### Issue: Asyncio "Event loop is closed" error
+
+**Cause:** Race condition in asyncio event loop lifecycle when using `aap-bridge migrate -r`
+
+**Solution:** Use manual three-step process (export → transform → import)
+
+```bash
+# Instead of:
+aap-bridge migrate -r organizations --skip-prep  # May fail
+
+# Use:
+aap-bridge export -r organizations
+aap-bridge transform -r organizations
+aap-bridge import -r organizations
+```
+
+**Why this works:**
+- Each command uses a separate event loop lifecycle
+- Avoids asyncio cleanup issues
+- Better error isolation
+
+**Complete Phase 1 example:**
+```bash
+# Export Phase 1
+aap-bridge export -r organizations -r users -r teams
+
+# Transform Phase 1
+aap-bridge transform -r organizations -r users -r teams
+
+# Import Phase 1
+aap-bridge import -r organizations -r users -r teams
+```
+
 ## Performance Tuning
 
 ### Adjust Batch Sizes
