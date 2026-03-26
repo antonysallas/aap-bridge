@@ -375,16 +375,22 @@ aap-bridge credentials compare
 cat ./reports/credential-comparison.md
 
 # Step 3: Phased migration (following dependency graph to avoid failures)
+# NOTE: Migrating one resource at a time provides better error isolation
 # NOTE: If you encounter asyncio errors, use the manual three-step process shown below
 
 # Phase 1: Foundation
-aap-bridge migrate -r organizations -r users -r teams --skip-prep
+aap-bridge migrate -r organizations --skip-prep
+aap-bridge migrate -r users --skip-prep
+aap-bridge migrate -r teams --skip-prep
 
 # Phase 2: Credentials (CRITICAL - must be 100% complete)
-aap-bridge migrate -r credential_types -r credentials --skip-prep
+aap-bridge migrate -r credential_types --skip-prep
+aap-bridge migrate -r credentials --skip-prep
 
 # Phase 3: Infrastructure
-aap-bridge migrate -r execution_environments -r projects -r inventories --skip-prep
+aap-bridge migrate -r execution_environments --skip-prep
+aap-bridge migrate -r projects --skip-prep
+aap-bridge migrate -r inventories --skip-prep
 aap-bridge migrate -r inventory_sources --skip-prep
 
 # Phase 4: Hosts
@@ -394,7 +400,8 @@ aap-bridge migrate -r hosts --skip-prep
 aap-bridge migrate -r instance_groups --skip-prep
 
 # Phase 6: Automation
-aap-bridge migrate -r job_templates -r workflow_job_templates --skip-prep
+aap-bridge migrate -r job_templates --skip-prep
+aap-bridge migrate -r workflow_job_templates --skip-prep
 
 # Phase 7: Schedules
 aap-bridge migrate -r schedules --skip-prep
@@ -411,23 +418,47 @@ python rbac_migration.py
 
 **⚠️ Workaround: Manual Three-Step Migration (Use if `migrate` command fails)**
 
-If the `migrate` command fails with asyncio errors, run each phase separately:
+If the `migrate` command fails with asyncio errors, run each resource type separately:
 
 ```bash
 # Phase 1: Foundation
-aap-bridge export -r organizations -r users -r teams
-aap-bridge transform -r organizations -r users -r teams
-aap-bridge import -r organizations -r users -r teams --yes
+aap-bridge export -r organizations
+aap-bridge transform -r organizations
+aap-bridge import -r organizations --yes
+
+aap-bridge export -r users
+aap-bridge transform -r users
+aap-bridge import -r users --yes
+
+aap-bridge export -r teams
+aap-bridge transform -r teams
+aap-bridge import -r teams --yes
 
 # Phase 2: Credentials
-aap-bridge export -r credential_types -r credentials
-aap-bridge transform -r credential_types -r credentials
-aap-bridge import -r credential_types -r credentials --yes
+aap-bridge export -r credential_types
+aap-bridge transform -r credential_types
+aap-bridge import -r credential_types --yes
+
+aap-bridge export -r credentials
+aap-bridge transform -r credentials
+aap-bridge import -r credentials --yes
 
 # Phase 3: Infrastructure
-aap-bridge export -r execution_environments -r projects -r inventories -r inventory_sources
-aap-bridge transform -r execution_environments -r projects -r inventories -r inventory_sources
-aap-bridge import -r execution_environments -r projects -r inventories -r inventory_sources --yes
+aap-bridge export -r execution_environments
+aap-bridge transform -r execution_environments
+aap-bridge import -r execution_environments --yes
+
+aap-bridge export -r projects
+aap-bridge transform -r projects
+aap-bridge import -r projects --yes
+
+aap-bridge export -r inventories
+aap-bridge transform -r inventories
+aap-bridge import -r inventories --yes
+
+aap-bridge export -r inventory_sources
+aap-bridge transform -r inventory_sources
+aap-bridge import -r inventory_sources --yes
 
 # Phase 4: Hosts
 aap-bridge export -r hosts
@@ -440,9 +471,13 @@ aap-bridge transform -r instance_groups
 aap-bridge import -r instance_groups --yes
 
 # Phase 6: Automation
-aap-bridge export -r job_templates -r workflow_job_templates
-aap-bridge transform -r job_templates -r workflow_job_templates
-aap-bridge import -r job_templates -r workflow_job_templates --yes
+aap-bridge export -r job_templates
+aap-bridge transform -r job_templates
+aap-bridge import -r job_templates --yes
+
+aap-bridge export -r workflow_job_templates
+aap-bridge transform -r workflow_job_templates
+aap-bridge import -r workflow_job_templates --yes
 
 # Phase 7: Schedules
 aap-bridge export -r schedules
