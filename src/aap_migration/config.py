@@ -525,6 +525,23 @@ class ValidationConfig(BaseModel):
     )
 
 
+# Default execution environment names often skipped (platform / hub defaults)
+DEFAULT_SKIP_EXECUTION_ENVIRONMENT_NAMES: tuple[str, ...] = (
+    "Control Plane Execution Environment",
+    "Default execution environment",
+    "Hub Default execution environment",
+    "Hub Minimal execution environment",
+    "Minimal execution environment",
+)
+
+
+def normalized_execution_environment_skip_names(names: list[str] | None) -> frozenset[str]:
+    """Normalize EE display names for case-insensitive matching."""
+    if not names:
+        return frozenset()
+    return frozenset(s.strip().casefold() for s in names if s and str(s).strip())
+
+
 class ExportConfig(BaseModel):
     """Export configuration options."""
 
@@ -563,6 +580,13 @@ class ExportConfig(BaseModel):
         description=(
             "Skip hosts managed by inventory sources (has_inventory_sources=true). "
             "These hosts are recreated when the inventory source syncs on target."
+        ),
+    )
+    skip_execution_environment_names: list[str] = Field(
+        default_factory=lambda: list(DEFAULT_SKIP_EXECUTION_ENVIRONMENT_NAMES),
+        description=(
+            "Execution environment `name` values to omit from export and import "
+            "(case-insensitive). Edit this list in config; use [] to include all EEs."
         ),
     )
     records_per_file: int = Field(

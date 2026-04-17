@@ -101,8 +101,12 @@ class PhaseProgressState:
         time_delta = now - self.last_update
 
         if time_delta > 0:
-            # Calculate items processed since last update (includes skipped)
-            items_delta = (completed - self.completed) + (skipped - self.skipped)
+            # Calculate items processed since last update (includes skipped and failed)
+            items_delta = (
+                (completed - self.completed)
+                + (skipped - self.skipped)
+                + (failed - self.failed)
+            )
             rate = items_delta / time_delta
             self.rate_history.append(rate)
 
@@ -117,12 +121,17 @@ class PhaseProgressState:
         return self.completed - self.failed
 
     @property
+    def total_processed(self) -> int:
+        """Items handled (exported + skipped + failed) for rate and percentage."""
+        return self.completed + self.skipped + self.failed
+
+    @property
     def average_rate(self) -> float:
         """Average processing rate (items/second) based on total throughput."""
         elapsed = self.elapsed_time
         if elapsed <= 0:
             return 0.0
-        return self.completed / elapsed  # Total items / total time
+        return self.total_processed / elapsed
 
     @property
     def elapsed_time(self) -> float:
@@ -134,7 +143,7 @@ class PhaseProgressState:
         """Progress as percentage (0-100)."""
         if self.total_items == 0:
             return 100.0
-        return (self.completed / self.total_items) * 100
+        return (self.total_processed / self.total_items) * 100
 
     @property
     def status_text(self) -> str:
@@ -560,8 +569,8 @@ class MigrationProgressDisplay:
         state.update(completed, failed, skipped)
 
         # Update the specific phase's task
-        # Use total processed (completed + skipped) for progress bar to show 100% when done
-        total_processed = completed + skipped
+        # Bar reflects all handled items (success + skipped + failed)
+        total_processed = completed + skipped + failed
         self.phase_progress.update(
             task_id,
             completed=total_processed,
@@ -585,7 +594,7 @@ class MigrationProgressDisplay:
 
             # Mark the specific phase's task as complete
             # When explicitly completed, always show as complete (✓) unless there were errors
-            total_processed = state.completed + state.skipped
+            total_processed = state.completed + state.skipped + state.failed
             final_status = state.status_text
             final_color = state.status_color
 

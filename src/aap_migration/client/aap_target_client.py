@@ -110,7 +110,7 @@ class AAPTargetClient(BaseAPIClient):
         Raises:
             ConflictError: If resource already exists (409)
         """
-        endpoint = f"{resource_type}/"
+        endpoint = get_endpoint(resource_type)
 
         try:
             result = await self.post(endpoint, json_data=data)
@@ -151,7 +151,8 @@ class AAPTargetClient(BaseAPIClient):
         Returns:
             Updated resource data
         """
-        endpoint = f"{resource_type}/{resource_id}/"
+        base = get_endpoint(resource_type).rstrip("/")
+        endpoint = f"{base}/{resource_id}/"
         result = await self.patch(endpoint, json_data=data)
         logger.info(
             "resource_updated",
@@ -175,7 +176,8 @@ class AAPTargetClient(BaseAPIClient):
         Returns:
             Empty dict or deletion confirmation
         """
-        endpoint = f"{resource_type}/{resource_id}/"
+        base = get_endpoint(resource_type).rstrip("/")
+        endpoint = f"{base}/{resource_id}/"
         result = await self.delete(endpoint)
         logger.info(
             "resource_deleted",
@@ -199,7 +201,8 @@ class AAPTargetClient(BaseAPIClient):
         Returns:
             Resource data
         """
-        endpoint = f"{resource_type}/{resource_id}/"
+        base = get_endpoint(resource_type).rstrip("/")
+        endpoint = f"{base}/{resource_id}/"
         return await self.get(endpoint)
 
     @retry_api_call
@@ -244,7 +247,7 @@ class AAPTargetClient(BaseAPIClient):
         if organization:
             params["organization__name"] = organization
 
-        endpoint = f"{resource_type}/"
+        endpoint = get_endpoint(resource_type)
         response = await self.get(endpoint, params=params)
 
         results = response.get("results", [])
@@ -496,7 +499,7 @@ class AAPTargetClient(BaseAPIClient):
         Returns:
             Count of resources
         """
-        endpoint = f"{resource_type}/"
+        endpoint = get_endpoint(resource_type)
         response = await self.get(endpoint, params={"page_size": 1})
         return response.get("count", 0)
 

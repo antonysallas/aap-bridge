@@ -295,8 +295,12 @@ def transform(
     with open(metadata_file) as f:
         metadata = json.load(f)
 
+    from aap_migration.cli.commands.migrate import DEFAULT_MIGRATION_EXCLUDED_TYPES
+
     # Determine resource types to transform
     available_types = list(metadata.get("resource_types", {}).keys())
+    if not resource_type:
+        available_types = [t for t in available_types if t not in DEFAULT_MIGRATION_EXCLUDED_TYPES]
     types_to_transform = list(resource_type) if resource_type else available_types
 
     # Sort by dependency order to ensure id_mappings exist for dependent resources
@@ -305,6 +309,7 @@ def transform(
 
     # Check for missing prerequisite types (REQ-006)
     from aap_migration.migration.transformer import DEPENDENCY_MAP
+    from aap_migration.resources import normalize_resource_type
 
     missing_prerequisites: list[str] = []
     for rtype in types_to_transform:
@@ -312,9 +317,10 @@ def transform(
         for dep_type in deps:
             # If the dependency is supposed to be in this transform run but was
             # empty in the export, or if it wasn't exported at all
-            dep_meta = metadata.get("resource_types", {}).get(dep_type, {})
+            dep_key = normalize_resource_type(dep_type)
+            dep_meta = metadata.get("resource_types", {}).get(dep_key, {})
             if dep_meta.get("count", 0) == 0:
-                missing_prerequisites.append(f"{rtype} requires {dep_type} (exported 0 resources)")
+                missing_prerequisites.append(f"{rtype} requires {dep_key} (exported 0 resources)")
 
     if missing_prerequisites:
         echo_warning("Pipeline continuity issues detected:")

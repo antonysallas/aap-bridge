@@ -11,7 +11,7 @@ from typing import Any
 from aap_migration.client.aap_target_client import AAPTargetClient
 from aap_migration.client.bulk_operations import BulkOperations
 from aap_migration.client.exceptions import APIError, ConflictError
-from aap_migration.config import PerformanceConfig
+from aap_migration.config import PerformanceConfig, normalized_execution_environment_skip_names
 from aap_migration.migration.state import MigrationState
 from aap_migration.utils.idempotency import compare_resources
 from aap_migration.utils.logging import get_logger
@@ -1679,6 +1679,26 @@ class ExecutionEnvironmentImporter(ResourceImporter):
         "credential": "credentials",
     }
 
+    def __init__(
+        self,
+        client: AAPTargetClient,
+        state: MigrationState,
+        performance_config: PerformanceConfig,
+        resource_mappings: dict[str, dict[str, str]] | None = None,
+        *,
+        skip_execution_environment_names: frozenset[str] | None = None,
+    ):
+        super().__init__(client, state, performance_config, resource_mappings)
+        self._skip_ee_names = skip_execution_environment_names or frozenset()
+
+    def _skip_ee(self, data: dict[str, Any]) -> bool:
+        if not self._skip_ee_names:
+            return False
+        name = data.get("name")
+        if not name or not isinstance(name, str):
+            return False
+        return name.strip().casefold() in self._skip_ee_names
+
     async def import_execution_environments(
         self,
         ees: list[dict[str, Any]],
@@ -1696,7 +1716,16 @@ class ExecutionEnvironmentImporter(ResourceImporter):
         Returns:
             List of created execution environment data
         """
-        return await self._import_parallel("execution_environments", ees, progress_callback)
+        to_import = [r for r in ees if not self._skip_ee(r)]
+        skipped = len(ees) - len(to_import)
+        if skipped:
+            self.stats["skipped_count"] += skipped
+            logger.info(
+                "execution_environments_skipped_by_config",
+                count=skipped,
+                message="Skipped by export.skip_execution_environment_names",
+            )
+        return await self._import_parallel("execution_environments", to_import, progress_callback)
 
 
 class RBACImporter(ResourceImporter):
@@ -3518,6 +3547,7 @@ def create_importer(
     state: MigrationState,
     performance_config: PerformanceConfig,
     resource_mappings: dict[str, dict[str, str]] | None = None,
+    skip_execution_environment_names: list[str] | None = None,
 ) -> ResourceImporter:
     """Create appropriate importer for resource type.
 
@@ -3527,6 +3557,7 @@ def create_importer(
         state: Migration state manager
         performance_config: Performance configuration
         resource_mappings: Optional resource name mappings from config/mappings.yaml
+        skip_execution_environment_names: EE names to skip (import); None means no name filter
 
     Returns:
         Appropriate ResourceImporter subclass instance
@@ -3580,6 +3611,20 @@ def create_importer(
         raise NotImplementedError(
             f"No importer implemented for resource type: {resource_type} (canonical: {canonical_type}). "
             f"Available importers: {', '.join(sorted(importers.keys()))}"
+        )
+
+    if canonical_type == "execution_environments":
+        skip_frozen = (
+            normalized_execution_environment_skip_names(skip_execution_environment_names)
+            if skip_execution_environment_names is not None
+            else frozenset()
+        )
+        return ExecutionEnvironmentImporter(
+            client,
+            state,
+            performance_config,
+            resource_mappings,
+            skip_execution_environment_names=skip_frozen,
         )
 
     return importer_class(client, state, performance_config, resource_mappings)

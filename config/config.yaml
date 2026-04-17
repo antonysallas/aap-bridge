@@ -208,6 +208,13 @@ export:
   skip_smart_inventories: false
   skip_constructed_inventories: false
   skip_inventory_sources: []
+  # Omit these EE names from export/import (case-insensitive). Use [] to migrate all.
+  skip_execution_environment_names:
+    - Control Plane Execution Environment
+    - Default execution environment
+    - Hub Default execution environment
+    - Hub Minimal execution environment
+    - Minimal execution environment
   skip_pending_deletion_inventories: true
   skip_hosts_with_inventory_sources: false
   records_per_file: 1000

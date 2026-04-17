@@ -12,7 +12,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from aap_migration.client.aap_source_client import AAPSourceClient
 from aap_migration.client.exceptions import APIError
-from aap_migration.config import PerformanceConfig
+from aap_migration.config import PerformanceConfig, normalized_execution_environment_skip_names
 from aap_migration.migration.state import MigrationState
 from aap_migration.utils.logging import get_logger
 
@@ -1717,6 +1717,43 @@ class ExecutionEnvironmentExporter(ResourceExporter):
     runtime environment in AAP 2.x.
     """
 
+    def __init__(
+        self,
+        client: AAPSourceClient,
+        state: MigrationState,
+        performance_config: PerformanceConfig,
+        skip_execution_environment_names: list[str] | None = None,
+    ):
+        super().__init__(client, state, performance_config)
+        self._skip_ee_names = normalized_execution_environment_skip_names(
+            skip_execution_environment_names
+        )
+
+    def _skip_ee(self, data: dict[str, Any]) -> bool:
+        if not self._skip_ee_names:
+            return False
+        name = data.get("name")
+        if not name or not isinstance(name, str):
+            return False
+        return name.strip().casefold() in self._skip_ee_names
+
+    async def _process_resource(
+        self, resource: dict[str, Any], resource_type: str
+    ) -> dict[str, Any] | None:
+        """Skip configured EE names for sequential export, export_parallel, and export_resources."""
+        processed = await super()._process_resource(resource, resource_type)
+        if processed is None:
+            return None
+        if resource_type == "execution_environments" and self._skip_ee(processed):
+            self.stats["skipped_count"] += 1
+            logger.info(
+                "execution_environment_skipped_by_config",
+                name=processed.get("name"),
+                source_id=processed.get("id"),
+            )
+            return None
+        return processed
+
     async def export(
         self, filters: dict[str, Any] | None = None
     ) -> AsyncGenerator[dict[str, Any], None]:
@@ -1910,6 +1947,7 @@ def create_exporter(
     client: AAPSourceClient,
     state: MigrationState,
     performance_config: PerformanceConfig,
+    skip_execution_environment_names: list[str] | None = None,
 ) -> ExporterProtocol:
     """Create appropriate exporter for resource type.
 
@@ -1918,6 +1956,7 @@ def create_exporter(
         client: AAP source client instance
         state: Migration state manager
         performance_config: Performance configuration
+        skip_execution_environment_names: Optional EE names to skip (export); defaults to no filter
 
     Returns:
         Exporter instance implementing ExporterProtocol
@@ -1962,6 +2001,14 @@ def create_exporter(
         raise NotImplementedError(
             f"No exporter implemented for resource type: {resource_type} (canonical: {canonical_type}). "
             f"Available exporters: {', '.join(sorted(exporters.keys()))}"
+        )
+
+    if canonical_type == "execution_environments":
+        return ExecutionEnvironmentExporter(
+            client,
+            state,
+            performance_config,
+            skip_execution_environment_names=skip_execution_environment_names,
         )
 
     return exporter_class(client, state, performance_config)

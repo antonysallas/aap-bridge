@@ -26,7 +26,7 @@ from aap_migration.cli.utils import (
 from aap_migration.client.aap_target_client import AAPTargetClient
 from aap_migration.client.bulk_operations import BulkOperations
 from aap_migration.client.exceptions import NotFoundError, PendingDeletionError, ResourceInUseError
-from aap_migration.config import MigrationConfig
+from aap_migration.config import MigrationConfig, normalized_execution_environment_skip_names
 from aap_migration.migration.database import get_session
 from aap_migration.migration.models import IDMapping, MigrationProgress
 from aap_migration.reporting.live_progress import MigrationProgressDisplay
@@ -1128,6 +1128,10 @@ async def delete_resources(
         error_count = 0
         failed_resources: list[tuple[int, str, str]] = []
 
+        ee_skip_names = normalized_execution_environment_skip_names(
+            config.export.skip_execution_environment_names
+        )
+
         # Filter resources to determine what to skip vs delete
         resources_to_delete = []
 
@@ -1140,6 +1144,13 @@ async def delete_resources(
             # Skip built-in/system resources if skip_default is True
             skip_resource = False
             skip_reason = ""
+
+            # Same name list as export (export.skip_execution_environment_names) — never delete these
+            if resource_type == "execution_environments" and ee_skip_names:
+                rn = resource.get("name")
+                if rn and isinstance(rn, str) and rn.strip().casefold() in ee_skip_names:
+                    skip_resource = True
+                    skip_reason = "export.skip_execution_environment_names"
 
             if skip_default:
                 # Skip Default organization (by name or by ID=1)

@@ -13,7 +13,11 @@ from pathlib import Path
 
 import click
 
-from aap_migration.cli.commands.migrate import PHASE1_RESOURCE_TYPES, PHASE3_RESOURCE_TYPES
+from aap_migration.cli.commands.migrate import (
+    DEFAULT_MIGRATION_EXCLUDED_TYPES,
+    PHASE1_RESOURCE_TYPES,
+    PHASE2_RESOURCE_TYPES,
+)
 from aap_migration.cli.commands.patch_projects import patch_project_scm_details
 from aap_migration.cli.context import MigrationContext
 from aap_migration.cli.decorators import handle_errors, pass_context, requires_config
@@ -62,7 +66,7 @@ def get_importer_dependencies(resource_type: str) -> dict[str, str]:
 
     Example:
         >>> get_importer_dependencies('inventory_sources')
-        {'inventory': 'inventories', 'source_project': 'projects', 'credential': 'credentials'}
+        {'inventory': 'inventory', 'source_project': 'projects', 'credential': 'credentials'}
     """
     try:
         # Create a dummy importer instance to access class-level DEPENDENCIES
@@ -88,7 +92,7 @@ def get_importer_dependencies(resource_type: str) -> dict[str, str]:
             WorkflowImporter,
         )
 
-        # Map resource types to importer classes
+        # Map resource types to importer classes (canonical + legacy aliases)
         importer_classes = {
             "organizations": OrganizationImporter,
             "labels": LabelImporter,
@@ -98,8 +102,10 @@ def get_importer_dependencies(resource_type: str) -> dict[str, str]:
             "credentials": CredentialImporter,
             "projects": ProjectImporter,
             "execution_environments": ExecutionEnvironmentImporter,
+            "inventory": InventoryImporter,
             "inventories": InventoryImporter,
             "inventory_sources": InventorySourceImporter,
+            "groups": InventoryGroupImporter,
             "inventory_groups": InventoryGroupImporter,
             "hosts": HostImporter,
             "job_templates": JobTemplateImporter,
@@ -324,7 +330,11 @@ def export(
     else:
         # No types specified - use discovered or hardcoded, then normalize
         discovered_types = get_exportable_types(use_discovered=True)
-        types_to_export = [normalize_resource_type(rt) for rt in discovered_types]
+        types_to_export = []
+        for rt in discovered_types:
+            nt = normalize_resource_type(rt)
+            if nt not in DEFAULT_MIGRATION_EXCLUDED_TYPES:
+                types_to_export.append(nt)
 
     # Check if parallel resource type export is enabled
     parallel_types_enabled = ctx.config.performance.parallel_resource_types
@@ -444,6 +454,7 @@ def export(
                         ctx.source_client,
                         ctx.migration_state,
                         ctx.config.performance,
+                        skip_execution_environment_names=ctx.config.export.skip_execution_environment_names,
                     )
                 except NotImplementedError as e:
                     # Exporter not implemented yet
@@ -517,7 +528,10 @@ def export(
                     def progress_callback(rtype: str, stats: dict):
                         phase_id = rtype  # We use resource_type as phase_id
                         progress.update_phase(
-                            phase_id, stats.get("exported", 0), stats.get("failed", 0)
+                            phase_id,
+                            stats.get("exported", 0),
+                            stats.get("failed", 0),
+                            stats.get("skipped", 0),
                         )
 
                     # Start all phases before parallel export begins
@@ -568,6 +582,7 @@ def export(
                             ctx.source_client,
                             ctx.migration_state,
                             ctx.config.performance,
+                            skip_execution_environment_names=ctx.config.export.skip_execution_environment_names,
                         )
 
                         # Apply skip_dynamic_hosts filter for hosts
@@ -660,8 +675,9 @@ def export(
                                 failed_count += 1
                                 resource_count += 1
 
-                            # Update progress (including failures)
-                            progress.update_phase(phase_id, resource_count, failed_count)
+                            # Update progress (exported + skipped from exporter, e.g. EE name filter)
+                            skip_ct = exporter.get_stats().get("skipped_count", 0)
+                            progress.update_phase(phase_id, resource_count, failed_count, skip_ct)
 
                             # Write batch when it reaches the limit
                             if len(current_batch) >= records_per_file:
@@ -678,6 +694,9 @@ def export(
                                 )
 
                                 current_batch = []
+
+                        skip_final = exporter.get_stats().get("skipped_count", 0)
+                        progress.update_phase(phase_id, resource_count, failed_count, skip_final)
 
                         # Commit remaining mappings
                         if pending_mappings:
@@ -837,7 +856,10 @@ def export(
     "--phase",
     type=click.Choice(["phase1", "phase2", "all"], case_sensitive=False),
     default="all",
-    help="Import phase: phase1 (up to projects), phase2 (patch projects and automation definitions), all (complete)",
+    help=(
+        "Import phase: phase1 (foundation through projects), "
+        "phase2 (patch projects then inventory + automation), all (complete)"
+    ),
 )
 @click.option(
     "-y",
@@ -915,17 +937,13 @@ def import_cmd(
         aap-bridge import --dry-run
 
         \b
-        # Three-phase import workflow:
-        # Phase 1: Import up to projects (Manual SCM)
+        # Two-phase import workflow:
+        # Phase 1: Import foundation through projects
         aap-bridge import --phase phase1
 
         \b
-        # Phase 2: Patch projects to activate SCM sync (controlled batching)
+        # Phase 2: Patch projects, then import inventory + automation
         aap-bridge import --phase phase2
-
-        \b
-        # Phase 3: Import job_templates and automation definitions
-        aap-bridge import --phase phase3
     """
     import logging
 
@@ -970,15 +988,16 @@ def import_cmd(
         echo_info("")
         raise click.ClickException("Import requires transformed data from xformed/ directory")
 
-    # Handle Phase 2 (Patch Projects) merged with Phase 3
+    # Handle Phase 2 (patch projects, then inventory + automation)
     if phase == "phase2":
         echo_info(
-            "Phase 2: Patching Projects + Importing Automation (Job Templates, Schedules, etc.)"
+            "Phase 2: Patching Projects + Importing Inventory & Automation (templates, schedules, …)"
         )
-        # Proceed to import Phase 3 resources after patching (logic handled in run_import)
 
     # Determine resource types to import
     available_types = list(metadata.get("resource_types", {}).keys())
+    if not resource_type:
+        available_types = [t for t in available_types if t not in DEFAULT_MIGRATION_EXCLUDED_TYPES]
     requested_types = list(resource_type) if resource_type else available_types
 
     # Check for missing prerequisite types (REQ-006)
@@ -988,14 +1007,15 @@ def import_cmd(
     for rtype in requested_types:
         deps = DEPENDENCY_MAP.get(rtype, [])
         for dep_type in deps:
-            # Check transformed metadata for dependency status
-            dep_meta = metadata.get("resource_types", {}).get(dep_type, {})
+            dep_key = normalize_resource_type(dep_type)
+            # Check transformed metadata for dependency status (keys use canonical names)
+            dep_meta = metadata.get("resource_types", {}).get(dep_key, {})
             # Either it wasn't in the metadata, or it had 0 transformed resources
             if not dep_meta or dep_meta.get("transformed_count", 0) == 0:
                 # Only warn if it's not already in id_mappings
-                if not ctx.migration_state.get_all_mappings(dep_type):
+                if not ctx.migration_state.get_all_mappings(dep_key):
                     missing_prerequisites.append(
-                        f"{rtype} requires {dep_type} (0 transformed resources available)"
+                        f"{rtype} requires {dep_key} (0 transformed resources available)"
                     )
 
     if missing_prerequisites:
@@ -1074,8 +1094,15 @@ def import_cmd(
         types_to_import = [t for t in types_to_import if t in PHASE1_RESOURCE_TYPES]
         logger.info("Phase 1 import: credential_types/credentials will be PATCHed (pre-created)")
     elif phase == "phase2":
-        # Phase 2 includes Phase 3 resources (merged)
-        types_to_import = [t for t in types_to_import if t in PHASE3_RESOURCE_TYPES]
+        types_to_import = [t for t in types_to_import if t in PHASE2_RESOURCE_TYPES]
+
+    if phase in ("phase1", "phase2"):
+        types_to_import = sorted(
+            types_to_import,
+            key=lambda t: RESOURCE_REGISTRY[t].migration_order
+            if t in RESOURCE_REGISTRY
+            else 999,
+        )
 
     # Force re-import: Clear import progress and reset target_ids
     if force_reimport:
@@ -1529,6 +1556,7 @@ def import_cmd(
                                 ctx.migration_state,
                                 ctx.config.performance,
                                 ctx.config.resource_mappings,
+                                skip_execution_environment_names=ctx.config.export.skip_execution_environment_names,
                             )
                         except NotImplementedError:
                             logger.info(
@@ -1560,9 +1588,12 @@ def import_cmd(
                             # Projects and execution
                             "projects": "import_projects",
                             "execution_environments": "import_execution_environments",
-                            # Inventory resources
+                            # Inventory resources (canonical names + legacy aliases)
+                            "inventory": "import_inventories",
                             "inventories": "import_inventories",
+                            # Optional: use -r inventory_sources (excluded from default import list)
                             "inventory_sources": "import_inventory_sources",
+                            "groups": "import_inventory_groups",
                             "inventory_groups": "import_inventory_groups",
                             # Job templates and workflows
                             "job_templates": "import_job_templates",

@@ -66,6 +66,12 @@ class MigrationCoordinator:
             "batch_size": 100,
         },
         {
+            "name": "projects",
+            "description": "Projects",
+            "resource_types": ["projects"],
+            "batch_size": 100,
+        },
+        {
             "name": "inventory",
             "description": "Inventories (80,000+ expected)",
             "resource_types": ["inventory"],
@@ -77,36 +83,25 @@ class MigrationCoordinator:
             "resource_types": ["constructed_inventories"],
             "batch_size": 100,
         },
+        # Inventory sources (SCM/dynamic sync) — omitted from default coordinator run; add phase if needed
+        # {
+        #     "name": "inventory_sources",
+        #     "description": "Inventory Sources",
+        #     "resource_types": ["inventory_sources"],
+        #     "batch_size": 100,
+        # },
+        {
+            "name": "groups",
+            "description": "Inventory Groups",
+            "resource_types": ["groups"],
+            "batch_size": 100,
+        },
         {
             "name": "hosts",
             "description": "Hosts (using bulk operations)",
             "resource_types": ["hosts"],
             "batch_size": 200,
             "use_bulk": True,
-        },
-        {
-            "name": "instances",
-            "description": "Instances (AAP Controller Nodes)",
-            "resource_types": ["instances"],
-            "batch_size": 50,
-        },
-        {
-            "name": "instance_groups",
-            "description": "Instance Groups",
-            "resource_types": ["instance_groups"],
-            "batch_size": 50,
-        },
-        {
-            "name": "projects",
-            "description": "Projects",
-            "resource_types": ["projects"],
-            "batch_size": 100,
-        },
-        {
-            "name": "inventory_config",
-            "description": "Inventory Sources and Groups",
-            "resource_types": ["inventory_sources", "groups"],
-            "batch_size": 100,
         },
         {
             "name": "notification_templates",
@@ -480,6 +475,7 @@ class MigrationCoordinator:
                 client=self.source_client,
                 state=self.state,
                 performance_config=self.config.performance,
+                skip_execution_environment_names=self.config.export.skip_execution_environment_names,
             )
 
             transformer = create_transformer(
@@ -494,6 +490,7 @@ class MigrationCoordinator:
                 state=self.state,
                 performance_config=self.config.performance,
                 resource_mappings=self.config.resource_mappings,
+                skip_execution_environment_names=self.config.export.skip_execution_environment_names,
             )
 
             # Special handling for hosts (bulk operations)

@@ -11,6 +11,7 @@ from typing import Any
 from aap_migration.client.base_client import BaseAPIClient
 from aap_migration.client.exceptions import StateError
 from aap_migration.config import AAPInstanceConfig
+from aap_migration.resources import get_endpoint
 from aap_migration.utils.logging import get_logger
 from aap_migration.utils.retry import retry_api_call
 
@@ -576,7 +577,8 @@ class AAPSourceClient(BaseAPIClient):
         Returns:
             Resource data
         """
-        endpoint = f"{resource_type}/{resource_id}/"
+        base = get_endpoint(resource_type).rstrip("/")
+        endpoint = f"{base}/{resource_id}/"
         return await self.get(endpoint)
 
     async def search_resources(
@@ -597,5 +599,5 @@ class AAPSourceClient(BaseAPIClient):
         """
         query_params = params.copy() if params else {}
         query_params["search"] = search_query
-        endpoint = f"{resource_type}/"
+        endpoint = get_endpoint(resource_type)
         return await self.get_paginated(endpoint, params=query_params)

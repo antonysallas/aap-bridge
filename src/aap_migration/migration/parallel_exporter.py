@@ -87,7 +87,7 @@ class ParallelExportCoordinator:
         # Normalize resource type
         resource_type = normalize_resource_type(resource_type)
 
-        stats = {
+        stats: dict[str, Any] = {
             "resource_type": resource_type,
             "exported": 0,
             "failed": 0,
@@ -109,6 +109,7 @@ class ParallelExportCoordinator:
                     self.source_client,
                     self.migration_state,
                     self.performance_config,
+                    skip_execution_environment_names=self.export_config.skip_execution_environment_names,
                 )
             except NotImplementedError as e:
                 # No exporter for this resource type - skip it gracefully
@@ -235,7 +236,8 @@ class ParallelExportCoordinator:
                         )
                         current_batch = []
 
-                    # Progress callback
+                    stats["skipped"] = exporter.get_stats().get("skipped_count", 0)
+                    # Progress callback (exported + skipped + failed drives TUI bar)
                     if progress_callback:
                         progress_callback(resource_type, stats)
 
@@ -248,11 +250,12 @@ class ParallelExportCoordinator:
                     )
                     stats["failed"] += 1
 
-            # Sync stats from exporter to capture skipped items (e.g. from resume or filtering)
-            # The coordinator tracks exported/failed, but exporter tracks what it skipped internally
+            # Sync stats from exporter (resume dedup, EE name filter, etc.)
             exporter_stats = exporter.get_stats()
-            # Only add skipped count, as we tracked exported/failed ourselves
-            stats["skipped"] += exporter_stats.get("skipped_count", 0)
+            stats["skipped"] = exporter_stats.get("skipped_count", 0)
+
+            if progress_callback:
+                progress_callback(resource_type, stats)
 
             # Commit remaining mappings
             if pending_mappings:
