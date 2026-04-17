@@ -1,0 +1,22 @@
+{
+  // MD013: Line length
+  // Use 100 chars to match Python line length, exclude tables and code blocks
+  "MD013": {
+    "line_length": 100,
+    "heading_line_length": 100,
+    "code_block_line_length": 120,
+    "code_blocks": false,
+    "tables": false
+  },
+
+  // MD033: Allow specific HTML elements (commonly used in mkdocs)
+  "MD033": {
+    "allowed_elements": ["div", "span", "br", "details", "summary"]
+  },
+
+  // MD041: First line heading - disabled
+  "MD041": false,
+
+  // MD060: Table column style - disabled as we use compact tables
+  "MD060": false
+}

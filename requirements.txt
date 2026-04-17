@@ -1,0 +1,38 @@
+# AAP Migration Tool - Production Dependencies
+
+# AAP API Client
+awxkit==24.6.1
+
+# HTTP Clients
+httpx==0.25.0
+requests==2.31.0
+aiofiles==23.2.1
+
+# CLI Framework
+click==8.1.7
+
+# Logging
+structlog==24.1.0
+
+# Retry Logic
+tenacity==8.2.3
+
+# Configuration Management
+pydantic==2.5.0
+pydantic-settings==2.1.0
+PyYAML==6.0.1
+python-dotenv==1.0.0
+
+# Progress Tracking
+tqdm==4.66.1
+
+# HashiCorp Vault Client
+hvac==2.1.0
+
+# Database
+sqlalchemy==2.0.23
+alembic==1.13.0
+
+# Utilities
+python-dateutil==2.8.2
+psutil==6.1.1
