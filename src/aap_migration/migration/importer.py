@@ -1007,7 +1007,56 @@ class CredentialTypeImporter(ResourceImporter):
                 result = {"id": target_id, "name": name, "_patched": bool(patch_data)}
 
             else:
-                # Not found - CREATE new
+                # Not found by name - try namespace lookup as fallback for managed types
+                # Built-in credential types can be renamed between AAP versions (e.g. CyberArk
+                # types changed names between 2.3 and 2.4), but their namespace is stable.
+                namespace = data.get("namespace")
+                is_source_managed = data.get("managed", False)
+
+                if is_source_managed and namespace:
+                    ns_results = await self.client.get(
+                        "credential_types/", params={"namespace": namespace}
+                    )
+                    ns_resources = ns_results.get("results", [])
+                    if ns_resources:
+                        target_id = ns_resources[0]["id"]
+                        target_name = ns_resources[0].get("name", name)
+                        logger.info(
+                            "credential_type_mapped_by_namespace",
+                            source_name=name,
+                            target_name=target_name,
+                            namespace=namespace,
+                            source_id=source_id,
+                            target_id=target_id,
+                            message="Managed credential type matched by namespace (name changed between versions)",
+                        )
+                        self.state.save_id_mapping(
+                            resource_type=resource_type,
+                            source_id=source_id,
+                            target_id=target_id,
+                            source_name=name,
+                            target_name=target_name,
+                        )
+                        self.state.mark_completed(
+                            resource_type=resource_type,
+                            source_id=source_id,
+                            target_id=target_id,
+                            target_name=target_name,
+                        )
+                        self.stats["skipped_count"] += 1
+                        return {"id": target_id, "name": target_name, "_skipped": True}
+
+                # Still not found - skip managed types, create custom ones
+                if is_source_managed:
+                    logger.warning(
+                        "skipping_managed_credential_type_not_found",
+                        name=name,
+                        namespace=namespace,
+                        source_id=source_id,
+                        message="Managed credential type not found on target by name or namespace - skipping",
+                    )
+                    self.stats["skipped_count"] += 1
+                    return None
 
                 # Skip creation of external credential types (they must exist in target)
                 if data.get("kind") == "external":
