@@ -1653,6 +1653,7 @@ def import_cmd(
                             # Credentials
                             "credential_types": "import_credential_types",
                             "credentials": "import_credentials",
+                            "credential_input_sources": "import_credential_input_sources",
                             # Projects and execution
                             "projects": "import_projects",
                             "execution_environments": "import_execution_environments",
@@ -1667,10 +1668,12 @@ def import_cmd(
                             "job_templates": "import_job_templates",
                             "workflow_job_templates": "import_workflows",
                             "schedules": "import_schedules",
+                            # Notifications
+                            "notification_templates": "import_notification_templates",
                             # Constructed inventories
                             "constructed_inventories": "import_constructed_inventories",
                             # RBAC
-                            "rbac": "import_rbac_assignments",
+                            "rbac": "import_role_assignments",
                             "role_definitions": "import_role_definitions",
                             "role_user_assignments": "import_role_user_assignments",
                             "role_team_assignments": "import_role_team_assignments",
