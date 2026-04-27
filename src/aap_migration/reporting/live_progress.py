@@ -618,11 +618,10 @@ class MigrationProgressDisplay:
             # status_text to return "running" and the spinner to persist.
             total_processed = state.completed + state.skipped + state.failed
 
-            # Only warn if truly nothing happened on a non-empty phase
-            if total_processed == 0 and state.total_items > 0:
-                final_status = "complete_with_issues"
-                final_color = MigrationColors.WARNING
-            elif state.failed > 0:
+            # Warn only on real failures. Zero processed with non-zero total_items
+            # is not a warning — it means all resources were already gone (e.g.
+            # cascade-deleted by an earlier phase) which is a successful outcome.
+            if state.failed > 0:
                 final_status = "complete_with_issues"
                 final_color = MigrationColors.WARNING
             else:
