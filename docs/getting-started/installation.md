@@ -23,7 +23,7 @@ Before installing AAP Bridge, ensure you have:
 
 ```bash
 # Clone the repository
-git clone https://github.com/antonysallas/aap-bridge.git
+git clone https://github.com/redhat-cop/aap-bridge.git
 cd aap-bridge
 
 # Create virtual environment
@@ -39,7 +39,7 @@ uv sync
 
 ```bash
 # Clone the repository
-git clone https://github.com/antonysallas/aap-bridge.git
+git clone https://github.com/redhat-cop/aap-bridge.git
 cd aap-bridge
 
 # Create virtual environment
@@ -57,7 +57,7 @@ For contributing or development:
 
 ```bash
 # Clone and setup
-git clone https://github.com/antonysallas/aap-bridge.git
+git clone https://github.com/redhat-cop/aap-bridge.git
 cd aap-bridge
 
 # Use make for complete setup

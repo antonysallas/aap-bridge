@@ -324,7 +324,7 @@ logging:
 
 If you can't resolve an issue:
 
-1. Check the [GitHub Issues](https://github.com/antonysallas/aap-bridge/issues)
+1. Check the [GitHub Issues](https://github.com/redhat-cop/aap-bridge/issues)
 2. Search existing issues for similar problems
 3. Open a new issue with:
    - AAP Bridge version

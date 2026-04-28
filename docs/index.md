@@ -84,6 +84,6 @@ This project is licensed under the GNU General Public License v3.0.
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/antonysallas/aap-bridge/issues)
+- **Issues**: [GitHub Issues](https://github.com/redhat-cop/aap-bridge/issues)
 - **Security**: See
-  [SECURITY.md](https://github.com/antonysallas/aap-bridge/blob/main/SECURITY.md)
+  [SECURITY.md](https://github.com/redhat-cop/aap-bridge/blob/main/SECURITY.md)

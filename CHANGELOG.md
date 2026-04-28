@@ -63,5 +63,5 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Environment variable support for all credentials
 - No hardcoded secrets in configuration files
 
-[Unreleased]: https://github.com/antonysallas/aap-bridge/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/antonysallas/aap-bridge/releases/tag/v0.1.0
+[Unreleased]: https://github.com/redhat-cop/aap-bridge/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/redhat-cop/aap-bridge/releases/tag/v0.1.0
