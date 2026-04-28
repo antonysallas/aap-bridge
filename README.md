@@ -51,7 +51,7 @@ The tool is organized into several key components:
 
 ```bash
 # Clone the repository
-git clone https://github.com/antonysallas/aap-bridge.git
+git clone https://github.com/redhat-cop/aap-bridge.git
 cd aap-bridge
 
 # Create virtual environment
@@ -398,7 +398,7 @@ For security concerns and vulnerability reporting, please see [SECURITY.md](SECU
 
 ## Support
 
-- **Issues**: Report bugs and request features via [GitHub Issues](https://github.com/antonysallas/aap-bridge/issues)
+- **Issues**: Report bugs and request features via [GitHub Issues](https://github.com/redhat-cop/aap-bridge/issues)
 - **Security**: Report vulnerabilities privately (see [SECURITY.md](SECURITY.md))
 
 ## Acknowledgments

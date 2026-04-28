@@ -72,10 +72,10 @@ aap-migrate = "aap_migration.cli.main:main"
 aap-bridge = "aap_migration.cli.main:main"
 
 [project.urls]
-Homepage = "https://github.com/antonysallas/aap-bridge"
-Documentation = "https://github.com/antonysallas/aap-bridge/tree/main/docs"
-Repository = "https://github.com/antonysallas/aap-bridge"
-"Bug Tracker" = "https://github.com/antonysallas/aap-bridge/issues"
+Homepage = "https://github.com/redhat-cop/aap-bridge"
+Documentation = "https://github.com/redhat-cop/aap-bridge/tree/main/docs"
+Repository = "https://github.com/redhat-cop/aap-bridge"
+"Bug Tracker" = "https://github.com/redhat-cop/aap-bridge/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

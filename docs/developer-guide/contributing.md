@@ -5,7 +5,7 @@ Thank you for your interest in contributing to AAP Bridge!
 ## Code of Conduct
 
 This project follows the [AAP Bridge Code of
-Conduct](https://github.com/antonysallas/aap-bridge/blob/main/CODE_OF_CONDUCT.md).
+Conduct](https://github.com/redhat-cop/aap-bridge/blob/main/CODE_OF_CONDUCT.md).
 By participating, you are expected to uphold this code.
 
 ## How to Contribute
