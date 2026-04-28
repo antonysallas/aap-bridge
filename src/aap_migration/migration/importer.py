@@ -4439,8 +4439,8 @@ class ConstructedInventoryImporter(ResourceImporter):
 class RoleDefinitionImporter(ResourceImporter):
     """Importer for role definition resources.
 
-    Role definitions are built-in and read-only in AAP 2.6.
-    We only map them by name (similar to SystemJobTemplateImporter).
+    Custom (managed=false) role definitions are created on the target if they
+    don't already exist, then the source→target ID mapping is saved.
     """
 
     DEPENDENCIES = {}
@@ -4452,7 +4452,7 @@ class RoleDefinitionImporter(ResourceImporter):
         data: dict[str, Any],
         resolve_dependencies: bool = True,
     ) -> dict[str, Any] | None:
-        """Map role definition by name."""
+        """Create or map a custom role definition on the target."""
         if self.state.is_migrated(resource_type, source_id):
             self.stats["skipped_count"] += 1
             return None
@@ -4488,15 +4488,32 @@ class RoleDefinitionImporter(ResourceImporter):
                     name=name,
                 )
                 return {"id": target_id, "name": name}
-            else:
-                logger.warning(
-                    "role_definition_not_found_in_target",
-                    name=name,
-                    source_id=source_id,
-                )
-                self.state.mark_failed(resource_type, source_id, "Not found in target")
-                self.stats["error_count"] += 1
-                return None
+
+            # Not on target yet — create it
+            payload = {
+                "name": name,
+                "description": data.get("description", ""),
+                "permissions": data.get("permissions", []),
+                "content_type": data.get("content_type"),
+            }
+            created = await self.client.post("role_definitions/", json_data=payload)
+            target_id = created["id"]
+            self.state.save_id_mapping(
+                resource_type=resource_type,
+                source_id=source_id,
+                target_id=target_id,
+                source_name=name,
+                target_name=name,
+            )
+            self.state.mark_completed(resource_type, source_id, target_id, name)
+            self.stats["imported_count"] += 1
+            logger.info(
+                "role_definition_created",
+                source_id=source_id,
+                target_id=target_id,
+                name=name,
+            )
+            return {"id": target_id, "name": name}
 
         except Exception as e:
             logger.error(
