@@ -46,6 +46,10 @@ The tool is organized into several key components:
 - **Credentials**: Admin access to both Source and Target AAP instances
 - **HashiCorp Vault** (Optional but recommended): For migrating encrypted
   credentials securely
+- **Instance Groups**: Any instance groups that have RBAC role assignments on
+  the source must already exist on the target with the same name before running
+  the migration. Instance groups are not migrated by this tool; they are
+  resolved by name on the target when applying role assignments.
 
 ### Installation
 
