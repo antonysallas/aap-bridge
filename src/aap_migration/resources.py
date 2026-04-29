@@ -47,7 +47,6 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         notes="Primary migration path. Fully tested.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
-            "Instance groups referenced by RBAC assignments must exist on the target with the same name",
             "Built-in credential types do not carry a 'managed' field in AAP 1.0 — types with a namespace are automatically treated as managed during import",
         ],
     ),
@@ -58,7 +57,6 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         notes="Primary migration path. Fully tested.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
-            "Instance groups referenced by RBAC assignments must exist on the target with the same name",
         ],
     ),
     VersionPath(
@@ -68,7 +66,6 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         notes="Primary migration path. Fully tested.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
-            "Instance groups referenced by RBAC assignments must exist on the target with the same name",
         ],
     ),
     VersionPath(
@@ -78,7 +75,6 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         notes="Primary migration path. Fully tested.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
-            "Instance groups referenced by RBAC assignments must exist on the target with the same name",
         ],
     ),
     VersionPath(
