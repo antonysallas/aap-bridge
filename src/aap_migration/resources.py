@@ -41,6 +41,17 @@ class VersionPath:
 
 COMPATIBILITY_MATRIX: list[VersionPath] = [
     VersionPath(
+        source="1.0",
+        target="2.6",
+        status="supported",
+        notes="Primary migration path. Fully tested.",
+        known_exceptions=[
+            "Encrypted credentials cannot be extracted from source API",
+            "Instance groups referenced by RBAC assignments must exist on the target with the same name",
+            "Built-in credential types do not carry a 'managed' field in AAP 1.0 — types with a namespace are automatically treated as managed during import",
+        ],
+    ),
+    VersionPath(
         source="2.3",
         target="2.6",
         status="supported",
