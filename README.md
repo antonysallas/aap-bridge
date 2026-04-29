@@ -78,12 +78,45 @@ The tool requires a PostgreSQL database to track migration state. You must creat
 
 ```bash
 
+# Example: Install and configure PostgreSQL.
+sudo yum install postgresql-server
+sudo postgresql-setup --initdb
+
+```
+
+If you have kerberos, you likely need to change the IPv4 and IPv6 local connections to a newer METHOD, such as scram-sha-256:
+
+```bash
+sudo vi /var/lib/pgsql/data/pg_hba.conf
+
+# IPv4 local connections:
+host    all             all             127.0.0.1/32            scram-sha-256
+# IPv6 local connections:
+host    all             all             ::1/128                 scram-sha-256
+
+sudo systemctl enable postgresql --now
+systemctl status postgresql # Check it's good.
+
+```
+
+As the postgres user, run the psql commands:
+
+```
+
 # Example: Create database and user locally
 psql -c "CREATE DATABASE aap_migration;"
 psql -c "CREATE USER aap_migration_user WITH PASSWORD 'your_secure_password';"
 psql -c "GRANT ALL PRIVILEGES ON DATABASE aap_migration TO aap_migration_user;"
 # Ensure the user owns the schema/tables (Postgres 15+)
 psql -d aap_migration -c "GRANT ALL ON SCHEMA public TO aap_migration_user;"
+
+```
+
+As a normal user, test connectivity to the database:
+
+```bash
+
+psql -h localhost -U aap_migration_user -W aap_migration
 
 ```
 
