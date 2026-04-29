@@ -781,41 +781,116 @@ def load_config_from_yaml(config_path: str | Path) -> MigrationConfig:
     if not config_data:
         raise ValueError(f"Empty configuration file: {config_path}")
 
-    # Expand environment variables in the config
+    # Expand ${VAR} references, prune optional sections that are entirely
+    # unconfigured (all env-var refs missing), then unwrap the sentinels.
     config_data = _expand_env_vars(config_data)
+    config_data = _prune_unconfigured_sections(config_data)
+    config_data = _unwrap_env_results(config_data)
 
     return MigrationConfig(**config_data)
 
 
-def _expand_env_vars(data: dict) -> dict:
+class _EnvVarResult:
+    """Wraps the outcome of a ${VAR} expansion so pruning can distinguish
+    env-var-sourced values (resolved or missing) from YAML literals."""
+
+    __slots__ = ("value",)
+
+    def __init__(self, value: str | None) -> None:
+        self.value = value  # None means the env var was not set
+
+    @property
+    def missing(self) -> bool:
+        return self.value is None
+
+
+def _expand_env_vars(data: object) -> object:
     """Recursively expand environment variables in config dict.
 
     Supports ${VAR_NAME} syntax for environment variable substitution.
+    Resolved references are wrapped in _EnvVarResult so that
+    _prune_unconfigured_sections can tell them apart from YAML literals.
+    Call _unwrap_env_results after pruning to obtain plain Python values.
 
     Args:
-        data: Configuration dictionary
+        data: Configuration value (dict, list, str, or scalar)
 
     Returns:
-        dict: Dictionary with expanded environment variables
+        Expanded value with ${VAR} references replaced by _EnvVarResult
     """
     if isinstance(data, dict):
         return {k: _expand_env_vars(v) for k, v in data.items()}
     elif isinstance(data, list):
         return [_expand_env_vars(item) for item in data]
     elif isinstance(data, str):
-        # Replace ${VAR_NAME} with environment variable value
         if data.startswith("${") and data.endswith("}"):
             var_name = data[2:-1]
-            env_value = os.environ.get(var_name)
-            if env_value is None:
-                raise ValueError(
-                    f"Environment variable '{var_name}' not found. "
-                    f"Please set it in your environment or .env file."
-                )
-            return env_value
+            return _EnvVarResult(os.environ.get(var_name))
         return data
     else:
         return data
+
+
+def _unwrap_env_results(data: object) -> object:
+    """Replace every _EnvVarResult with its plain value after pruning."""
+    if isinstance(data, _EnvVarResult):
+        return data.value
+    if isinstance(data, dict):
+        return {k: _unwrap_env_results(v) for k, v in data.items()}
+    if isinstance(data, list):
+        return [_unwrap_env_results(item) for item in data]
+    return data
+
+
+def _prune_unconfigured_sections(data: dict) -> dict:
+    """Remove top-level config sections whose env-var references all failed.
+
+    A section is considered unconfigured when it contains at least one
+    ${VAR} reference that did not resolve AND no ${VAR} references that
+    did resolve. YAML literals (mount_point, verify_ssl, …) inside the
+    same section are ignored for this test — they do not count as
+    "resolved" env-var references.
+
+    This lets optional sections such as vault be omitted from .env entirely
+    even when the YAML template includes literal defaults alongside the
+    ${VAR} placeholders. Pydantic then applies the field's own default
+    (None) instead of trying to validate a partially-populated dict.
+
+    A section with a mix of resolved and unresolved ${VAR} references is
+    left intact so Pydantic surfaces a clear validation error.
+
+    Args:
+        data: Config dict after _expand_env_vars (may contain _EnvVarResult)
+
+    Returns:
+        dict: Config with fully-unconfigured sections removed
+    """
+
+    def _has_missing(value: object) -> bool:
+        if isinstance(value, _EnvVarResult):
+            return value.missing
+        if isinstance(value, dict):
+            return any(_has_missing(v) for v in value.values())
+        if isinstance(value, list):
+            return any(_has_missing(v) for v in value)
+        return False
+
+    def _has_resolved(value: object) -> bool:
+        if isinstance(value, _EnvVarResult):
+            return not value.missing
+        if isinstance(value, dict):
+            return any(_has_resolved(v) for v in value.values())
+        if isinstance(value, list):
+            return any(_has_resolved(v) for v in value)
+        return False
+
+    pruned = {}
+    for k, v in data.items():
+        if _has_missing(v) and not _has_resolved(v):
+            # All env-var references in this section are unset — drop it.
+            continue
+        pruned[k] = v
+    return pruned
 
 
 def save_config_to_yaml(config: MigrationConfig, output_path: str | Path) -> None:
