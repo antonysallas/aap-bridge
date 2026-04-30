@@ -117,7 +117,7 @@ cp .env.example .env
 
 Edit `.env` with your AAP instance details and database connection string.
 
-**Critical AAP 2.6 Note:** The Target URL must point to the **Platform Gateway** (`/api/controller/v2`), not the direct controller API.
+**Critical AAP 2.6 Note:** The Target URL must point to the **Platform's Controller** (`/api/controller/v2`), not the Gateway API.
 
 ```bash
 
