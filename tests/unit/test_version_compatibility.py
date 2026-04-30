@@ -2,7 +2,7 @@ import pytest
 
 from aap_migration.resources import COMPATIBILITY_MATRIX, get_version_path
 
-SOURCE_VERSIONS = ["2.3", "2.4", "2.5"]
+SOURCE_VERSIONS = ["1.0", "1.1", "1.2", "2.0", "2.1", "2.2", "2.3", "2.4", "2.5"]
 
 
 @pytest.mark.parametrize("source_version", SOURCE_VERSIONS)
@@ -26,8 +26,8 @@ def test_version_path_major_minor_matching():
 
 def test_version_path_unsupported():
     """Test lookup for unsupported version pair."""
-    # 2.2 is not in our matrix
-    path = get_version_path("2.2.0", "2.6.0")
+    # 2.0 is not in our matrix
+    path = get_version_path("2.0.0", "2.6.0")
     assert path is None
 
     # Target 2.7 is not in our matrix

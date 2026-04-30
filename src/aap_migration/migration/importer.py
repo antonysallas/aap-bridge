@@ -939,6 +939,15 @@ class CredentialTypeImporter(ResourceImporter):
         )
 
         try:
+            # In AAP 2.3 and earlier the 'managed' field did not exist on credential
+            # types. A non-empty 'namespace' is a reliable proxy: all built-in types
+            # carry one; custom (user-created) types do not.
+            managed_from_data = data.get("managed")
+            namespace = data.get("namespace")
+            is_source_managed = (
+                managed_from_data if managed_from_data is not None else bool(namespace)
+            )
+
             # Find existing credential_type in target by name
             results = await self.client.get("credential_types/", params={"name": name})
             resources = results.get("results", [])
@@ -1007,12 +1016,10 @@ class CredentialTypeImporter(ResourceImporter):
                 result = {"id": target_id, "name": name, "_patched": bool(patch_data)}
 
             else:
-                # Not found by name - try namespace lookup as fallback for managed types
+                # Not found by name - try namespace lookup as fallback for managed types.
                 # Built-in credential types can be renamed between AAP versions (e.g. CyberArk
                 # types changed names between 2.3 and 2.4), but their namespace is stable.
-                namespace = data.get("namespace")
-                is_source_managed = data.get("managed", False)
-
+                # is_source_managed and namespace are resolved above before the name lookup.
                 if is_source_managed and namespace:
                     ns_results = await self.client.get(
                         "credential_types/", params={"namespace": namespace}
@@ -1056,7 +1063,7 @@ class CredentialTypeImporter(ResourceImporter):
                         message="Managed credential type not found on target by name or namespace - skipping",
                     )
                     self.stats["skipped_count"] += 1
-                    return None
+                    return {"_skipped": True, "policy_skip": True}
 
                 # Skip creation of external credential types (they must exist in target)
                 if data.get("kind") == "external":
@@ -1067,7 +1074,7 @@ class CredentialTypeImporter(ResourceImporter):
                         message="External credential type not found in target - skipping creation per policy",
                     )
                     self.stats["skipped_count"] += 1
-                    return None
+                    return {"_skipped": True, "policy_skip": True}
 
                 logger.info(
                     "credential_type_creating",
