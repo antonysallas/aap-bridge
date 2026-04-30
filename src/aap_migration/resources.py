@@ -51,6 +51,15 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         ],
     ),
     VersionPath(
+        source="2.1",
+        target="2.6",
+        status="supported",
+        notes="Primary migration path. Fully tested.",
+        known_exceptions=[
+            "Encrypted credentials cannot be extracted from source API",
+        ],
+    ),
+    VersionPath(
         source="2.2",
         target="2.6",
         status="supported",
