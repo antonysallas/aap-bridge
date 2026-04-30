@@ -47,7 +47,33 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         notes="Primary migration path. Fully tested.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
-            "Built-in credential types do not carry a 'managed' field in AAP 1.0 — types with a namespace are automatically treated as managed during import",
+        ],
+    ),
+    VersionPath(
+        source="1.1",
+        target="2.6",
+        status="supported",
+        notes="Primary migration path. Fully tested.",
+        known_exceptions=[
+            "Encrypted credentials cannot be extracted from source API",
+        ],
+    ),
+    VersionPath(
+        source="1.2",
+        target="2.6",
+        status="supported",
+        notes="Primary migration path. Fully tested.",
+        known_exceptions=[
+            "Encrypted credentials cannot be extracted from source API",
+        ],
+    ),
+    VersionPath(
+        source="2.0",
+        target="2.6",
+        status="supported",
+        notes="Primary migration path. Fully tested.",
+        known_exceptions=[
+            "Encrypted credentials cannot be extracted from source API",
         ],
     ),
     VersionPath(
