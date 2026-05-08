@@ -953,12 +953,16 @@
 
 
 <h1 id="resource-support-matrix-aap-23-26">Resource Support Matrix (AAP 2.3 → 2.6)<a class="headerlink" href="#resource-support-matrix-aap-23-26" title="Permanent link">&para;</a></h1>
-<p>This document lists all resources supported by the AAP Bridge migration tool, their classification, and any caveats associated with their migration.</p>
+<p>This document lists all resources supported by the AAP Bridge migration tool, their
+classification, and any caveats associated with their migration.</p>
 <h2 id="migration-categories">Migration Categories<a class="headerlink" href="#migration-categories" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Migrate</strong>: Business resources with durable value that are recreated on the target AAP 2.6 instance.</li>
-<li><strong>Export-Only</strong>: Resources exported from the source for audit, reporting, or analysis purposes, but <strong>not recreated</strong> on the target.</li>
-<li><strong>Never Migrate</strong>: Endpoints intentionally excluded from both export and import (read-only, runtime data, or operational endpoints).</li>
+<li><strong>Migrate</strong>: Business resources with durable value that are recreated on the target AAP 2.6
+  instance.</li>
+<li><strong>Export-Only</strong>: Resources exported from the source for audit, reporting, or analysis
+  purposes, but <strong>not recreated</strong> on the target.</li>
+<li><strong>Never Migrate</strong>: Endpoints intentionally excluded from both export and import (read-only,
+  runtime data, or operational endpoints).</li>
 </ul>
 <h2 id="support-matrix">Support Matrix<a class="headerlink" href="#support-matrix" title="Permanent link">&para;</a></h2>
 <table>
@@ -982,20 +986,6 @@
 <tr>
 <td style="text-align: left;"><code>labels</code></td>
 <td style="text-align: left;"><code>labels/</code></td>
-<td style="text-align: left;">Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">-</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>users</code></td>
-<td style="text-align: left;"><code>users/</code></td>
-<td style="text-align: left;">Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">Passwords are not migrated</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>teams</code></td>
-<td style="text-align: left;"><code>teams/</code></td>
 <td style="text-align: left;">Migrate</td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">-</td>
@@ -1029,6 +1019,13 @@
 <td style="text-align: left;">-</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>projects</code></td>
+<td style="text-align: left;"><code>projects/</code></td>
+<td style="text-align: left;">Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">-</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>inventory</code></td>
 <td style="text-align: left;"><code>inventories/</code></td>
 <td style="text-align: left;">Migrate</td>
@@ -1036,18 +1033,18 @@
 <td style="text-align: left;">Canonical name aligns with API root</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>constructed_inventories</code></td>
-<td style="text-align: left;"><code>constructed_inventories/</code></td>
-<td style="text-align: left;">Migrate</td>
-<td style="text-align: left;"><code>constructed_inventory</code></td>
-<td style="text-align: left;">Transitional canonical name</td>
-</tr>
-<tr>
 <td style="text-align: left;"><code>inventory_sources</code></td>
 <td style="text-align: left;"><code>inventory_sources/</code></td>
 <td style="text-align: left;">Migrate</td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">-</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>constructed_inventories</code></td>
+<td style="text-align: left;"><code>constructed_inventories/</code></td>
+<td style="text-align: left;">Migrate</td>
+<td style="text-align: left;"><code>constructed_inventory</code></td>
+<td style="text-align: left;">Transitional canonical name</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>groups</code></td>
@@ -1062,27 +1059,6 @@
 <td style="text-align: left;">Migrate</td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Uses Bulk API for high performance</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>instances</code></td>
-<td style="text-align: left;"><code>instances/</code></td>
-<td style="text-align: left;">Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">Controller Nodes</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>instance_groups</code></td>
-<td style="text-align: left;"><code>instance_groups/</code></td>
-<td style="text-align: left;">Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">-</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>projects</code></td>
-<td style="text-align: left;"><code>projects/</code></td>
-<td style="text-align: left;">Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">-</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>notification_templates</code></td>
@@ -1120,25 +1096,39 @@
 <td style="text-align: left;">-</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>users</code></td>
+<td style="text-align: left;"><code>users/</code></td>
+<td style="text-align: left;">Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Passwords are not migrated</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>teams</code></td>
+<td style="text-align: left;"><code>teams/</code></td>
+<td style="text-align: left;">Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">-</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>role_definitions</code></td>
 <td style="text-align: left;"><code>role_definitions/</code></td>
 <td style="text-align: left;">Migrate</td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">2.6 target-only (DAB RBAC)</td>
+<td style="text-align: left;">AAP 2.5+ RBAC</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>role_user_assignments</code></td>
 <td style="text-align: left;"><code>role_user_assignments/</code></td>
 <td style="text-align: left;">Migrate</td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">2.6 target-only (DAB RBAC)</td>
+<td style="text-align: left;">AAP 2.5+ RBAC</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>role_team_assignments</code></td>
 <td style="text-align: left;"><code>role_team_assignments/</code></td>
 <td style="text-align: left;">Migrate</td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">2.6 target-only (DAB RBAC)</td>
+<td style="text-align: left;">AAP 2.5+ RBAC</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>jobs</code></td>
@@ -1148,11 +1138,39 @@
 <td style="text-align: left;">Historical runtime data, not imported</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>ping</code></td>
-<td style="text-align: left;"><code>ping/</code></td>
+<td style="text-align: left;"><code>activity_stream</code></td>
+<td style="text-align: left;"><code>activity_stream/</code></td>
 <td style="text-align: left;">Never Migrate</td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Read-only health check</td>
+<td style="text-align: left;">Audit log, historical (auto-generated on target)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ad_hoc_commands</code></td>
+<td style="text-align: left;"><code>ad_hoc_commands/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Ad-hoc command records (historical)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>analytics</code></td>
+<td style="text-align: left;"><code>analytics/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Analytics data, read-only (2.6 only)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>applications</code></td>
+<td style="text-align: left;"><code>applications/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">OAuth applications, deferred from current phase</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>bulk</code></td>
+<td style="text-align: left;"><code>bulk/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Bulk API operational endpoint, not a resource</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>config</code></td>
@@ -1169,18 +1187,46 @@
 <td style="text-align: left;">Dashboard aggregation, read-only</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>host_metric_summary_monthly</code></td>
+<td style="text-align: left;"><code>host_metric_summary_monthly/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Monthly usage summary, auto-expires (2.6 only)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>host_metrics</code></td>
+<td style="text-align: left;"><code>host_metrics/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Host usage metrics, auto-generated (2.6 only)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>instance_groups</code></td>
+<td style="text-align: left;"><code>instance_groups/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Must exist on target with same name; resolved by name during RBAC import</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>instances</code></td>
+<td style="text-align: left;"><code>instances/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Controller infrastructure, not migrated</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>inventory_updates</code></td>
+<td style="text-align: left;"><code>inventory_updates/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Inventory source sync logs (historical)</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>me</code></td>
 <td style="text-align: left;"><code>me/</code></td>
 <td style="text-align: left;">Never Migrate</td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Current user session, read-only</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>metrics</code></td>
-<td style="text-align: left;"><code>metrics/</code></td>
-<td style="text-align: left;">Never Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">Prometheus metrics, read-only</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>mesh_visualizer</code></td>
@@ -1190,11 +1236,46 @@
 <td style="text-align: left;">Receptor mesh visualization, read-only</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>analytics</code></td>
-<td style="text-align: left;"><code>analytics/</code></td>
+<td style="text-align: left;"><code>metrics</code></td>
+<td style="text-align: left;"><code>metrics/</code></td>
 <td style="text-align: left;">Never Migrate</td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Analytics data, read-only (2.6 only)</td>
+<td style="text-align: left;">Prometheus metrics, read-only</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>notifications</code></td>
+<td style="text-align: left;"><code>notifications/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Runtime notification instances (historical)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>ping</code></td>
+<td style="text-align: left;"><code>ping/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Read-only health check</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>project_updates</code></td>
+<td style="text-align: left;"><code>project_updates/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Project SCM sync logs (historical)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>receptor_addresses</code></td>
+<td style="text-align: left;"><code>receptor_addresses/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Receptor mesh addresses, infrastructure (2.6 only)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>roles</code></td>
+<td style="text-align: left;"><code>roles/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Deprecated; replaced by RBAC</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>service_index</code></td>
@@ -1202,6 +1283,27 @@
 <td style="text-align: left;">Never Migrate</td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Service discovery index, read-only (2.6 only)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>settings</code></td>
+<td style="text-align: left;"><code>settings/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Global system settings, requires manual review</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>system_jobs</code></td>
+<td style="text-align: left;"><code>system_jobs/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">System job records (historical)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tokens</code></td>
+<td style="text-align: left;"><code>tokens/</code></td>
+<td style="text-align: left;">Never Migrate</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">OAuth tokens, short-lived, must be recreated manually</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>unified_job_templates</code></td>
@@ -1218,55 +1320,6 @@
 <td style="text-align: left;">Virtual meta-endpoint aggregating all jobs</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>workflow_jobs</code></td>
-<td style="text-align: left;"><code>workflow_jobs/</code></td>
-<td style="text-align: left;">Never Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">Workflow execution records (historical)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>project_updates</code></td>
-<td style="text-align: left;"><code>project_updates/</code></td>
-<td style="text-align: left;">Never Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">Project SCM sync logs (historical)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>inventory_updates</code></td>
-<td style="text-align: left;"><code>inventory_updates/</code></td>
-<td style="text-align: left;">Never Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">Inventory source sync logs (historical)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>ad_hoc_commands</code></td>
-<td style="text-align: left;"><code>ad_hoc_commands/</code></td>
-<td style="text-align: left;">Never Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">Ad-hoc command records (historical)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>system_jobs</code></td>
-<td style="text-align: left;"><code>system_jobs/</code></td>
-<td style="text-align: left;">Never Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">System job records (historical)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>workflow_job_nodes</code></td>
-<td style="text-align: left;"><code>workflow_job_nodes/</code></td>
-<td style="text-align: left;">Never Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">Workflow execution node logs (historical)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>notifications</code></td>
-<td style="text-align: left;"><code>notifications/</code></td>
-<td style="text-align: left;">Never Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">Runtime notification instances (historical)</td>
-</tr>
-<tr>
 <td style="text-align: left;"><code>workflow_approvals</code></td>
 <td style="text-align: left;"><code>workflow_approvals/</code></td>
 <td style="text-align: left;">Never Migrate</td>
@@ -1274,75 +1327,29 @@
 <td style="text-align: left;">Workflow approval records (historical)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>receptor_addresses</code></td>
-<td style="text-align: left;"><code>receptor_addresses/</code></td>
+<td style="text-align: left;"><code>workflow_job_nodes</code></td>
+<td style="text-align: left;"><code>workflow_job_nodes/</code></td>
 <td style="text-align: left;">Never Migrate</td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Receptor mesh addresses, infrastructure (2.6 only)</td>
+<td style="text-align: left;">Per-run execution node records (historical); template nodes are embedded in <code>workflow_job_templates</code></td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>host_metrics</code></td>
-<td style="text-align: left;"><code>host_metrics/</code></td>
+<td style="text-align: left;"><code>workflow_jobs</code></td>
+<td style="text-align: left;"><code>workflow_jobs/</code></td>
 <td style="text-align: left;">Never Migrate</td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Host usage metrics, auto-generated (2.6 only)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>host_metric_summary_monthly</code></td>
-<td style="text-align: left;"><code>host_metric_summary_monthly/</code></td>
-<td style="text-align: left;">Never Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">Monthly usage summary, auto-expires (2.6 only)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>bulk</code></td>
-<td style="text-align: left;"><code>bulk/</code></td>
-<td style="text-align: left;">Never Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">Bulk API operational endpoint, not a resource</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>activity_stream</code></td>
-<td style="text-align: left;"><code>activity_stream/</code></td>
-<td style="text-align: left;">Never Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">Audit log, historical (auto-generated on target)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>settings</code></td>
-<td style="text-align: left;"><code>settings/</code></td>
-<td style="text-align: left;">Never Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">Global system settings, requires manual review</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>roles</code></td>
-<td style="text-align: left;"><code>roles/</code></td>
-<td style="text-align: left;">Never Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">Deprecated; replaced by DAB RBAC</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>applications</code></td>
-<td style="text-align: left;"><code>applications/</code></td>
-<td style="text-align: left;">Never Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">OAuth applications, deferred from current phase</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>tokens</code></td>
-<td style="text-align: left;"><code>tokens/</code></td>
-<td style="text-align: left;">Never Migrate</td>
-<td style="text-align: left;">-</td>
-<td style="text-align: left;">OAuth tokens, short-lived, must be recreated manually</td>
+<td style="text-align: left;">Workflow execution records (historical)</td>
 </tr>
 </tbody>
 </table>
 <h2 id="special-handling">Special Handling<a class="headerlink" href="#special-handling" title="Permanent link">&para;</a></h2>
 <h3 id="workflow-nodes">Workflow Nodes<a class="headerlink" href="#workflow-nodes" title="Permanent link">&para;</a></h3>
-<p>Workflow job template nodes (<code>workflow_job_template_nodes/</code>) are not migrated as standalone resources. They are embedded within their parent <code>workflow_job_templates</code>.</p>
+<p>Workflow job template nodes (<code>workflow_job_template_nodes/</code>) are not migrated as standalone
+resources. They are embedded within their parent <code>workflow_job_templates</code>.</p>
 <h3 id="system-job-templates">System Job Templates<a class="headerlink" href="#system-job-templates" title="Permanent link">&para;</a></h3>
-<p>System job templates are auto-created by the target AAP 2.6 instance. The migration tool only creates ID mappings so that schedules referencing these templates can be correctly linked on the target.</p>
+<p>System job templates are auto-created by the target AAP 2.6 instance. The migration tool only
+creates ID mappings so that schedules referencing these templates can be correctly linked on
+the target.</p>
 
 
 

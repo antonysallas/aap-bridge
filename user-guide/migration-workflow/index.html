@@ -1257,68 +1257,103 @@
 </tr>
 <tr>
 <td>3</td>
-<td>Users, Teams</td>
-<td>Includes team membership and role grants</td>
+<td>Credential Types</td>
+<td></td>
 </tr>
 <tr>
 <td>4</td>
-<td>Credential Types, Credentials, Credential Input Sources</td>
+<td>Credentials</td>
 <td></td>
 </tr>
 <tr>
 <td>5</td>
+<td>Credential Input Sources</td>
+<td></td>
+</tr>
+<tr>
+<td>6</td>
 <td>Execution Environments</td>
 <td>Default platform EEs are skipped by default</td>
 </tr>
 <tr>
-<td>6</td>
-<td>Inventories</td>
-<td>Smart and constructed inventories exported separately</td>
-</tr>
-<tr>
 <td>7</td>
-<td>Inventory Sources</td>
-<td>Includes cloud/SCM source configuration</td>
-</tr>
-<tr>
-<td>8</td>
-<td>Inventory Groups</td>
-<td>Includes nested group hierarchy</td>
-</tr>
-<tr>
-<td>9</td>
-<td>Hosts</td>
-<td>Dynamic hosts skipped by default</td>
-</tr>
-<tr>
-<td>10</td>
 <td>Projects</td>
 <td></td>
 </tr>
 <tr>
+<td>8</td>
+<td>Inventories</td>
+<td>Smart and constructed inventories exported separately</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Inventory Sources</td>
+<td>Includes cloud/SCM source configuration</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Constructed Inventories</td>
+<td></td>
+</tr>
+<tr>
 <td>11</td>
+<td>Inventory Groups</td>
+<td>Includes nested group hierarchy</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Hosts</td>
+<td>Dynamic hosts skipped by default</td>
+</tr>
+<tr>
+<td>13</td>
 <td>Notification Templates</td>
 <td></td>
 </tr>
 <tr>
-<td>12</td>
+<td>14</td>
 <td>Job Templates</td>
 <td>Includes survey spec and notification associations</td>
 </tr>
 <tr>
-<td>13</td>
+<td>15</td>
 <td>Workflow Job Templates</td>
 <td>Includes nodes, survey spec, and notification associations</td>
 </tr>
 <tr>
-<td>14</td>
+<td>16</td>
+<td>System Job Templates</td>
+<td></td>
+</tr>
+<tr>
+<td>17</td>
 <td>Schedules</td>
 <td>System-job schedules excluded</td>
 </tr>
 <tr>
-<td>15</td>
+<td>18</td>
+<td>Users</td>
+<td></td>
+</tr>
+<tr>
+<td>19</td>
+<td>Teams</td>
+<td></td>
+</tr>
+<tr>
+<td>20</td>
 <td>Role Definitions</td>
-<td>AAP 2.6 DAB RBAC custom role definitions</td>
+<td>AAP 2.5+ RBAC custom role definitions</td>
+</tr>
+<tr>
+<td>21</td>
+<td>User Role Assignments</td>
+<td></td>
+</tr>
+<tr>
+<td>22</td>
+<td>Team Role Assignments</td>
+<td></td>
 </tr>
 </tbody>
 </table>
@@ -1381,7 +1416,7 @@
 <li><strong>Nested Groups</strong>: Inventory group parent-child relationships are recreated after all groups
   are imported</li>
 <li><strong>Classic RBAC Translation</strong>: User and team role grants from AAP 2.3–2.5 are translated to
-  the AAP 2.6 DAB RBAC model</li>
+  the AAP 2.5+ RBAC model</li>
 <li><strong>Idempotency</strong>: Skips already-migrated resources</li>
 <li><strong>Conflict Resolution</strong>: Updates or skips existing resources</li>
 <li><strong>Checkpointing</strong>: Can resume from any failure point</li>
@@ -1450,7 +1485,7 @@
 <a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a>    ├── Survey Spec (sub-resource)
 <a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a>    └── Notification Associations (started/success/error/approvals)
 <a id="__codelineno-9-34" name="__codelineno-9-34" href="#__codelineno-9-34"></a>
-<a id="__codelineno-9-35" name="__codelineno-9-35" href="#__codelineno-9-35"></a>Role Definitions (AAP 2.6 DAB RBAC)
+<a id="__codelineno-9-35" name="__codelineno-9-35" href="#__codelineno-9-35"></a>Role Definitions (AAP 2.5+ RBAC)
 <a id="__codelineno-9-36" name="__codelineno-9-36" href="#__codelineno-9-36"></a>    ├── Role User Assignments
 <a id="__codelineno-9-37" name="__codelineno-9-37" href="#__codelineno-9-37"></a>    └── Role Team Assignments
 </code></pre></div>
