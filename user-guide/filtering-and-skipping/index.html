@@ -1250,11 +1250,14 @@
 
 
 <h1 id="filtering-and-skipping-logic">Filtering and Skipping Logic<a class="headerlink" href="#filtering-and-skipping-logic" title="Permanent link">&para;</a></h1>
-<p>This document explains why resource counts in the target environment may be lower than the source. AAP Bridge applies various filters and skip conditions across different phases to ensure a clean, consistent migration.</p>
+<p>This document explains why resource counts in the target environment may be lower than the
+source. AAP Bridge applies various filters and skip conditions across different phases to
+ensure a clean, consistent migration.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <p>Resources can be filtered or skipped for several reasons:</p>
 <ul>
-<li><strong>Intentional exclusion</strong>: Dynamic hosts, smart inventories, installer-created default credentials, and disabled schedules are excluded by design</li>
+<li><strong>Intentional exclusion</strong>: Dynamic hosts, smart inventories, installer-created default
+  credentials, and disabled schedules are excluded by design</li>
 <li><strong>Dependency validation</strong>: Resources with missing dependencies cannot be migrated</li>
 <li><strong>Idempotency</strong>: Already-migrated resources are skipped to prevent duplicates</li>
 <li><strong>System constraints</strong>: Some resources are read-only or non-deletable</li>
@@ -1304,6 +1307,12 @@
 <td>Credentials</td>
 <td>Excludes installer-created default credentials by name (case-insensitive). The target installer recreates these automatically. Use <code>[]</code> to migrate all credentials.</td>
 </tr>
+<tr>
+<td><code>skip_execution_environment_names</code></td>
+<td><code>["Control Plane Execution Environment", "Default execution environment", ...]</code></td>
+<td>Execution Environments</td>
+<td>Excludes platform-managed EEs by name (case-insensitive). These are recreated by the AAP installer. Use <code>[]</code> to migrate all EEs.</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Example configuration:</strong></p>
@@ -1315,6 +1324,13 @@
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">skip_credential_names</span><span class="p">:</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Ansible Galaxy</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Default Execution Environment Registry Credential</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="c1"># Remove entries or use [] to migrate these execution environments</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="nt">skip_execution_environment_names</span><span class="p">:</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Control Plane Execution Environment</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Default execution environment</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Hub Default execution environment</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Hub Minimal execution environment</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Minimal execution environment</span>
 </code></pre></div>
 <h3 id="built-in-filters-not-configurable">Built-in Filters (Not Configurable)<a class="headerlink" href="#built-in-filters-not-configurable" title="Permanent link">&para;</a></h3>
 <table>
@@ -1340,7 +1356,8 @@
 </table>
 <div class="admonition note">
 <p class="admonition-title">Dynamic Hosts</p>
-<p>Hosts managed by inventory sources (EC2, VMware, etc.) are excluded because they will be automatically recreated when the inventory source syncs on the target controller.</p>
+<p>Hosts managed by inventory sources (EC2, VMware, etc.) are excluded because they will be
+automatically recreated when the inventory source syncs on the target controller.</p>
 </div>
 <hr />
 <h2 id="transform-phase-filters">Transform Phase Filters<a class="headerlink" href="#transform-phase-filters" title="Permanent link">&para;</a></h2>
@@ -1414,7 +1431,8 @@
 </tbody>
 </table>
 <h3 id="external-credential-types">External Credential Types<a class="headerlink" href="#external-credential-types" title="Permanent link">&para;</a></h3>
-<p>Credentials using external credential types (custom types from the source) are skipped if the credential type cannot be mapped to the target environment.</p>
+<p>Credentials using external credential types (custom types from the source) are skipped if the
+credential type cannot be mapped to the target environment.</p>
 <p><strong>Log message:</strong> <code>skipping_credential_external_type_unmapped</code></p>
 <hr />
 <h2 id="import-phase-filters">Import Phase Filters<a class="headerlink" href="#import-phase-filters" title="Permanent link">&para;</a></h2>
@@ -1476,6 +1494,14 @@
 <td>System Job Templates</td>
 <td>Built-in, cannot be deleted</td>
 </tr>
+<tr>
+<td>Managed Execution Environments</td>
+<td><code>is_managed=true</code> EEs (e.g. Control Plane EE) are protected unconditionally</td>
+</tr>
+<tr>
+<td>Named EEs in <code>skip_execution_environment_names</code></td>
+<td>Excluded by name list even in <code>--full</code> mode</td>
+</tr>
 </tbody>
 </table>
 <h3 id="excluded-endpoint-categories">Excluded Endpoint Categories<a class="headerlink" href="#excluded-endpoint-categories" title="Permanent link">&para;</a></h3>
@@ -1534,6 +1560,12 @@
 <td>Installer-created default credentials</td>
 <td>Yes</td>
 <td>Check <code>skip_credential_names</code> setting</td>
+</tr>
+<tr>
+<td>Export</td>
+<td>Platform-managed execution environments</td>
+<td>Yes</td>
+<td>Check <code>skip_execution_environment_names</code> setting</td>
 </tr>
 <tr>
 <td>Export</td>
@@ -1599,33 +1631,35 @@
 <li><strong>Hosts</strong>: If <code>skip_dynamic_hosts=true</code> (default), dynamic hosts won't be counted</li>
 <li><strong>Inventories</strong>: Smart inventories and pending deletion inventories are excluded</li>
 <li><strong>Schedules</strong>: Disabled schedules are not exported</li>
-<li><strong>Credentials</strong>: Installer-created defaults (<code>Ansible Galaxy</code>, <code>Default Execution Environment Registry Credential</code>) are skipped by default; others may be skipped due to unmapped external types</li>
+<li><strong>Credentials</strong>: Installer-created defaults (<code>Ansible Galaxy</code>,
+   <code>Default Execution Environment Registry Credential</code>) are skipped by default; others may be
+   skipped due to unmapped external types</li>
+<li><strong>Execution Environments</strong>: Platform-managed EEs (e.g. <code>Control Plane Execution Environment</code>)
+   are skipped and protected from deletion by default</li>
 </ol>
 <h3 id="investigating-discrepancies">Investigating Discrepancies<a class="headerlink" href="#investigating-discrepancies" title="Permanent link">&para;</a></h3>
 <ol>
-<li>
-<p><strong>Check export logs</strong> for <code>skipped</code> entries:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>grep<span class="w"> </span><span class="s2">&quot;skipped&quot;</span><span class="w"> </span>logs/migration.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.resource_type, .reason&#39;</span>
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Check transform logs</strong> for dependency failures:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>grep<span class="w"> </span><span class="s2">&quot;required_dependency_missing&quot;</span><span class="w"> </span>logs/migration.log
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Review configuration</strong> in <code>config.yaml</code>:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">export</span><span class="p">:</span>
+<li><strong>Check export logs</strong> for <code>skipped</code> entries:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>grep<span class="w"> </span><span class="s2">&quot;skipped&quot;</span><span class="w"> </span>logs/migration.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.resource_type, .reason&#39;</span>
+</code></pre></div>
+<ol>
+<li><strong>Check transform logs</strong> for dependency failures:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>grep<span class="w"> </span><span class="s2">&quot;required_dependency_missing&quot;</span><span class="w"> </span>logs/migration.log
+</code></pre></div>
+<ol>
+<li><strong>Review configuration</strong> in <code>config.yaml</code>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">export</span><span class="p">:</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">skip_dynamic_hosts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">      </span><span class="c1"># Are dynamic hosts being skipped?</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">skip_smart_inventories</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">  </span><span class="c1"># Are smart inventories being skipped?</span>
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Check state database</strong> for import status:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>aap-bridge<span class="w"> </span>status<span class="w"> </span>--resource-type<span class="w"> </span>hosts
-</code></pre></div></p>
-</li>
+</code></pre></div>
+<ol>
+<li><strong>Check state database</strong> for import status:</li>
 </ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>aap-bridge<span class="w"> </span>status<span class="w"> </span>--resource-type<span class="w"> </span>hosts
+</code></pre></div>
 <hr />
 <h2 id="adjusting-filter-behavior">Adjusting Filter Behavior<a class="headerlink" href="#adjusting-filter-behavior" title="Permanent link">&para;</a></h2>
 <p>To include resources that are filtered by default:</p>
@@ -1642,10 +1676,15 @@
 <a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
 <a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">  </span><span class="c1"># Include installer-created default credentials (normally recreated by the target installer)</span>
 <a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">  </span><span class="nt">skip_credential_names</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">  </span><span class="c1"># Include platform-managed execution environments (normally recreated by the target installer)</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">  </span><span class="nt">skip_execution_environment_names</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Changing Defaults</p>
-<p>The default filters exist for good reasons. Dynamic hosts will be recreated (and potentially duplicated) when inventory sources sync. Smart inventories may not function correctly if their source inventories differ.</p>
+<p>The default filters exist for good reasons. Dynamic hosts will be recreated (and potentially
+duplicated) when inventory sources sync. Smart inventories may not function correctly if
+their source inventories differ.</p>
 </div>
 
 

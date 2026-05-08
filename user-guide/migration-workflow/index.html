@@ -1202,9 +1202,9 @@
 <p>This guide explains the complete AAP migration process.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <p>AAP Bridge follows an ETL (Export, Transform, Load) pattern:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌──────────┐    ┌───────────┐    ┌──────────┐    ┌────────┐    ┌─────────────────┐
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│   Prep   │───▶│  Export   │───▶│Transform │───▶│ Import │───▶│ Synchronise │
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>└──────────┘    └───────────┘    └──────────┘    └────────┘    └─────────────────┘
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌──────────┐    ┌──────────┐    ┌───────────┐    ┌────────┐    ┌──────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│   Prep   │──▶│  Export  │──▶│ Transform │──▶│ Import │──▶│ Validate │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>└──────────┘    └──────────┘    └───────────┘    └────────┘    └──────────┘
 </code></pre></div>
 <h2 id="phase-1-preparation">Phase 1: Preparation<a class="headerlink" href="#phase-1-preparation" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>aap-bridge<span class="w"> </span>prep
@@ -1241,60 +1241,84 @@
 <tr>
 <th>Order</th>
 <th>Resources</th>
+<th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>1</td>
 <td>Organizations</td>
+<td>Foundation resource</td>
 </tr>
 <tr>
 <td>2</td>
 <td>Labels</td>
+<td></td>
 </tr>
 <tr>
 <td>3</td>
 <td>Users, Teams</td>
+<td>Includes team membership and role grants</td>
 </tr>
 <tr>
 <td>4</td>
-<td>Credential Types, Credentials</td>
+<td>Credential Types, Credentials, Credential Input Sources</td>
+<td></td>
 </tr>
 <tr>
 <td>5</td>
 <td>Execution Environments</td>
+<td>Default platform EEs are skipped by default</td>
 </tr>
 <tr>
 <td>6</td>
 <td>Inventories</td>
+<td>Smart and constructed inventories exported separately</td>
 </tr>
 <tr>
 <td>7</td>
-<td>Inventory Sources, Inventory Groups</td>
+<td>Inventory Sources</td>
+<td>Includes cloud/SCM source configuration</td>
 </tr>
 <tr>
 <td>8</td>
-<td>Hosts</td>
+<td>Inventory Groups</td>
+<td>Includes nested group hierarchy</td>
 </tr>
 <tr>
 <td>9</td>
-<td>Instances, Instance Groups</td>
+<td>Hosts</td>
+<td>Dynamic hosts skipped by default</td>
 </tr>
 <tr>
 <td>10</td>
 <td>Projects</td>
+<td></td>
 </tr>
 <tr>
 <td>11</td>
-<td>Job Templates</td>
+<td>Notification Templates</td>
+<td></td>
 </tr>
 <tr>
 <td>12</td>
-<td>Workflow Job Templates</td>
+<td>Job Templates</td>
+<td>Includes survey spec and notification associations</td>
 </tr>
 <tr>
 <td>13</td>
+<td>Workflow Job Templates</td>
+<td>Includes nodes, survey spec, and notification associations</td>
+</tr>
+<tr>
+<td>14</td>
 <td>Schedules</td>
+<td>System-job schedules excluded</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Role Definitions</td>
+<td>AAP 2.6 DAB RBAC custom role definitions</td>
 </tr>
 </tbody>
 </table>
@@ -1344,7 +1368,20 @@
 </ol>
 <p><strong>Import Features:</strong></p>
 <ul>
-<li><strong>Bulk Operations</strong>: Hosts imported 200 at a time</li>
+<li><strong>Bulk Operations</strong>: Hosts imported 200 at a time via the AAP bulk API</li>
+<li><strong>Host-Group Associations</strong>: Hosts are associated with their groups after bulk import</li>
+<li><strong>Inventory Source Sync</strong>: After importing inventory sources, the tool triggers a sync and
+  waits for completion before moving to constructed and smart inventories</li>
+<li><strong>Smart Inventory Deferral</strong>: Smart inventories are imported in a dedicated phase after
+  inventory source sync to ensure correct host membership</li>
+<li><strong>Survey Specs</strong>: Job template and workflow job template survey specs are posted after
+  template creation</li>
+<li><strong>Notification Associations</strong>: Notification template relationships
+  (started/success/error/approvals) are applied after template creation</li>
+<li><strong>Nested Groups</strong>: Inventory group parent-child relationships are recreated after all groups
+  are imported</li>
+<li><strong>Classic RBAC Translation</strong>: User and team role grants from AAP 2.3–2.5 are translated to
+  the AAP 2.6 DAB RBAC model</li>
 <li><strong>Idempotency</strong>: Skips already-migrated resources</li>
 <li><strong>Conflict Resolution</strong>: Updates or skips existing resources</li>
 <li><strong>Checkpointing</strong>: Can resume from any failure point</li>
@@ -1381,24 +1418,41 @@
 <p>Understanding dependencies is crucial for migration:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Organizations
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    ├── Users (member of)
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    ├── Teams (belongs to)
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    ├── Credentials (owned by)
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    ├── Projects (belongs to)
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    └── Inventories (belongs to)
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>            ├── Inventory Sources
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>            ├── Inventory Groups
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>            └── Hosts
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>Credential Types (standalone)
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    └── Credentials (uses)
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    │       └── Team memberships
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    ├── Teams (belongs to)
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    │       └── Resource role grants
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    ├── Credentials (owned by)
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    ├── Projects (belongs to)
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    └── Inventories (belongs to)
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>            ├── Inventory Sources → sync → Smart Inventories
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>            ├── Inventory Groups (with nested hierarchy)
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>            │       └── Hosts (associated after bulk import)
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>            └── Constructed Inventories (after inventory source sync)
 <a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>
-<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>Execution Environments (standalone)
-<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
-<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>Job Templates
-<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>    ├── Project (uses)
-<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>    ├── Inventory (uses)
-<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>    ├── Credentials (uses)
-<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>    └── Execution Environment (uses)
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>Credential Types (standalone)
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>    └── Credentials (uses)
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>            └── Credential Input Sources
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>Execution Environments (standalone)
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>Notification Templates (org-scoped)
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>Job Templates
+<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>    ├── Project (uses)
+<a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a>    ├── Inventory (uses)
+<a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a>    ├── Credentials (uses)
+<a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a>    ├── Execution Environment (uses)
+<a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a>    ├── Survey Spec (sub-resource)
+<a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a>    └── Notification Associations (started/success/error)
+<a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a>
+<a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a>Workflow Job Templates
+<a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a>    ├── Nodes (embedded, including approval templates)
+<a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a>    ├── Survey Spec (sub-resource)
+<a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a>    └── Notification Associations (started/success/error/approvals)
+<a id="__codelineno-9-34" name="__codelineno-9-34" href="#__codelineno-9-34"></a>
+<a id="__codelineno-9-35" name="__codelineno-9-35" href="#__codelineno-9-35"></a>Role Definitions (AAP 2.6 DAB RBAC)
+<a id="__codelineno-9-36" name="__codelineno-9-36" href="#__codelineno-9-36"></a>    ├── Role User Assignments
+<a id="__codelineno-9-37" name="__codelineno-9-37" href="#__codelineno-9-37"></a>    └── Role Team Assignments
 </code></pre></div>
 <h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
 <h3 id="before-migration">Before Migration<a class="headerlink" href="#before-migration" title="Permanent link">&para;</a></h3>

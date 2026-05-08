@@ -985,10 +985,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#v010-current" class="md-nav__link">
+  <a href="#unreleased-since-v010" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v0.1.0 (Current)
+        Unreleased (since v0.1.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#v010" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v0.1.0
       
     </span>
   </a>
@@ -1064,7 +1075,41 @@
 <a href="https://github.com/redhat-cop/aap-bridge/blob/main/CHANGELOG.md">CHANGELOG.md</a>
 in the repository.</p>
 <h2 id="version-history">Version History<a class="headerlink" href="#version-history" title="Permanent link">&para;</a></h2>
-<h3 id="v010-current">v0.1.0 (Current)<a class="headerlink" href="#v010-current" title="Permanent link">&para;</a></h3>
+<h3 id="unreleased-since-v010">Unreleased (since v0.1.0)<a class="headerlink" href="#unreleased-since-v010" title="Permanent link">&para;</a></h3>
+<p><strong>New Features:</strong></p>
+<ul>
+<li>Source version support expanded to AAP 1.0, 1.1, 1.2, 2.0, 2.1, 2.2, 2.5, and 2.6</li>
+<li>Survey spec migration for job templates and workflow job templates</li>
+<li>Notification template association migration (started/success/error/approvals)</li>
+<li>Nested inventory group hierarchy export and import</li>
+<li>Host-to-group associations applied after bulk import</li>
+<li>Constructed inventory <code>input_inventories</code> exported and re-linked on target</li>
+<li>Automatic inventory source sync after import (with configurable timeout/polling)</li>
+<li>Smart inventory import deferred until after inventory source sync</li>
+<li>Classic RBAC migration for user and team resource role grants</li>
+<li><code>role_definitions</code> included in cleanup phase</li>
+<li><code>skip_credential_names</code> configuration option (defaults exclude installer-created credentials)</li>
+<li><code>skip_execution_environment_names</code> configuration option (defaults exclude platform-managed EEs)</li>
+<li>MkDocs GitHub Actions deployment workflow</li>
+</ul>
+<p><strong>Bug Fixes:</strong></p>
+<ul>
+<li>Credential deduplication: same-name/different-type and non-unique name+org+type cases
+  handled correctly</li>
+<li>Batch precheck scoping fixed for org-scoped, parent-scoped, notification template, and
+  schedule resources</li>
+<li>Project sync failure detection with retry and configurable abort</li>
+<li>System-job schedules excluded from export/import/cleanup</li>
+<li>Managed credential types matched by namespace when name differs between versions</li>
+<li>User team memberships exported and re-applied on import</li>
+<li>Vault configuration is now optional</li>
+<li>Cleanup: inventory sources excluded, job history preserved, groups/hosts skipped</li>
+<li>Managed execution environments always protected from deletion (including in <code>--full</code> mode)</li>
+<li>Import dispatch table corrected for <code>notification_templates</code>, <code>credential_input_sources</code>,
+  <code>rbac</code>, and <code>workflow_job_templates</code></li>
+<li>400 "pending deletion" responses treated as idempotent skips</li>
+</ul>
+<h3 id="v010">v0.1.0<a class="headerlink" href="#v010" title="Permanent link">&para;</a></h3>
 <p>Initial release of AAP Bridge.</p>
 <p><strong>Features:</strong></p>
 <ul>
@@ -1084,23 +1129,26 @@ in the repository.</p>
 <li>Teams</li>
 <li>Credential Types</li>
 <li>Credentials</li>
+<li>Credential Input Sources</li>
 <li>Execution Environments</li>
 <li>Inventories</li>
 <li>Inventory Sources</li>
 <li>Inventory Groups</li>
 <li>Hosts</li>
-<li>Instances</li>
-<li>Instance Groups</li>
 <li>Projects</li>
+<li>Notification Templates</li>
 <li>Job Templates</li>
 <li>Workflow Job Templates</li>
+<li>System Job Templates</li>
 <li>Schedules</li>
+<li>Role Definitions</li>
+<li>User Role Assignments</li>
+<li>Team Role Assignments</li>
 </ul>
 <p><strong>Known Limitations:</strong></p>
 <ul>
-<li>Encrypted credentials cannot be migrated (API limitation)</li>
-<li>RBAC assignments require manual verification</li>
-<li>Workflow approval nodes need manual setup</li>
+<li>Encrypted credentials cannot be migrated via API (use HashiCorp Vault or manual entry)</li>
+<li>Workflow approval nodes require manual review after migration</li>
 </ul>
 <hr />
 <h2 id="versioning">Versioning<a class="headerlink" href="#versioning" title="Permanent link">&para;</a></h2>
