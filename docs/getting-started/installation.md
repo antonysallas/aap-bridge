@@ -86,7 +86,7 @@ This mode keeps the same host-side `.env` and config files, but you do not need 
 ### Requirements
 
 - **podman** with compose support
-- **make**
+- **make** (optional convenience wrapper)
 - Access to `registry.redhat.io` to pull the Red Hat PostgreSQL image
 
 ### Setup
@@ -105,7 +105,7 @@ podman login registry.redhat.io
 make build
 
 # Start the db + bridge services
-make up-dev
+podman compose up -d db bridge
 
 # Open a shell in the running bridge container
 make shell
@@ -114,7 +114,9 @@ make shell
 ### Notes
 
 - `compose.yml` uses `registry.redhat.io/rhel9/postgresql-15` for the bundled database service.
-- `make up-dev` reads your host `.env` via compose, then overrides `MIGRATION_STATE_DB_PATH` so the CLI talks to the containerized PostgreSQL service.
+- The compose stack now prepares its own writable volumes, so `podman compose up -d db bridge` works without any Makefile ownership helpers.
+- `make up-dev` is a thin wrapper around the same compose workflow if you prefer the shortcut.
+- The bridge container stores logs, exports, and reports in compose-managed volumes mounted under `/app`.
 - The container workflow is intended for the CLI/TUI path only in this PR.
 
 ## Verify Installation

@@ -1,7 +1,7 @@
 .PHONY: help install install-dev clean format lint typecheck test test-unit test-integration \
        test-performance test-cov check docs docs-serve \
        init-env setup version venv install-editable all \
-       build prepare-pgdata up-dev down shell logs
+       build up-dev down shell logs
 
 .DEFAULT_GOAL := help
 
@@ -143,25 +143,12 @@ COMPOSE          := podman compose
 BRIDGE_SVC       := bridge
 BRIDGE_IMAGE     := localhost/aap-bridge:latest
 BRIDGE_DEV_IMAGE := localhost/aap-bridge-dev:latest
-PROJECT_NAME     := $(notdir $(CURDIR))
-PGDATA_VOLUME    := $(PROJECT_NAME)_pgdata
 
 build: ## Build aap-bridge container image (base + dev)
 	podman build -t $(BRIDGE_IMAGE) .
 	podman build -t $(BRIDGE_DEV_IMAGE) -f Containerfile.dev .
 
-prepare-pgdata: ## Prepare PostgreSQL volume ownership for rootless Podman
-	@created=0; \
-	if ! podman volume inspect $(PGDATA_VOLUME) >/dev/null 2>&1; then \
-		podman volume create $(PGDATA_VOLUME) >/dev/null; \
-		created=1; \
-	fi; \
-	mountpoint="$$(podman volume inspect $(PGDATA_VOLUME) --format '{{.Mountpoint}}')"; \
-	if [ "$$created" -eq 1 ] || [ -z "$$(podman unshare sh -c "ls -A \"$$mountpoint\" 2>/dev/null")" ]; then \
-		podman unshare chown -R 26:26 "$$mountpoint"; \
-	fi
-
-up-dev: prepare-pgdata ## Start db + bridge (CLI dev container)
+up-dev: ## Start db + bridge (CLI dev container)
 	$(COMPOSE) up -d db bridge
 
 down: ## Stop all containers
