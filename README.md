@@ -13,8 +13,10 @@ migrations (e.g., 80,000+ hosts)
   duplicates
 - **Broad Source Version Support**: Migrate from AAP 1.0, 1.1, 1.2, 2.0, 2.1,
   2.2, 2.3, 2.4, 2.5, 2.6, or 2.7 — or from upstream AWX at the equivalent
-  release level — to a target AAP 2.6 or 2.7 instance (only AWX 24.6.1 has been
-  tested as a source; see [AWX Migration](docs/reference/awx-migration.md))
+  release level — to a **same-or-newer** target AAP version (typically 2.6 or 2.7;
+  see the [compatibility matrix](docs/reference/compatibility-matrix.md)).
+  Downgrade paths (for example 2.7 → 2.6) are not supported. Only AWX 24.6.1 has
+  been tested as a source; see [AWX Migration](docs/reference/awx-migration.md).
 - **Complete Resource Coverage**: Organizations, users, teams, credentials,
   execution environments, inventories, groups, hosts, projects, job templates,
   workflow job templates (including nodes, survey specs, and notification

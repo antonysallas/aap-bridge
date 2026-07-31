@@ -1,7 +1,8 @@
 # Resource Support Matrix
 
 This document lists all resources supported by the AAP Bridge migration tool, their
-classification, and any caveats associated with their migration to AAP 2.6 and 2.7 targets.
+classification, and any caveats associated with their migration to AAP 2.6 or 2.7 targets
+(per the [compatibility matrix](compatibility-matrix.md); same-or-forward paths only).
 
 ## Migration Categories
 

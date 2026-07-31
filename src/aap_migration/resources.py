@@ -136,7 +136,7 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         source="1.0",
         target="2.7",
         status="supported",
-        notes="Primary migration path. Fully tested.",
+        notes="Supported; integration coverage pending.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
         ],
@@ -145,7 +145,7 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         source="1.1",
         target="2.7",
         status="supported",
-        notes="Primary migration path. Fully tested.",
+        notes="Supported; integration coverage pending.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
         ],
@@ -154,7 +154,7 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         source="1.2",
         target="2.7",
         status="supported",
-        notes="Primary migration path. Fully tested.",
+        notes="Supported; integration coverage pending.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
         ],
@@ -163,7 +163,7 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         source="2.0",
         target="2.7",
         status="supported",
-        notes="Primary migration path. Fully tested.",
+        notes="Supported; integration coverage pending.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
         ],
@@ -172,7 +172,7 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         source="2.1",
         target="2.7",
         status="supported",
-        notes="Primary migration path. Fully tested.",
+        notes="Supported; integration coverage pending.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
         ],
@@ -181,7 +181,7 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         source="2.2",
         target="2.7",
         status="supported",
-        notes="Primary migration path. Fully tested.",
+        notes="Supported; integration coverage pending.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
         ],
@@ -190,7 +190,7 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         source="2.3",
         target="2.7",
         status="supported",
-        notes="Primary migration path. Fully tested.",
+        notes="Supported; integration coverage pending.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
         ],
@@ -199,7 +199,7 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         source="2.4",
         target="2.7",
         status="supported",
-        notes="Primary migration path. Fully tested.",
+        notes="Supported; integration coverage pending.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
         ],
@@ -208,7 +208,7 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         source="2.5",
         target="2.7",
         status="supported",
-        notes="Primary migration path. Fully tested.",
+        notes="Supported; integration coverage pending.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
             "Instance groups referenced by RBAC assignments must exist on the target with the same name",
@@ -218,7 +218,7 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         source="2.6",
         target="2.7",
         status="supported",
-        notes="Primary upgrade path. Fully tested.",
+        notes="Primary upgrade path. Supported; integration coverage pending.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
             "Instance groups referenced by RBAC assignments must exist on the target with the same name",
@@ -228,7 +228,7 @@ COMPATIBILITY_MATRIX: list[VersionPath] = [
         source="2.7",
         target="2.7",
         status="supported",
-        notes="Same-version migration path. Schema fully compatible.",
+        notes="Same-version migration path. Supported; integration coverage pending.",
         known_exceptions=[
             "Encrypted credentials cannot be extracted from source API",
             "Instance groups referenced by RBAC assignments must exist on the target with the same name",

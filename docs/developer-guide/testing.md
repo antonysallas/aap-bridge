@@ -81,9 +81,10 @@ warning is printed during build). A manifest upload failure in the build log
 is non-blocking — the golden image is still created; place a valid `.zip` in
 `tests/integration/files/manifest/` before the next build to license the instance.
 
-> **Note:** AAP **2.7** golden images can be built for integration testing, but
-> aap-bridge migration compatibility still tops out at **2.6** until separate
-> 2.7 migration support lands in the tool.
+> **Note:** AAP **2.7** golden images can be built for integration testing. AAP 2.7
+> is supported as a migration source and target in the tool; batch integration tests
+> (`make test-all`) still exercise **1.0–2.5 → 2.6** only — use explicit
+> `run-pair` / `test-bridge` for 2.6-source or 2.7-target combinations.
 
 ## Architecture
 

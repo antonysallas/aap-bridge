@@ -3,6 +3,11 @@
 This document defines the supported source-to-target migration paths for the AAP Bridge tool
 and documents known version-specific exceptions.
 
+Migration supports **same-or-forward** target versions only. Each source version may migrate
+to AAP 2.6 and/or 2.7 as listed in the matrix below — not every source may use every target.
+For example, an AAP **2.7 source must target AAP 2.7**; downgrade paths such as 2.7 → 2.6
+are not supported.
+
 AAP Bridge also supports **AWX** as a migration source. AWX shares the Controller API with
 AAP at equivalent release levels; configure `SOURCE__VERSION` using the AAP version that
 matches your AWX release. See [AWX Migration](awx-migration.md) for the full version mapping
@@ -17,7 +22,7 @@ and configuration guidance.
 
 | Status | Description |
 |:---|:---|
-| **Supported** | Fully tested migration path. Core resource families and dependency chains are verified. |
+| **Supported** | Declared migration path. Core resource families are expected to work; see Notes for test coverage. |
 | **Partial** | Core resources tested, but some version-specific features or complex configurations may require manual steps. |
 | **Unsupported** | Migration path not yet tested or verified. Use with caution. |
 
@@ -35,17 +40,17 @@ and configuration guidance.
 | AAP 2.4 | AAP 2.6 | **Supported** | 2026-04-25 | Primary migration path. Fully tested. |
 | AAP 2.5 | AAP 2.6 | **Supported** | 2026-04-25 | Primary migration path. Fully tested. |
 | AAP 2.6 | AAP 2.6 | **Supported** | 2026-04-25 | Same-version migration path. Schema fully compatible. |
-| AAP 1.0 | AAP 2.7 | **Supported** | 2026-06-24 | Primary migration path. Fully tested. |
-| AAP 1.1 | AAP 2.7 | **Supported** | 2026-06-24 | Primary migration path. Fully tested. |
-| AAP 1.2 | AAP 2.7 | **Supported** | 2026-06-24 | Primary migration path. Fully tested. |
-| AAP 2.0 | AAP 2.7 | **Supported** | 2026-06-24 | Primary migration path. Fully tested. |
-| AAP 2.1 | AAP 2.7 | **Supported** | 2026-06-24 | Primary migration path. Fully tested. |
-| AAP 2.2 | AAP 2.7 | **Supported** | 2026-06-24 | Primary migration path. Fully tested. |
-| AAP 2.3 | AAP 2.7 | **Supported** | 2026-06-24 | Primary migration path. Fully tested. |
-| AAP 2.4 | AAP 2.7 | **Supported** | 2026-06-24 | Primary migration path. Fully tested. |
-| AAP 2.5 | AAP 2.7 | **Supported** | 2026-06-24 | Primary migration path. Fully tested. |
-| AAP 2.6 | AAP 2.7 | **Supported** | 2026-06-24 | Primary migration path. Fully tested. |
-| AAP 2.7 | AAP 2.7 | **Supported** | 2026-06-24 | Same-version migration path. Schema fully compatible. |
+| AAP 1.0 | AAP 2.7 | **Supported** | 2026-06-24 | Supported; integration coverage pending. |
+| AAP 1.1 | AAP 2.7 | **Supported** | 2026-06-24 | Supported; integration coverage pending. |
+| AAP 1.2 | AAP 2.7 | **Supported** | 2026-06-24 | Supported; integration coverage pending. |
+| AAP 2.0 | AAP 2.7 | **Supported** | 2026-06-24 | Supported; integration coverage pending. |
+| AAP 2.1 | AAP 2.7 | **Supported** | 2026-06-24 | Supported; integration coverage pending. |
+| AAP 2.2 | AAP 2.7 | **Supported** | 2026-06-24 | Supported; integration coverage pending. |
+| AAP 2.3 | AAP 2.7 | **Supported** | 2026-06-24 | Supported; integration coverage pending. |
+| AAP 2.4 | AAP 2.7 | **Supported** | 2026-06-24 | Supported; integration coverage pending. |
+| AAP 2.5 | AAP 2.7 | **Supported** | 2026-06-24 | Supported; integration coverage pending. |
+| AAP 2.6 | AAP 2.7 | **Supported** | 2026-06-24 | Primary upgrade path. Supported; integration coverage pending. |
+| AAP 2.7 | AAP 2.7 | **Supported** | 2026-06-24 | Same-version migration path. Supported; integration coverage pending. |
 
 ## AWX as Migration Source
 
