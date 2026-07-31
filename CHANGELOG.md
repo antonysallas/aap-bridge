@@ -10,6 +10,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **AAP 2.7 Support**: AAP 2.7 is supported as both a migration source and target
+  (same-or-forward paths only; see compatibility matrix)
 - **Optional Container CLI Workflow**: Podman Compose stack with
   `registry.redhat.io/rhel9/postgresql-15` and bridge runtime/dev images for
   running the CLI/TUI without provisioning PostgreSQL on the host; includes
@@ -23,8 +25,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   orchestrating source/target pairs (`make build-aap`, `run-pair`, `reset-pair`),
   and validating bridge connectivity; documented in
   `docs/developer-guide/testing.md`
-- **Source Version Support**: AAP 1.0, 1.1, 1.2, 2.0, 2.1, 2.2, 2.5, and 2.6 are now
-  supported as migration sources in addition to the original 2.3/2.4/2.5 paths
+- **Source Version Support**: AAP 1.0 through 2.7 are supported as migration sources
+  on same-or-forward paths to AAP 2.6 or 2.7 targets per the compatibility matrix
 - **Survey Spec Migration**: Job template and workflow job template survey specs are now
   exported via `GET …/{id}/survey_spec/` and imported via `POST …/{id}/survey_spec/`
 - **Notification Template Associations**: Notification template relationships for job
@@ -76,8 +78,9 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   credentials before projects; users and teams deferred until after all content objects
   are in place). The export progress display reflects this order even when parallel
   export is enabled.
-- **All Migration Paths Marked Fully Supported**: The 2.3 → 2.6, 2.4 → 2.6, and
-  2.5 → 2.6 paths are all now marked as fully supported; messaging is standardised
+- **Compatibility Matrix**: AAP 2.7 target paths added; messaging clarifies
+  same-or-forward migration rules and distinguishes integration-tested 2.6 paths
+  from 2.7 paths where batch integration coverage is still pending
 - **`inventory_sources` Re-ordered**: Inventory sources are now imported before
   constructed inventories and smart inventories to satisfy sync dependencies
 - **Smart Inventories Deferred**: Smart inventory import is now a dedicated phase that
