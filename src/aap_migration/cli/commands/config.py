@@ -13,6 +13,10 @@ import click
 from aap_migration.cli.context import MigrationContext
 from aap_migration.cli.decorators import handle_errors, pass_context, requires_config
 from aap_migration.cli.utils import echo_error, echo_info, echo_success, echo_warning, print_table
+from aap_migration.client.bulk_settings import (
+    BULK_HOST_MAX_CREATE_DEFAULT,
+    fetch_bulk_host_max_create,
+)
 from aap_migration.config import MigrationConfig
 from aap_migration.utils.logging import get_logger
 
@@ -137,8 +141,15 @@ def _validate_settings(config: MigrationConfig) -> None:
             echo_error(f"Invalid batch size for {resource_type}: {batch_size}")
             raise click.ClickException(f"Batch size must be positive: {resource_type}={batch_size}")
 
+        if resource_type == "hosts" and batch_size > 100:
+            echo_warning(
+                f"Host batch size ({batch_size}) exceeds the stock target limit "
+                f"(BULK_HOST_MAX_CREATE defaults to 100). Run "
+                f"'aap-bridge config validate --check-connectivity' to verify the target setting."
+            )
+
         if resource_type == "hosts" and batch_size > 200:
-            echo_warning(f"Host batch size ({batch_size}) exceeds recommended maximum (200)")
+            echo_warning(f"Host batch size ({batch_size}) exceeds API maximum (200)")
 
     # Validate concurrency
     if config.performance.max_concurrent <= 0:
@@ -215,10 +226,22 @@ def _test_connectivity(ctx: MigrationContext) -> None:
         # Test target connection
         echo_info("Testing target AAP connection...")
         try:
-            _target_client = ctx.target_client
-            # For now, just creating the client validates the URL format
-            # In a real implementation, you'd make an API call here
+            target_client = ctx.target_client
+            await target_client.get("ping/")
             echo_success(f"Target AAP accessible: {ctx.config.target.url}")
+
+            host_batch = ctx.config.performance.batch_sizes.get(
+                "hosts", BULK_HOST_MAX_CREATE_DEFAULT
+            )
+            bulk_max = await fetch_bulk_host_max_create(target_client)
+            if bulk_max is not None:
+                echo_success(f"Target BULK_HOST_MAX_CREATE: {bulk_max}")
+                if host_batch > bulk_max:
+                    echo_warning(
+                        f"Host batch size ({host_batch}) exceeds target BULK_HOST_MAX_CREATE "
+                        f"({bulk_max}). Lower performance.batch_sizes.hosts or raise the setting "
+                        "on the target (Settings → Bulk Actions)."
+                    )
         except Exception as e:
             echo_error(f"Failed to connect to target AAP: {e}")
             raise click.ClickException(f"Target AAP connection failed: {e}") from e

@@ -144,7 +144,7 @@ aap-bridge import
 
 **Import Features:**
 
-- **Bulk Operations**: Hosts imported 200 at a time via the AAP bulk API
+- **Bulk Operations**: Hosts imported in batches sized to the target's `BULK_HOST_MAX_CREATE` (stock default: 100; API max: 200)
 - **Host-Group Associations**: Hosts are associated with their groups after bulk import
 - **Inventory Source Sync**: After importing inventory sources, the tool triggers a sync and
   waits for completion before moving to constructed and smart inventories

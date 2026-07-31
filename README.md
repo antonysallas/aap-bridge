@@ -376,7 +376,7 @@ The tool migrates resources in the correct dependency order:
 9. Inventory Sources (with auto-sync wait)
 10. Constructed Inventories
 11. Inventory Groups (with nested hierarchy)
-12. Hosts (bulk operations, 200/batch) + host-group associations
+12. Hosts (bulk operations, up to BULK_HOST_MAX_CREATE/batch, default 100) + host-group associations
 13. Notification Templates
 14. Job Templates (with survey specs and notification associations)
 15. Workflow Job Templates (with nodes, survey specs, and notification associations)

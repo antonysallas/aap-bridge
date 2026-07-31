@@ -176,7 +176,7 @@ class PerformanceConfig(BaseModel):
             "inventory": 200,
             "groups": 200,
             "inventory_sources": 200,
-            "hosts": 200,  # API maximum - parallel fetching handles rate limiting
+            "hosts": 100,  # Default matches stock BULK_HOST_MAX_CREATE; API allows up to 200
             "job_templates": 200,
             "workflow_job_templates": 200,
             "workflow_job_template_nodes": 200,
