@@ -47,9 +47,9 @@ classification, and any caveats associated with their migration to AAP 2.6 or 2.
 | `bulk` | `bulk/` | Never Migrate | - | Bulk API operational endpoint, not a resource |
 | `config` | `config/` | Never Migrate | - | System configuration, read-only |
 | `dashboard` | `dashboard/` | Never Migrate | - | Dashboard aggregation, read-only |
-| `host_metric_summary_monthly` | `host_metric_summary_monthly/` | Never Migrate | - | Monthly usage summary, auto-expires (2.5+) |
-| `host_metrics` | `host_metrics/` | Never Migrate | - | Host usage metrics, auto-generated (2.5+) |
-| `instance_groups` | `instance_groups/` | Never Migrate | - | Must exist on target with same name; resolved by name during RBAC import |
+| `host_metric_summary_monthly` | `host_metric_summary_monthly/` | Never Migrate | - | Monthly usage summary, auto-expires (2.6+) |
+| `host_metrics` | `host_metrics/` | Never Migrate | - | Host usage metrics, auto-generated (2.6+) |
+| `instance_groups` | `instance_groups/` | Never Migrate | - | Must exist on target with same name; resolved by name during RBAC and for org/inventory/job template capacity assignments |
 | `instances` | `instances/` | Never Migrate | - | Controller infrastructure, not migrated |
 | `inventory_updates` | `inventory_updates/` | Never Migrate | - | Inventory source sync logs (historical) |
 | `me` | `me/` | Never Migrate | - | Current user session, read-only |

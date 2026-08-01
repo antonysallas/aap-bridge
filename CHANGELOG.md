@@ -10,6 +10,9 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Instance Group Capacity Assignments**: Organizations, inventories, and job templates
+  now export related instance group names and re-associate them on the target by name
+  after create (instance group objects remain a target prerequisite)
 - **AAP 2.7 Support**: AAP 2.7 is supported as both a migration source and target
   (same-or-forward paths only; see compatibility matrix)
 - **Optional Container CLI Workflow**: Podman Compose stack with
