@@ -472,6 +472,13 @@ class TestHostImporter:
     @pytest.fixture
     def host_importer(self, mock_client, mock_state, performance_config):
         """Create HostImporter instance."""
+
+        async def mock_get(endpoint, params=None, **kwargs):
+            if endpoint == "settings/bulk/":
+                return {"BULK_HOST_MAX_CREATE": 200}
+            return {"count": 0, "results": []}
+
+        mock_client.get = AsyncMock(side_effect=mock_get)
         return HostImporter(mock_client, mock_state, performance_config)
 
     @pytest.mark.asyncio
@@ -533,8 +540,31 @@ class TestHostImporter:
 
         await host_importer.import_hosts_bulk(inventory_id=100, hosts=hosts)
 
-        # Should be called twice (200 + 50)
+        # Should be called twice (200 + 50) when target allows 200 per bulk request
         assert host_importer.bulk_ops.bulk_create_hosts.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_import_hosts_bulk_caps_to_target_bulk_max(
+        self, mock_client, mock_state, performance_config
+    ):
+        """Configured batch size above BULK_HOST_MAX_CREATE is capped at import time."""
+
+        async def mock_get(endpoint, params=None, **kwargs):
+            if endpoint == "settings/bulk/":
+                return {"BULK_HOST_MAX_CREATE": 100}
+            return {"count": 0, "results": []}
+
+        mock_client.get = AsyncMock(side_effect=mock_get)
+        host_importer = HostImporter(mock_client, mock_state, performance_config)
+        host_importer.bulk_ops.bulk_create_hosts = AsyncMock(
+            return_value={"hosts": [], "failed": []}
+        )
+
+        hosts = [{"_source_id": i, "name": f"host-{i}", "enabled": True} for i in range(250)]
+
+        await host_importer.import_hosts_bulk(inventory_id=100, hosts=hosts)
+
+        assert host_importer.bulk_ops.bulk_create_hosts.call_count == 3
 
     @pytest.mark.asyncio
     async def test_import_hosts_skips_already_migrated(self, host_importer, mock_state):

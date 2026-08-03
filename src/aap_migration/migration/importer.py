@@ -18,6 +18,11 @@ from aap_migration.client.api_layout import (
     uses_gateway_api,
 )
 from aap_migration.client.bulk_operations import BulkOperations
+from aap_migration.client.bulk_settings import (
+    BULK_HOST_MAX_CREATE_DEFAULT,
+    effective_host_batch_size,
+    fetch_bulk_host_max_create,
+)
 from aap_migration.client.exceptions import APIError, ConflictError
 from aap_migration.config import (
     PerformanceConfig,
@@ -3344,6 +3349,7 @@ class HostImporter(ResourceImporter):
         super().__init__(client, state, performance_config, resource_mappings)
         self.bulk_ops = BulkOperations(client, performance_config)
         self._inventory_has_sources_cache: dict[int, bool] = {}
+        self._bulk_host_max_create: int | None = None
 
     async def import_hosts_bulk(
         self,
@@ -3362,13 +3368,35 @@ class HostImporter(ResourceImporter):
         Returns:
             Bulk operation result with total_created, total_failed, total_skipped
         """
-        batch_size = self.performance_config.batch_sizes.get("hosts", 200)
+        if self._bulk_host_max_create is None:
+            self._bulk_host_max_create = await fetch_bulk_host_max_create(self.client)
+
+        configured_batch_size = self.performance_config.batch_sizes.get(
+            "hosts", BULK_HOST_MAX_CREATE_DEFAULT
+        )
+        batch_size = effective_host_batch_size(
+            configured_batch_size,
+            target_bulk_max=self._bulk_host_max_create,
+        )
+        if batch_size < configured_batch_size:
+            logger.warning(
+                "host_batch_size_capped",
+                configured=configured_batch_size,
+                effective=batch_size,
+                target_bulk_host_max_create=self._bulk_host_max_create,
+                message=(
+                    "Configured host batch size exceeds target BULK_HOST_MAX_CREATE; "
+                    "using effective batch size for bulk import"
+                ),
+            )
 
         logger.info(
             "bulk_import_hosts_starting",
             inventory_id=inventory_id,
             host_count=len(hosts),
             batch_size=batch_size,
+            configured_batch_size=configured_batch_size,
+            target_bulk_host_max_create=self._bulk_host_max_create,
         )
 
         try:

@@ -209,21 +209,48 @@ Warning: Unresolved dependency - organization ID 5 not found
 
 ```text
 Error: Bulk host create failed: 400 Bad Request
+Number of hosts exceeds system setting BULK_HOST_MAX_CREATE
 ```
+
+**Cause:** AAP Bridge batch size (`performance.batch_sizes.hosts`) exceeds the
+target controller setting `BULK_HOST_MAX_CREATE`. Stock AAP/AWX installs default
+this to **100**, while the bulk API accepts up to **200** hosts per request.
+Bridge used to default to 200, which fails on unmodified targets.
 
 **Solutions:**
 
-1. Check for invalid host data (duplicate names, invalid characters)
-2. Reduce batch size:
+1. Set Bridge batch size to match (or stay below) the target limit:
 
    ```yaml
    performance:
      batch_sizes:
        hosts: 100
-
    ```
 
-1. Check target AAP logs for details
+2. Or raise the limit on the target: **Settings → Bulk Actions → Max number of
+   hosts to allow to be created in a single bulk action** (requires admin access).
+
+3. Verify the target limit before migrating:
+
+   ```bash
+   aap-bridge config validate --config config/config.yaml --check-connectivity
+   ```
+
+Bridge now defaults to 100 and auto-caps batch size at import time when it can
+read `BULK_HOST_MAX_CREATE` from the target.
+
+**Other bulk import failures:**
+
+1. Check for invalid host data (duplicate names, invalid characters)
+2. Reduce batch size further if hosts have large `variables` payloads (nginx ~1MB body limit):
+
+   ```yaml
+   performance:
+     batch_sizes:
+       hosts: 50
+   ```
+
+3. Check target AAP logs for details
 
 ## Validation Issues
 

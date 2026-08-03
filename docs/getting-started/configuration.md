@@ -133,7 +133,7 @@ performance:
   batch_sizes:
     organizations: 100
     inventories: 200           # Maximum API page size for optimal performance
-    hosts: 200                 # Maximum API page size (required for bulk operations)
+    hosts: 100                 # Match target BULK_HOST_MAX_CREATE (stock default); max 200
     credentials: 50
   rate_limit: 25               # Requests per second
 
@@ -266,7 +266,7 @@ Increase batch sizes and concurrency:
 performance:
   max_concurrent: 20
   batch_sizes:
-    hosts: 200
+    hosts: 100
     inventories: 200
   rate_limit: 25
 

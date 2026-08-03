@@ -387,7 +387,7 @@ class CustomImporter(ResourceImporter):
 
 ### Bulk Operations
 
-- Hosts: 200 per bulk request
+- Hosts: up to `BULK_HOST_MAX_CREATE` per bulk request (stock default 100; API max 200)
 - Uses `/bulk/host_create` endpoint
 - Significantly faster than individual creates
 
