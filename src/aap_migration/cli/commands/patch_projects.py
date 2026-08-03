@@ -551,8 +551,9 @@ async def patch_project_scm_details(
                     )
                     permanently_failed_ids.extend(still_failed_ids)
 
-                # Pause between batches to avoid overwhelming the controller
-                await asyncio.sleep(interval)
+                # Pause between batches only when another batch remains.
+                if i + batch_size < total_projects:
+                    await asyncio.sleep(interval)
 
         progress.complete_phase("patching")
 
