@@ -81,6 +81,10 @@ pre-commit / CI via `tools/check_changelog_periods.py` on this file and
   and `docs/reference/changelog.md` must end with a period; enforced by pre-commit
   and CI (`tools/check_changelog_periods.py`). Structural Keep a Changelog checks on
   `CHANGELOG.md` use `python-kacl` (`kacl-verify`, `.kacl.yml`).
+- **Schedules – Export All Non-System, Import Disabled**: Enabled and disabled
+  non-system schedules are both exported. System-job (built-in maintenance)
+  schedules remain excluded. Import always creates schedules with `enabled=false`
+  so they do not fire on the target until operators re-enable them.
 - **Local Host Setup**: `make setup` auto-detects **uv** when installed and falls
   back to stdlib `venv` + **pip** when it is not.
 - **Export and Transform Order Aligned with Import**: Resource types are now exported
