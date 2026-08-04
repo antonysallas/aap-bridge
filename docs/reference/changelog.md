@@ -54,6 +54,9 @@ in the repository.
 
 **Bug Fixes:**
 
+- Inventory source sync wait no longer hangs after a 405 on `update/` (removed GET
+  launch fallback that used the source id as the expected job id); wait matches
+  current/last update job fields and recovers from expected-job mismatches
 - Cleanup clears export/transform contents without removing mount points; export/transform
   overwrite prompts only when directories contain data
 - Phase 2 project sync wait uses `project_sync_timeout` (not batch interval); ignores
