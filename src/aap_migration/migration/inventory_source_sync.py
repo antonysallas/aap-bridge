@@ -113,9 +113,7 @@ def collect_inventory_source_target_ids_for_sync(
     return list(dict.fromkeys(ids))
 
 
-async def trigger_inventory_source_update(
-    client: BaseAPIClient, inventory_source_id: int
-) -> int:
+async def trigger_inventory_source_update(client: BaseAPIClient, inventory_source_id: int) -> int:
     """Launch ``inventory_sources/<id>/update/`` and return inventory_update job id.
 
     AAP launch endpoints are POST-first. Some environments also allow GET launch,
@@ -138,9 +136,7 @@ async def trigger_inventory_source_update(
             inventory_source_id=inventory_source_id,
             response_keys=list(data.keys()) if isinstance(data, dict) else None,
         )
-        raise ValueError(
-            f"inventory_sources/{inventory_source_id}/update/ did not return a job id"
-        )
+        raise ValueError(f"inventory_sources/{inventory_source_id}/update/ did not return a job id")
     return int(job_id)
 
 
