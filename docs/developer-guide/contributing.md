@@ -87,7 +87,7 @@ After `make setup`, hooks run on every `git commit`. They cover:
 | Hook | What it does |
 |------|----------------|
 | Hygiene | trailing whitespace, EOF, YAML, merge conflicts, large files |
-| gitleaks | secret scanning (also enforced in CI via pre-commit) |
+| gitleaks | secret scanning (dedicated CI job + local pre-commit) |
 | black / isort / ruff | format and lint Python under `src/` and `tests/` |
 | pytest unit | `pytest tests/unit` (fast; no AAP containers) |
 | ansible-lint | offline lint of `tests/integration/` when those YAML files change |
@@ -100,11 +100,12 @@ make pre-commit
 # or: .venv/bin/pre-commit run --all-files
 ```
 
-GitHub Actions (`.github/workflows/ci.yml`) runs three jobs on every PR/push to
+GitHub Actions (`.github/workflows/ci.yml`) runs four jobs on every PR/push to
 `main`:
 
-- **Python** — `pre-commit run --all-files` with
-  `SKIP=ansible-lint,web-build,web-vitest` (those have their own jobs)
+- **Secrets** — `pre-commit run gitleaks --all-files` (dedicated status check)
+- **Python** — remaining pre-commit hooks with
+  `SKIP=gitleaks,ansible-lint,web-build,web-vitest`
 - **Ansible** — path-filtered `ansible-lint --offline` when
   `tests/integration/` changes
 - **Web** — path-filtered `npm ci`, `npm run build`, and `npm run test:unit`
