@@ -87,6 +87,8 @@ After `make setup`, hooks run on every `git commit`. They cover:
 | Hook | What it does |
 |------|----------------|
 | Hygiene | trailing whitespace, EOF, YAML, merge conflicts, large files |
+| CHANGELOG periods | each bullet in `CHANGELOG.md` and `docs/reference/changelog.md` ends with `.` (`tools/check_changelog_periods.py`) |
+| kacl-verify | Keep a Changelog structure on `CHANGELOG.md` (`python-kacl`; see `.kacl.yml`) |
 | gitleaks | secret scanning (dedicated CI job + local pre-commit) |
 | black / isort / ruff | format and lint Python under `src/` and `tests/` |
 | pytest unit | `pytest tests/unit` (fast; no AAP containers) |
@@ -105,7 +107,8 @@ GitHub Actions (`.github/workflows/ci.yml`) runs four jobs on every PR/push to
 
 - **Secrets** — `pre-commit run gitleaks --all-files` (dedicated status check)
 - **Python** — remaining pre-commit hooks with
-  `SKIP=gitleaks,ansible-lint,web-build,web-vitest`
+  `SKIP=gitleaks,ansible-lint,web-build,web-vitest` (includes changelog
+  trailing-period checks and `kacl-verify`)
 - **Ansible** — path-filtered `ansible-lint --offline` when
   `tests/integration/` changes
 - **Web** — path-filtered `npm ci`, `npm run build`, and `npm run test:unit`
