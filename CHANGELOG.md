@@ -106,6 +106,12 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Inventory Source Sync – Poll Hang**: Post-import inventory source sync no longer
+  treats a 405 from `inventory_sources/<id>/update/` as a successful launch via GET
+  fallback (which mistook the source id for an `inventory_update` id and polled forever).
+  Launch fails closed when the source cannot be updated; the wait matches job ids across
+  `last_job`/`last_update`/`current_job`/`current_update`, recovers when a real sync
+  finished with a mismatched expected id, and emits periodic poll heartbeats for diagnosis
 - **Testing – Cleanup and Overwrite Prompts**: Cleanup clears export/transform directory
   contents without removing mount points; export and transform only prompt to overwrite
   when output directories contain data (not empty dirs left after cleanup)
