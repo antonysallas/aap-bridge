@@ -2762,9 +2762,47 @@ class ScheduleImporter(ResourceImporter):
     - job_templates
     - workflow_job_templates
     - inventory_sources
+
+    Schedules are always created with ``enabled=false`` so they do not fire on
+    the target until operators re-enable them after validation.
     """
 
     DEPENDENCIES = {}  # Handled manually in _resolve_dependencies
+
+    async def ensure_schedule_disabled_on_target(self, schedule: dict[str, Any]) -> dict[str, Any]:
+        """PATCH a target schedule to ``enabled=false`` when it is still enabled."""
+        target_id = schedule.get("id")
+        if target_id is None:
+            return schedule
+        if schedule.get("enabled"):
+            updated = await self.client.update_resource(
+                "schedules", int(target_id), {"enabled": False}
+            )
+            logger.info(
+                "schedule_disabled_on_target",
+                target_id=target_id,
+                name=schedule.get("name"),
+            )
+            return updated
+        return schedule
+
+    async def import_resource(
+        self,
+        resource_type: str,
+        source_id: int,
+        data: dict[str, Any],
+        resolve_dependencies: bool = True,
+    ) -> dict[str, Any] | None:
+        """Import schedule and ensure the target copy stays disabled."""
+        result = await super().import_resource(
+            resource_type=resource_type,
+            source_id=source_id,
+            data=data,
+            resolve_dependencies=resolve_dependencies,
+        )
+        if result and not result.get("_skipped"):
+            return await self.ensure_schedule_disabled_on_target(result)
+        return result
 
     async def _resolve_dependencies(
         self, resource_type: str, data: dict[str, Any]
@@ -2772,6 +2810,17 @@ class ScheduleImporter(ResourceImporter):
         """Resolve dependencies with polymorphic unified_job_template handling."""
         # Call parent to handle any standard dependencies
         resolved = await super()._resolve_dependencies(resource_type, data)
+
+        # Always import disabled regardless of source enabled state.
+        source_enabled = resolved.get("enabled", data.get("enabled"))
+        if source_enabled is not False:
+            logger.debug(
+                "schedule_force_disabled_on_import",
+                source_id=data.get("id") or data.get("_source_id"),
+                source_name=data.get("name"),
+                source_enabled=source_enabled,
+            )
+        resolved["enabled"] = False
 
         # Handle polymorphic unified_job_template
         if "unified_job_template" in data:
@@ -2822,7 +2871,8 @@ class ScheduleImporter(ResourceImporter):
 
         Handles unified_job_template dependency which can point to various
         schedulable resources (job templates, workflows, inventory sources).
-        Preserves RRULE format for recurrence patterns.
+        Preserves RRULE format for recurrence patterns. Always creates schedules
+        with enabled=false.
 
         Args:
             schedules: List of schedule data

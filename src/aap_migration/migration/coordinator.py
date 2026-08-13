@@ -415,6 +415,10 @@ class MigrationCoordinator:
 
             if lookup_key in existing_by_identifier:
                 existing = existing_by_identifier[lookup_key]
+                if resource_type == "schedules" and hasattr(
+                    importer, "ensure_schedule_disabled_on_target"
+                ):
+                    existing = await importer.ensure_schedule_disabled_on_target(existing)
                 self.state.save_id_mapping(
                     resource_type=mapping_resource_type,
                     source_id=source_id,
