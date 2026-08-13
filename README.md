@@ -21,6 +21,8 @@ supported. See the
 
 ## Documentation
 
+Published docs: [https://redhat-cop.github.io/aap-bridge/](https://redhat-cop.github.io/aap-bridge/)
+
 Full docs live under [`docs/`](docs/) and are built with MkDocs Material.
 Procedures and reference material are **not** duplicated in this README —
 use the guides below as the source of truth.
