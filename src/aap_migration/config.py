@@ -8,11 +8,11 @@ import os
 from pathlib import Path
 
 import yaml
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from aap_migration.client.api_layout import normalize_host_url, parse_aap_major_minor
 from aap_migration.utils.logging import get_logger
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def normalize_aap_version(version: str) -> str:
@@ -176,7 +176,7 @@ class PerformanceConfig(BaseModel):
             "inventory": 200,
             "groups": 200,
             "inventory_sources": 200,
-            "hosts": 200,  # API maximum - parallel fetching handles rate limiting
+            "hosts": 100,  # Default matches stock BULK_HOST_MAX_CREATE; API allows up to 200
             "job_templates": 200,
             "workflow_job_templates": 200,
             "workflow_job_template_nodes": 200,

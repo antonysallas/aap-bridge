@@ -133,7 +133,7 @@ performance:
   batch_sizes:
     organizations: 100
     inventories: 200           # Maximum API page size for optimal performance
-    hosts: 200                 # Maximum API page size (required for bulk operations)
+    hosts: 100                 # Match target BULK_HOST_MAX_CREATE (stock default); max 200
     credentials: 50
   rate_limit: 25               # Requests per second
 
@@ -254,7 +254,7 @@ aap-bridge config show
 ```bash
 export AAP_BRIDGE__LOGGING__DISABLE_PROGRESS=true
 export AAP_BRIDGE__LOGGING__CONSOLE_LEVEL=INFO
-aap-bridge migrate full
+aap-bridge migrate
 
 ```
 
@@ -266,7 +266,7 @@ Increase batch sizes and concurrency:
 performance:
   max_concurrent: 20
   batch_sizes:
-    hosts: 200
+    hosts: 100
     inventories: 200
   rate_limit: 25
 

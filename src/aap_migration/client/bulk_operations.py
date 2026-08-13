@@ -58,9 +58,10 @@ class BulkOperations:
     ) -> dict[str, Any]:
         """Bulk create hosts in an inventory.
 
-        AAP 2.6 allows creating up to 200 hosts per request via the
-        bulk API endpoint. This is significantly faster than creating
-        hosts one by one.
+        AAP allows up to 200 hosts per bulk/host_create request, but the target
+        controller enforces a separate system setting BULK_HOST_MAX_CREATE (stock
+        default: 100). This method caps batch_size to that limit when callers pass
+        a higher value.
 
         Args:
             inventory_id: Target inventory ID

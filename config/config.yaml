@@ -52,7 +52,7 @@ performance:
     inventories: 200 # Maximum API page size for optimal performance
     inventory_groups: 100
     inventory_sources: 50
-    hosts: 200 # Maximum API page size (required for bulk operations)
+    hosts: 100 # Match target BULK_HOST_MAX_CREATE (stock default); API allows up to 200
     workflow_nodes: 100
     schedules: 100
     rbac_assignments: 100
