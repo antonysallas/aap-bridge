@@ -2769,6 +2769,41 @@ class ScheduleImporter(ResourceImporter):
 
     DEPENDENCIES = {}  # Handled manually in _resolve_dependencies
 
+    async def ensure_schedule_disabled_on_target(self, schedule: dict[str, Any]) -> dict[str, Any]:
+        """PATCH a target schedule to ``enabled=false`` when it is still enabled."""
+        target_id = schedule.get("id")
+        if target_id is None:
+            return schedule
+        if schedule.get("enabled"):
+            updated = await self.client.update_resource(
+                "schedules", int(target_id), {"enabled": False}
+            )
+            logger.info(
+                "schedule_disabled_on_target",
+                target_id=target_id,
+                name=schedule.get("name"),
+            )
+            return updated
+        return schedule
+
+    async def import_resource(
+        self,
+        resource_type: str,
+        source_id: int,
+        data: dict[str, Any],
+        resolve_dependencies: bool = True,
+    ) -> dict[str, Any] | None:
+        """Import schedule and ensure the target copy stays disabled."""
+        result = await super().import_resource(
+            resource_type=resource_type,
+            source_id=source_id,
+            data=data,
+            resolve_dependencies=resolve_dependencies,
+        )
+        if result and not result.get("_skipped"):
+            return await self.ensure_schedule_disabled_on_target(result)
+        return result
+
     async def _resolve_dependencies(
         self, resource_type: str, data: dict[str, Any]
     ) -> dict[str, Any]:

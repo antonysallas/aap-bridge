@@ -1550,6 +1550,11 @@ def import_cmd(
                 # Resource exists in target - create/update id_mapping
                 existing = existing_by_identifier[lookup_key]
 
+                if resource_type == "schedules" and hasattr(
+                    importer, "ensure_schedule_disabled_on_target"
+                ):
+                    existing = await importer.ensure_schedule_disabled_on_target(existing)
+
                 state.save_id_mapping(
                     resource_type=mapping_resource_type,
                     source_id=source_id,

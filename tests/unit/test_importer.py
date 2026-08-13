@@ -1112,3 +1112,61 @@ class TestScheduleImporter:
         assert create_kwargs["data"]["enabled"] is False
         assert create_kwargs["data"]["unified_job_template"] == 55
         assert "_ujt_resource_type" not in create_kwargs["data"]
+
+    @pytest.mark.asyncio
+    async def test_import_patches_when_create_returns_enabled(
+        self, schedule_importer, mock_client, mock_state
+    ):
+        """Target APIs may ignore enabled on POST; PATCH if the schedule is still enabled."""
+        mock_state.get_mapped_id = MagicMock(return_value=55)
+        mock_client.create_resource = AsyncMock(
+            return_value={"id": 900, "name": "Nightly Job", "enabled": True}
+        )
+        mock_client.update_resource = AsyncMock(
+            return_value={"id": 900, "name": "Nightly Job", "enabled": False}
+        )
+
+        result = await schedule_importer.import_resource(
+            resource_type="schedules",
+            source_id=10,
+            data={
+                "_source_id": 10,
+                "name": "Nightly Job",
+                "enabled": True,
+                "rrule": "DTSTART:20240101T000000Z RRULE:FREQ=DAILY;INTERVAL=1",
+                "unified_job_template": 7,
+                "_ujt_resource_type": "job_templates",
+            },
+        )
+
+        assert result is not None
+        assert result["enabled"] is False
+        mock_client.update_resource.assert_awaited_once_with("schedules", 900, {"enabled": False})
+
+    @pytest.mark.asyncio
+    async def test_ensure_schedule_disabled_on_target_patches_enabled_schedule(
+        self, schedule_importer, mock_client
+    ):
+        mock_client.update_resource = AsyncMock(
+            return_value={"id": 42, "name": "Nightly Job", "enabled": False}
+        )
+
+        result = await schedule_importer.ensure_schedule_disabled_on_target(
+            {"id": 42, "name": "Nightly Job", "enabled": True}
+        )
+
+        assert result["enabled"] is False
+        mock_client.update_resource.assert_awaited_once_with("schedules", 42, {"enabled": False})
+
+    @pytest.mark.asyncio
+    async def test_ensure_schedule_disabled_on_target_skips_when_already_disabled(
+        self, schedule_importer, mock_client
+    ):
+        mock_client.update_resource = AsyncMock()
+
+        result = await schedule_importer.ensure_schedule_disabled_on_target(
+            {"id": 42, "name": "Nightly Job", "enabled": False}
+        )
+
+        assert result["enabled"] is False
+        mock_client.update_resource.assert_not_awaited()
