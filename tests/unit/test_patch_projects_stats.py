@@ -5,10 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from aap_migration.cli.commands.patch_projects import (
-    _empty_patch_stats,
-    patch_project_scm_details,
-)
+from aap_migration.cli.commands.patch_projects import _empty_patch_stats, patch_project_scm_details
 
 
 def test_empty_patch_stats_shape() -> None:
