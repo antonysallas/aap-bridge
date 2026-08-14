@@ -39,6 +39,7 @@ nav:
   - User Guide:
       - CLI Reference: user-guide/cli-reference.md
       - Web UI: user-guide/web-ui.md
+      - Disconnected Environment: user-guide/disconnected-environment.md
       - Migration Workflow: user-guide/migration-workflow.md
       - Filtering and Skipping: user-guide/filtering-and-skipping.md
       - Troubleshooting: user-guide/troubleshooting.md

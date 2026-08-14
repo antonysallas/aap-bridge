@@ -365,6 +365,33 @@ Error: 429 Too Many Requests
 
    ```
 
+## Web UI and container ports
+
+### Port 8080 returns 301 to :8443, or engine fails with address already in use
+
+Something else already owns the default UI (8080) or engine (8000) port. A
+healthy AAP Bridge UI answers **200** with an nginx server header, not a
+redirect to `:8443`.
+
+The `ui` and `engine` services use host networking, so compose `ports:` lines
+do not move the listen sockets. Change `deploy/nginx.conf` and mount it, and
+override the engine `--port`. See
+[Change UI and engine ports without rebuilding](disconnected-environment.md#change-ui-and-engine-ports-without-rebuilding).
+
+### Nginx Permission denied (13)
+
+The UI process cannot read a bind-mounted `nginx.conf` (file mode or SELinux).
+The UI image runs as a non-root user (UID 1001 in the stock image — inspect
+yours). Use `chmod 644` on the host file and add `security_opt: label=disable`
+on the `ui` service. Full steps:
+[Disconnected Environment](disconnected-environment.md#2-make-the-file-readable-in-the-container).
+
+### Browser connection refused on localhost:8080
+
+If Bridge runs on a remote host, `localhost` in the browser is your workstation.
+Open `http://<host-ip>:8080` or use an SSH tunnel. See
+[Disconnected Environment](disconnected-environment.md#disconnected-host-load-and-start).
+
 ## Logging and Debugging
 
 ### Enable debug logging
