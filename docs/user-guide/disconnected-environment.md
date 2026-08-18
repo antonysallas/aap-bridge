@@ -11,6 +11,21 @@ from AAP.
 For a connected install, see [Installation](../getting-started/installation.md)
 and [Web UI](web-ui.md).
 
+This page focuses on the **Web UI**. The container TUI/CLI path is listed so you
+can skip UI images and nginx/port work if you do not need the browser.
+
+| Component | Web UI (`make up`) | TUI/CLI (`make up-dev`) |
+| --- | --- | --- |
+| `registry.redhat.io/rhel9/postgresql-15` | Yes | Yes |
+| `registry.redhat.io/ubi9/ubi-minimal` | Yes | Yes |
+| `localhost/aap-bridge-api`, `localhost/aap-bridge-ui` (`make build-all`) | Yes | No |
+| `localhost/aap-bridge`, `localhost/aap-bridge-dev` (`make build`) | No | Yes |
+| nginx / UI port remap | Yes | No |
+
+The TUI/CLI path is less setup: build the CLI images, pull PostgreSQL and UBI,
+then `make up-dev` / `make shell`. The rest of this page is the Web UI air-gap
+flow.
+
 ## Prerequisites
 
 | Host | Needs |
@@ -19,7 +34,7 @@ and [Web UI](web-ui.md).
 | **Disconnected (run)** | Podman with compose support (`podman compose` / `podman-compose`), Make |
 
 !!! warning "Images alone are not enough"
-    Transfer the git repository (or a tarball of it) with the images.
+    Transfer a tarball of the repository **without** `.env` (see below).
     `compose.yml`, `Makefile`, `config/`, and `deploy/nginx.conf` are part of
     the runtime.
 
@@ -55,13 +70,31 @@ podman save -o aap-bridge-ui.tar  localhost/aap-bridge-ui:latest
 podman save -o postgresql-15.tar  registry.redhat.io/rhel9/postgresql-15
 podman save -o ubi-minimal.tar    registry.redhat.io/ubi9/ubi-minimal:latest
 
-# Optional: container CLI
+# TUI/CLI only (skip if you are shipping the Web UI path)
 # podman save -o aap-bridge.tar     localhost/aap-bridge:latest
 # podman save -o aap-bridge-dev.tar localhost/aap-bridge-dev:latest
 
-tar czf aap-bridge-repo.tar.gz -C /path/to/aap-bridge .
+# Do not pack .env: make init-env writes AAP_BRIDGE_TOKEN_ENCRYPTION_KEY,
+# PostgreSQL passwords, and (if edited) AAP tokens. Reuse on the disconnected
+# host would share that encryption key with a connected machine.
+tar czf aap-bridge-repo.tar.gz \
+  --exclude='.env' \
+  --exclude='.venv' \
+  --exclude='exports' \
+  --exclude='xformed' \
+  --exclude='logs' \
+  --exclude='reports' \
+  -C /path/to/aap-bridge .
 sha256sum *.tar *.tar.gz > SHA256SUMS
 ```
+
+!!! danger "Never copy `.env` across the air gap"
+    `make init-env` generates `AAP_BRIDGE_TOKEN_ENCRYPTION_KEY` used to encrypt
+    Web UI connection tokens in the state database. Shipping that file from a
+    connected host also ships AAP tokens and database passwords if they were
+    filled in. Always run `make init-env` on the disconnected host so it gets
+    its own key. A new key cannot decrypt tokens stored with a different key,
+    which is another reason not to copy `.env` or PostgreSQL `pgdata`.
 
 Transfer the directory with whatever your air-gap process allows. Verify
 checksums on the disconnected host before loading images.
@@ -80,8 +113,8 @@ podman load -i aap-bridge-ui.tar
 mkdir -p ~/aap-bridge && tar xzf aap-bridge-repo.tar.gz -C ~/aap-bridge
 cd ~/aap-bridge
 
-make init-env   # if you did not ship .env
-# Edit .env and config/config.yaml for this environment
+make init-env   # always: new encryption key and DB passwords for this host
+# Edit SOURCE__/TARGET__ (or use Web UI Connections) and config/config.yaml
 make up         # db + engine + ui (--no-build)
 ```
 
@@ -230,16 +263,17 @@ offline.
 
 **Connected**
 
-- [ ] `make build-all` and pull PostgreSQL + UBI
+- [ ] `make build-all` and pull PostgreSQL + UBI (plus `make build` only for TUI/CLI)
 - [ ] `podman save` every image compose needs
-- [ ] Ship repo tarball + `SHA256SUMS`
+- [ ] Ship repo tarball **excluding `.env`** + `SHA256SUMS`
 - [ ] Image tags match what `compose.yml` expects
 
 **Disconnected**
 
 - [ ] Checksums verify
 - [ ] `podman load` all images
-- [ ] Unpack repo; configure `.env` / `config/config.yaml`
+- [ ] Unpack repo; run `make init-env` here (do not copy the connected `.env`)
+- [ ] Configure source/target and `config/config.yaml`
 - [ ] `podman compose` is available
 - [ ] `make up`; open `http://<host-ip>:8080`
 

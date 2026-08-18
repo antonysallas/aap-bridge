@@ -18,6 +18,8 @@ in the repository.
   bridge images (`make build`, `make up-dev`, `make shell`, etc.).
 - Web UI: React/PatternFly browser interface with connection management, migration
   preview, TUI-matching phased migration controls, job history, and live log streaming.
+- Disconnected environment user guide: connected-build / disconnected-run for the
+  Web UI, exclude `.env` from the transfer tarball, runtime nginx port mount.
 - Integration testing infrastructure: Ansible playbooks and roles under
   `tests/integration/` for golden-image builds (AAP 1.0–2.7), pair orchestration,
   and bridge connectivity checks (`make build-aap`, `run-pair`, `reset-pair`, etc.).
