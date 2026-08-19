@@ -26,6 +26,9 @@ pre-commit / CI via `tools/check_changelog_periods.py` on this file and
   a FastAPI engine, and an nginx-served frontend (`make build-all` / `make up`),
   with connection management, migration preview, TUI-matching phased migration
   controls, job history, and live log streaming.
+- **Documentation – Disconnected Environment**: User guide for building images on a
+  connected host, transferring them without `.env` (token encryption key stays
+  local), running the Web UI offline, and remapping nginx/engine ports at runtime.
 - **Integration Testing Infrastructure**: Ansible-driven workflow under
   `tests/integration/` for building UBI-based AAP golden images (1.0–2.7),
   orchestrating source/target pairs (`make build-aap`, `run-pair`, `reset-pair`),

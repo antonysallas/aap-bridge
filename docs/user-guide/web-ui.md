@@ -17,6 +17,12 @@ make up
 # Access at http://localhost:8080
 ```
 
+From another workstation, use the Bridge host IP (or an SSH tunnel), not
+laptop `localhost`. If the run host cannot pull from registries, follow
+[Disconnected Environment](disconnected-environment.md). To move ports 8080/8000
+when they are already in use, that page also covers mounting `deploy/nginx.conf`
+into compose.
+
 This starts:
 
 | Container | Port | Description |

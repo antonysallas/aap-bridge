@@ -41,6 +41,10 @@ migrations (e.g., 80,000+ hosts).
 
     Use the browser-based interface
 
+- :material-lan-disconnect: **[Disconnected Environment](user-guide/disconnected-environment.md)**
+
+    Build connected, transfer images, run the Web UI offline
+
 - :material-console: **[CLI Reference](user-guide/cli-reference.md)**
 
     Complete command reference

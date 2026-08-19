@@ -231,6 +231,8 @@ Open [http://localhost:8080](http://localhost:8080) in your browser.
 - The UI proxies `/api` and `/ws` traffic to the FastAPI engine running on port `8000`.
 - For frontend-only development, run `aap-bridge serve --reload` in one terminal
   and `make web-dev` in another.
+- To build on a connected host and run without registry access, see
+  [Disconnected Environment](../user-guide/disconnected-environment.md).
 
 ## Verify Installation
 
@@ -281,5 +283,7 @@ aap-bridge --help
 
 - [Quick Start](quickstart.md) - Get up and running in 5 minutes
 - [Configuration](configuration.md) - Configure your environment
+- [Disconnected Environment](../user-guide/disconnected-environment.md) - Build
+  connected and run the Web UI without registry access
 - [Testing with Ephemeral AAP Instances](../developer-guide/testing.md) - Build golden
   images and run migration test pairs (podman + make; no local Python/AAP required)
