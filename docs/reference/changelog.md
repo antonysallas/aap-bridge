@@ -67,6 +67,8 @@ in the repository.
 
 **Bug Fixes:**
 
+- Phase 2 import summary reports patched project count instead of always
+  `0 resources processed` (#116).
 - Inventory source sync wait no longer hangs after a 405 on `update/` (removed GET
   launch fallback that used the source id as the expected job id); wait matches
   current/last update job fields and recovers from expected-job mismatches.

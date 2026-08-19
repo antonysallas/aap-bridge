@@ -128,6 +128,8 @@ pre-commit / CI via `tools/check_changelog_periods.py` on this file and
 
 ### Fixed
 
+- **Import Summary – Project Patching Count (#116)**: Phase 2 import summary now reports
+  how many projects were patched instead of always showing `0 resources processed`.
 - **Inventory Source Sync – Poll Hang**: Post-import inventory source sync no longer
   treats a 405 from `inventory_sources/<id>/update/` as a successful launch via GET
   fallback (which mistook the source id for an `inventory_update` id and polled forever).
