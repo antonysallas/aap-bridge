@@ -332,18 +332,26 @@ async def patch_project_scm_details(
             "phase2_skipped_all_projects_already_configured",
             skipped=skipped_already_configured,
         )
-        if not progress_display:
-            echo_info(
-                f"All {skipped_already_configured} project(s) already have SCM configured. "
-                "Skipping Phase 2 patching."
-            )
-        return {
+        stats = {
             "imported": 0,
             "skipped": skipped_already_configured,
             "failed": 0,
             "total": skipped_already_configured,
         }
+        if progress_display:
+            progress_display.start_phase(
+                "patching", "Patching Projects", skipped_already_configured
+            )
+            progress_display.update_phase("patching", 0, 0, skipped_already_configured)
+            progress_display.complete_phase("patching")
+        else:
+            echo_info(
+                f"All {skipped_already_configured} project(s) already have SCM configured. "
+                "Skipping Phase 2 patching."
+            )
+        return stats
 
+    total_deferred = len(projects_with_deferred)
     total_projects = len(work_items)
     max_retries = ctx.config.performance.project_sync_max_retries
     fail_on_failure = ctx.config.performance.project_sync_fail_on_sync_failure
@@ -375,15 +383,15 @@ async def patch_project_scm_details(
             progress.set_total_phases(1)
             # Use specialized method for single-phase initialization to prevent artifacts
             progress.initialize_and_start_single_phase(
-                "patching", "Patching Projects", total_projects
+                "patching", "Patching Projects", total_deferred
             )
         else:
             # If re-using existing display (e.g. from import all), use standard start
-            progress.start_phase("patching", "Patching Projects", total_projects)
+            progress.start_phase("patching", "Patching Projects", total_deferred)
 
         patched_count = 0
         failed_patch_count = 0
-        skipped_count = 0
+        skipped_count = skipped_already_configured
         all_target_ids = []
         # Maps target_id → project name for human-readable error messages
         target_id_to_name: dict[int, str] = {}
@@ -394,6 +402,8 @@ async def patch_project_scm_details(
             echo_info(
                 f"Skipping {skipped_already_configured} project(s) already configured on target."
             )
+        if skipped_already_configured:
+            progress.update_phase("patching", 0, 0, skipped_count)
 
         # Process in batches
         for i in range(0, total_projects, batch_size):
@@ -602,9 +612,9 @@ async def patch_project_scm_details(
 
         return {
             "imported": patched_count,
-            "skipped": skipped_count + skipped_already_configured,
+            "skipped": skipped_count,
             "failed": failed_patch_count,
-            "total": len(work_items) + skipped_already_configured,
+            "total": total_deferred,
         }
 
 

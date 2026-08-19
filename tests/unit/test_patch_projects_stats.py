@@ -123,6 +123,53 @@ async def test_patch_returns_failed_count_on_patch_error(tmp_path: Path) -> None
 
 
 @pytest.mark.asyncio
+async def test_patch_returns_skipped_count_when_all_already_configured(tmp_path: Path) -> None:
+    """Re-run must report already-configured projects as skipped."""
+    _make_patch_test_project_file(tmp_path)
+    ctx = _make_patch_test_ctx()
+
+    with (
+        patch(
+            "aap_migration.cli.commands.patch_projects.classify_project_patch_action",
+            new_callable=AsyncMock,
+            return_value="skip",
+        ),
+        patch("aap_migration.cli.commands.patch_projects.MigrationProgressDisplay"),
+    ):
+        stats = await patch_project_scm_details(ctx, tmp_path, batch_size=1, interval=0)
+
+    assert stats["imported"] == 0
+    assert stats["failed"] == 0
+    assert stats["skipped"] == 1
+    assert stats["total"] == 1
+    ctx.target_client.patch.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_patch_reports_skipped_in_progress_when_all_already_configured(
+    tmp_path: Path,
+) -> None:
+    """Import progress must show patching phase even when all projects are skipped."""
+    _make_patch_test_project_file(tmp_path)
+    ctx = _make_patch_test_ctx()
+    progress = MagicMock()
+
+    with patch(
+        "aap_migration.cli.commands.patch_projects.classify_project_patch_action",
+        new_callable=AsyncMock,
+        return_value="skip",
+    ):
+        stats = await patch_project_scm_details(
+            ctx, tmp_path, batch_size=1, interval=0, progress_display=progress
+        )
+
+    assert stats["skipped"] == 1
+    progress.start_phase.assert_called_once_with("patching", "Patching Projects", 1)
+    progress.update_phase.assert_called_once_with("patching", 0, 0, 1)
+    progress.complete_phase.assert_called_once_with("patching")
+
+
+@pytest.mark.asyncio
 async def test_patch_returns_skipped_count_when_no_mapping(tmp_path: Path) -> None:
     """Projects without a target ID mapping must be counted as skipped."""
     _make_patch_test_project_file(tmp_path)

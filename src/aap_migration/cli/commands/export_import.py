@@ -19,7 +19,7 @@ from aap_migration.cli.commands.migrate import (
     PHASE2_RESOURCE_TYPES,
 )
 from aap_migration.cli.commands.patch_projects import (
-    count_projects_needing_scm_patch,
+    load_projects_with_deferred_scm,
     patch_project_scm_details,
 )
 from aap_migration.cli.context import MigrationContext
@@ -1606,11 +1606,11 @@ def import_cmd(
         # Initialize phases
         phases = []
 
-        # If Phase 2, check for projects to patch and add as first phase
+        # If Phase 2, add patching phase when transformed projects have deferred SCM
         if phase == "phase2" and not dry_run:
-            patch_count = await count_projects_needing_scm_patch(ctx, input_dir)
-            if patch_count > 0:
-                phases.append(("patching", "Patching Projects", patch_count))
+            deferred_patch_count = len(load_projects_with_deferred_scm(input_dir))
+            if deferred_patch_count > 0:
+                phases.append(("patching", "Patching Projects", deferred_patch_count))
 
         for rtype in types_to_import:
             stats = metadata.get("resource_types", {}).get(rtype, {})
