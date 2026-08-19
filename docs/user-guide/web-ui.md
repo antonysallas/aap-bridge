@@ -29,6 +29,12 @@ This starts:
 
 For frontend development with hot-reload:
 
+Set the API port once in the project-root ``.env`` when port 8000 is unavailable:
+
+```dotenv
+AAP_BRIDGE_API_PORT=4017
+```
+
 ```bash
 # Terminal 1: Start the API server
 make init-env   # Or reuse an existing .env from make setup
@@ -41,6 +47,9 @@ make web-dev
 
 # Access at http://localhost:5173
 ```
+
+Both ``aap-bridge serve`` and the Vite development proxy read
+``AAP_BRIDGE_API_PORT``. The default is ``8000`` when the variable is not set.
 
 ## Pages
 
