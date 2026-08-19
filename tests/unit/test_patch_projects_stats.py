@@ -67,3 +67,81 @@ async def test_patch_returns_patched_count(tmp_path: Path) -> None:
     assert stats["skipped"] == 0
     assert stats["total"] == 1
     ctx.target_client.patch.assert_awaited_once()
+
+
+def _make_patch_test_project_file(tmp_path: Path) -> None:
+    projects_dir = tmp_path / "projects"
+    projects_dir.mkdir()
+    (projects_dir / "projects_001.json").write_text(
+        """[
+          {
+            "name": "demo",
+            "_source_id": 10,
+            "_deferred_scm_details": {
+              "scm_type": "git",
+              "scm_url": "https://example.com/repo.git",
+              "scm_branch": "main"
+            }
+          }
+        ]"""
+    )
+
+
+def _make_patch_test_ctx(*, mapped_id: int | None = 99) -> MagicMock:
+    ctx = MagicMock()
+    ctx.migration_state.get_mapped_id = MagicMock(return_value=mapped_id)
+    ctx.target_client.patch = AsyncMock(return_value={})
+    ctx.config.performance.project_sync_max_retries = 0
+    ctx.config.performance.project_sync_fail_on_sync_failure = False
+    ctx.config.performance.project_sync_poll_interval = 0
+    ctx.config.performance.project_sync_timeout = 1
+    return ctx
+
+
+@pytest.mark.asyncio
+async def test_patch_returns_failed_count_on_patch_error(tmp_path: Path) -> None:
+    """PATCH exceptions must populate stats['failed']."""
+    _make_patch_test_project_file(tmp_path)
+    ctx = _make_patch_test_ctx()
+    ctx.target_client.patch = AsyncMock(side_effect=RuntimeError("API error"))
+
+    with (
+        patch(
+            "aap_migration.cli.commands.patch_projects.wait_for_project_sync",
+            new_callable=AsyncMock,
+            return_value=(1, 0, []),
+        ),
+        patch("aap_migration.cli.commands.patch_projects.asyncio.sleep", new_callable=AsyncMock),
+        patch("aap_migration.cli.commands.patch_projects.MigrationProgressDisplay"),
+    ):
+        stats = await patch_project_scm_details(ctx, tmp_path, batch_size=1, interval=0)
+
+    assert stats["imported"] == 0
+    assert stats["failed"] == 1
+    assert stats["skipped"] == 0
+    assert stats["total"] == 1
+    ctx.target_client.patch.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_patch_returns_skipped_count_when_no_mapping(tmp_path: Path) -> None:
+    """Projects without a target ID mapping must be counted as skipped."""
+    _make_patch_test_project_file(tmp_path)
+    ctx = _make_patch_test_ctx(mapped_id=None)
+
+    with (
+        patch(
+            "aap_migration.cli.commands.patch_projects.wait_for_project_sync",
+            new_callable=AsyncMock,
+            return_value=(1, 0, []),
+        ),
+        patch("aap_migration.cli.commands.patch_projects.asyncio.sleep", new_callable=AsyncMock),
+        patch("aap_migration.cli.commands.patch_projects.MigrationProgressDisplay"),
+    ):
+        stats = await patch_project_scm_details(ctx, tmp_path, batch_size=1, interval=0)
+
+    assert stats["imported"] == 0
+    assert stats["failed"] == 0
+    assert stats["skipped"] == 1
+    assert stats["total"] == 1
+    ctx.target_client.patch.assert_not_awaited()

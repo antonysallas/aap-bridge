@@ -198,6 +198,7 @@ async def patch_project_scm_details(
 
         patched_count = 0
         failed_patch_count = 0
+        skipped_count = 0
         all_target_ids = []
         # Maps target_id → project name for human-readable error messages
         target_id_to_name: dict[int, str] = {}
@@ -225,8 +226,10 @@ async def patch_project_scm_details(
                         name=name,
                         message="Project not found in map (not imported?)",
                     )
-                    failed_patch_count += 1
-                    progress.update_phase("patching", patched_count, failed_patch_count)
+                    skipped_count += 1
+                    progress.update_phase(
+                        "patching", patched_count, failed_patch_count, skipped_count
+                    )
                     continue
 
                 try:
@@ -281,7 +284,7 @@ async def patch_project_scm_details(
                         error=str(e),
                     )
 
-                progress.update_phase("patching", patched_count, failed_patch_count)
+                progress.update_phase("patching", patched_count, failed_patch_count, skipped_count)
 
             # After batch is patched, wait for SCM sync and retry failures
             if batch_target_ids:
@@ -386,7 +389,7 @@ async def patch_project_scm_details(
 
         return {
             "imported": patched_count,
-            "skipped": 0,
+            "skipped": skipped_count,
             "failed": failed_patch_count,
             "total": total_projects,
         }
