@@ -209,21 +209,94 @@ Warning: Unresolved dependency - organization ID 5 not found
 
 ```text
 Error: Bulk host create failed: 400 Bad Request
+Number of hosts exceeds system setting BULK_HOST_MAX_CREATE
 ```
+
+**Cause:** AAP Bridge batch size (`performance.batch_sizes.hosts`) exceeds the
+target controller setting `BULK_HOST_MAX_CREATE`. Stock AAP/AWX installs default
+this to **100**, while the bulk API accepts up to **200** hosts per request.
+Bridge used to default to 200, which fails on unmodified targets.
 
 **Solutions:**
 
-1. Check for invalid host data (duplicate names, invalid characters)
-2. Reduce batch size:
+1. Set Bridge batch size to match (or stay below) the target limit:
 
    ```yaml
    performance:
      batch_sizes:
        hosts: 100
-
    ```
 
-1. Check target AAP logs for details
+2. Or raise the limit on the target: **Settings → Bulk Actions → Max number of
+   hosts to allow to be created in a single bulk action** (requires admin access).
+
+3. Verify the target limit before migrating:
+
+   ```bash
+   aap-bridge config validate --config config/config.yaml --check-connectivity
+   ```
+
+Bridge now defaults to 100 and auto-caps batch size at import time when it can
+read `BULK_HOST_MAX_CREATE` from the target.
+
+**Other bulk import failures:**
+
+1. Check for invalid host data (duplicate names, invalid characters)
+2. Reduce batch size further if hosts have large `variables` payloads (nginx ~1MB body limit):
+
+   ```yaml
+   performance:
+     batch_sizes:
+       hosts: 50
+   ```
+
+3. Check target AAP logs for details
+
+### Migration appears stuck polling inventory sources
+
+**Symptoms:**
+
+- Import seems frozen after inventory sources (often mistaken for job template
+  creation, which runs later in phase 2)
+- Logs repeatedly show successful `GET` requests to
+  `/api/controller/v2/inventory_sources/<id>/` every few seconds
+- Target UI may already show those sources as healthy while Bridge keeps polling
+
+**Cause:** After importing inventory sources, Bridge triggers a sync and waits
+for each `inventory_update` before continuing (smart/constructed inventories,
+hosts, then job templates). The wait polls the inventory source object until
+status leaves active states (`pending`, `waiting`, `running`, `never updated`,
+etc.), up to `inventory_source_update_job_timeout_seconds` (default 3600).
+
+**Diagnosis:**
+
+1. Prefer structured sync events over URL-only greps:
+
+   ```bash
+   grep -E 'inventory_source_sync_poll_state|inventory_source_update_triggered|inventory_source_sync_timeout|inventory_source_sync_failed|inventory_source_sync_expected_job_mismatch' logs/migration.log
+   ```
+
+2. In the target UI/API, confirm the source can sync (`can_update`): SCM sources
+   need a valid `source_project`; cloud sources need credentials; `source=file`
+   cannot be updated via the API.
+
+3. Check whether an inventory update job is actually running or stuck pending
+   (capacity, project sync dependency).
+
+**Workarounds:**
+
+1. Lower the wait timeout so a stuck sync fails faster and later phases can
+   proceed when `inventory_source_sync_fail_on_job_failure` is `false` (default):
+
+   ```yaml
+   performance:
+     inventory_source_update_job_timeout_seconds: 600
+     inventory_source_update_poll_interval_seconds: 3
+     inventory_source_sync_fail_on_job_failure: false
+   ```
+
+2. Fix the source on the target (project sync, credentials), sync it manually in
+   AAP if needed, then resume/rerun import.
 
 ## Validation Issues
 
@@ -292,12 +365,39 @@ Error: 429 Too Many Requests
 
    ```
 
+## Web UI and container ports
+
+### Port 8080 returns 301 to :8443, or engine fails with address already in use
+
+Something else already owns the default UI (8080) or engine (8000) port. A
+healthy AAP Bridge UI answers **200** with an nginx server header, not a
+redirect to `:8443`.
+
+The `ui` and `engine` services use host networking, so compose `ports:` lines
+do not move the listen sockets. Change `deploy/nginx.conf` and mount it, and
+override the engine `--port`. See
+[Change UI and engine ports without rebuilding](disconnected-environment.md#change-ui-and-engine-ports-without-rebuilding).
+
+### Nginx Permission denied (13)
+
+The UI process cannot read a bind-mounted `nginx.conf` (file mode or SELinux).
+The UI image runs as a non-root user (UID 1001 in the stock image — inspect
+yours). Use `chmod 644` on the host file and add `security_opt: label=disable`
+on the `ui` service. Full steps:
+[Disconnected Environment](disconnected-environment.md#2-make-the-file-readable-in-the-container).
+
+### Browser connection refused on localhost:8080
+
+If Bridge runs on a remote host, `localhost` in the browser is your workstation.
+Open `http://<host-ip>:8080` or use an SSH tunnel. See
+[Disconnected Environment](disconnected-environment.md#disconnected-host-load-and-start).
+
 ## Logging and Debugging
 
 ### Enable debug logging
 
 ```bash
-aap-bridge --log-level DEBUG migrate full
+aap-bridge --log-level DEBUG migrate
 
 ```
 

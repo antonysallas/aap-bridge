@@ -18,6 +18,11 @@ from aap_migration.client.api_layout import (
     uses_gateway_api,
 )
 from aap_migration.client.bulk_operations import BulkOperations
+from aap_migration.client.bulk_settings import (
+    BULK_HOST_MAX_CREATE_DEFAULT,
+    effective_host_batch_size,
+    fetch_bulk_host_max_create,
+)
 from aap_migration.client.exceptions import APIError, ConflictError
 from aap_migration.config import (
     PerformanceConfig,
@@ -170,6 +175,8 @@ class ResourceImporter:
         # Track issues for reporting
         self.unresolved_dependencies: list[dict[str, Any]] = []
         self.import_errors: list[dict[str, Any]] = []
+        # Cache target instance group name → id for capacity associations
+        self._instance_group_id_by_name: dict[str, int] = {}
 
     # ------------------------------------------------------------------
     # Shared classic-RBAC helpers (used by UserImporter and TeamImporter)
@@ -960,6 +967,123 @@ class ResourceImporter:
                     error=str(e),
                 )
 
+    async def _resolve_instance_group_id_by_name(self, name: str) -> int | None:
+        """Resolve a target instance group ID by exact name (cached).
+
+        Instance groups are not migrated; they must already exist on the target.
+        """
+        if not name:
+            return None
+        if name in self._instance_group_id_by_name:
+            return self._instance_group_id_by_name[name]
+
+        try:
+            endpoint = get_endpoint("instance_groups")
+            results = await self.client.get(endpoint, params={"name": name})
+            resources = results.get("results", []) if isinstance(results, dict) else []
+            if resources:
+                target_id = int(resources[0]["id"])
+                self._instance_group_id_by_name[name] = target_id
+                return target_id
+        except Exception as e:
+            logger.warning(
+                "instance_group_name_lookup_failed",
+                name=name,
+                error=str(e),
+            )
+            return None
+
+        logger.warning(
+            "instance_group_not_found_on_target",
+            name=name,
+            message="Instance group must exist on the target with the same name",
+        )
+        return None
+
+    async def _associate_instance_groups(
+        self,
+        resource_type: str,
+        target_id: int,
+        instance_group_names: list[str],
+        resource_name: str | None = None,
+    ) -> None:
+        """Associate instance groups with a resource via POST (capacity assignment).
+
+        Resolves each name on the target and POSTs in list order (controller priority).
+        Missing groups are skipped with a warning; the parent resource is not failed.
+
+        On gateway topology, organizations are created on the gateway API but the
+        nested ``instance_groups`` capacity endpoint is controller-only. For
+        organizations we resolve the controller org id by name and POST on the
+        controller base.
+        """
+        if not instance_group_names:
+            return
+
+        base = get_endpoint(resource_type).rstrip("/")
+        associate_id = target_id
+        api_base: str | None = None
+
+        layout = getattr(self.client, "api_layout", None)
+        if (
+            resource_type == "organizations"
+            and layout is not None
+            and layout.mode is ApiMode.GATEWAY
+            and layout.controller_base
+        ):
+            api_base = layout.controller_base
+            if resource_name:
+                resolved = await _lookup_organization_id_on_base(
+                    self.client, api_base, resource_name
+                )
+                if resolved is None:
+                    logger.warning(
+                        "organization_controller_id_unavailable_for_instance_groups",
+                        gateway_org_id=target_id,
+                        organization_name=resource_name,
+                        message=(
+                            "Cannot associate instance groups: organization not found "
+                            "on controller API"
+                        ),
+                    )
+                    return
+                associate_id = resolved
+            endpoint = f"organizations/{associate_id}/instance_groups/"
+        else:
+            endpoint = f"{base}/{associate_id}/instance_groups/"
+
+        for name in instance_group_names:
+            target_ig_id = await self._resolve_instance_group_id_by_name(name)
+            if not target_ig_id:
+                continue
+            try:
+                if api_base:
+                    await self.client.post_on_base(
+                        api_base, endpoint, json_data={"id": target_ig_id}
+                    )
+                else:
+                    await self.client.post(endpoint, json_data={"id": target_ig_id})
+                logger.debug(
+                    "instance_group_associated",
+                    resource_type=resource_type,
+                    target_id=associate_id,
+                    instance_group_name=name,
+                    instance_group_id=target_ig_id,
+                    resource_name=resource_name,
+                    api_base=api_base,
+                )
+            except Exception as e:
+                logger.warning(
+                    "instance_group_association_failed",
+                    resource_type=resource_type,
+                    target_id=associate_id,
+                    instance_group_name=name,
+                    instance_group_id=target_ig_id,
+                    resource_name=resource_name,
+                    api_base=api_base,
+                    error=str(e),
+                )
+
 
 class LabelImporter(ResourceImporter):
     """Importer for label resources."""
@@ -1220,7 +1344,9 @@ class CredentialTypeImporter(ResourceImporter):
 
                     # Precheck can miss edge-cases on reruns; if CREATE says it already
                     # exists, map by name and mark completed to keep phase1 idempotent.
-                    existing_results = await self.client.get("credential_types/", params={"name": name})
+                    existing_results = await self.client.get(
+                        "credential_types/", params={"name": name}
+                    )
                     existing_resources = existing_results.get("results", [])
                     if not existing_resources:
                         raise
@@ -1383,9 +1509,7 @@ class UserImporter(ResourceImporter):
             skipped_unmapped=skipped_unmapped,
         )
 
-    async def sync_team_memberships_for_existing_users(
-        self, users: list[dict[str, Any]]
-    ) -> None:
+    async def sync_team_memberships_for_existing_users(self, users: list[dict[str, Any]]) -> None:
         """Sync memberships for users skipped by create/update import path.
 
         Import pre-check may detect users already existing in target and skip
@@ -1462,7 +1586,9 @@ class UserImporter(ResourceImporter):
             # Team memberships are exported separately from user fields.
             # Keep them for post-create association calls, but do not include in create payload.
             team_source_ids = [
-                int(team_id) for team_id in (data.pop("_team_source_ids", []) or []) if team_id is not None
+                int(team_id)
+                for team_id in (data.pop("_team_source_ids", []) or [])
+                if team_id is not None
             ]
 
             # Remove password-related fields (cannot be migrated)
@@ -1518,7 +1644,7 @@ class UserImporter(ResourceImporter):
 
             return result
 
-        except ConflictError as e:
+        except ConflictError:
             # Handle conflict (user already exists)
             result = await self._handle_conflict(resource_type, source_id, data)
             if result:
@@ -1595,9 +1721,7 @@ class UserImporter(ResourceImporter):
         converts grants to ``role_user_assignments`` rows for the modern RBAC API.
         """
         from aap_migration.client.api_layout import uses_gateway_topology
-        from aap_migration.migration.classic_rbac_conversion import (
-            classic_user_grant_to_assignment,
-        )
+        from aap_migration.migration.classic_rbac_conversion import classic_user_grant_to_assignment
 
         users_dir = input_dir / "users"
         if not users_dir.is_dir():
@@ -1774,9 +1898,7 @@ class TeamImporter(ResourceImporter):
             skipped_unmapped=skipped_unmapped,
         )
 
-    async def sync_team_members_for_existing_teams(
-        self, teams: list[dict[str, Any]]
-    ) -> None:
+    async def sync_team_members_for_existing_teams(self, teams: list[dict[str, Any]]) -> None:
         """Sync members for teams skipped by create/update import path."""
         for team in teams:
             source_team_id = team.get("_source_id")
@@ -1862,9 +1984,7 @@ class TeamImporter(ResourceImporter):
         converts grants to ``role_team_assignments`` rows for the modern RBAC API.
         """
         from aap_migration.client.api_layout import uses_gateway_topology
-        from aap_migration.migration.classic_rbac_conversion import (
-            classic_team_grant_to_assignment,
-        )
+        from aap_migration.migration.classic_rbac_conversion import classic_team_grant_to_assignment
 
         teams_dir = input_dir / "teams"
         if not teams_dir.is_dir():
@@ -1985,6 +2105,31 @@ class OrganizationImporter(ResourceImporter):
     """Importer for organization resources."""
 
     DEPENDENCIES = {}  # No dependencies
+
+    async def import_resource(
+        self,
+        resource_type: str,
+        source_id: int | str,
+        data: dict[str, Any],
+        resolve_dependencies: bool = True,
+    ) -> dict[str, Any] | None:
+        """Import an organization and associate instance groups after create."""
+        instance_group_names = data.pop("_instance_group_names", []) or []
+        org_name = data.get("name")
+
+        result = await super().import_resource(
+            resource_type, source_id, data, resolve_dependencies=resolve_dependencies
+        )
+
+        if result and result.get("id") and instance_group_names:
+            await self._associate_instance_groups(
+                "organizations",
+                result["id"],
+                instance_group_names,
+                resource_name=org_name,
+            )
+
+        return result
 
     async def import_organizations(
         self,
@@ -2163,6 +2308,31 @@ class InventoryImporter(ResourceImporter):
     DEPENDENCIES = {
         "organization": "organizations",
     }
+
+    async def import_resource(
+        self,
+        resource_type: str,
+        source_id: int | str,
+        data: dict[str, Any],
+        resolve_dependencies: bool = True,
+    ) -> dict[str, Any] | None:
+        """Import an inventory and associate instance groups after create."""
+        instance_group_names = data.pop("_instance_group_names", []) or []
+        inventory_name = data.get("name")
+
+        result = await super().import_resource(
+            resource_type, source_id, data, resolve_dependencies=resolve_dependencies
+        )
+
+        if result and result.get("id") and instance_group_names:
+            await self._associate_instance_groups(
+                "inventory",
+                result["id"],
+                instance_group_names,
+                resource_name=inventory_name,
+            )
+
+        return result
 
     async def import_inventories(
         self,
@@ -2592,9 +2762,47 @@ class ScheduleImporter(ResourceImporter):
     - job_templates
     - workflow_job_templates
     - inventory_sources
+
+    Schedules are always created with ``enabled=false`` so they do not fire on
+    the target until operators re-enable them after validation.
     """
 
     DEPENDENCIES = {}  # Handled manually in _resolve_dependencies
+
+    async def ensure_schedule_disabled_on_target(self, schedule: dict[str, Any]) -> dict[str, Any]:
+        """PATCH a target schedule to ``enabled=false`` when it is still enabled."""
+        target_id = schedule.get("id")
+        if target_id is None:
+            return schedule
+        if schedule.get("enabled"):
+            updated = await self.client.update_resource(
+                "schedules", int(target_id), {"enabled": False}
+            )
+            logger.info(
+                "schedule_disabled_on_target",
+                target_id=target_id,
+                name=schedule.get("name"),
+            )
+            return updated
+        return schedule
+
+    async def import_resource(
+        self,
+        resource_type: str,
+        source_id: int,
+        data: dict[str, Any],
+        resolve_dependencies: bool = True,
+    ) -> dict[str, Any] | None:
+        """Import schedule and ensure the target copy stays disabled."""
+        result = await super().import_resource(
+            resource_type=resource_type,
+            source_id=source_id,
+            data=data,
+            resolve_dependencies=resolve_dependencies,
+        )
+        if result and not result.get("_skipped"):
+            return await self.ensure_schedule_disabled_on_target(result)
+        return result
 
     async def _resolve_dependencies(
         self, resource_type: str, data: dict[str, Any]
@@ -2602,6 +2810,17 @@ class ScheduleImporter(ResourceImporter):
         """Resolve dependencies with polymorphic unified_job_template handling."""
         # Call parent to handle any standard dependencies
         resolved = await super()._resolve_dependencies(resource_type, data)
+
+        # Always import disabled regardless of source enabled state.
+        source_enabled = resolved.get("enabled", data.get("enabled"))
+        if source_enabled is not False:
+            logger.debug(
+                "schedule_force_disabled_on_import",
+                source_id=data.get("id") or data.get("_source_id"),
+                source_name=data.get("name"),
+                source_enabled=source_enabled,
+            )
+        resolved["enabled"] = False
 
         # Handle polymorphic unified_job_template
         if "unified_job_template" in data:
@@ -2652,7 +2871,8 @@ class ScheduleImporter(ResourceImporter):
 
         Handles unified_job_template dependency which can point to various
         schedulable resources (job templates, workflows, inventory sources).
-        Preserves RRULE format for recurrence patterns.
+        Preserves RRULE format for recurrence patterns. Always creates schedules
+        with enabled=false.
 
         Args:
             schedules: List of schedule data
@@ -3175,6 +3395,7 @@ class HostImporter(ResourceImporter):
         super().__init__(client, state, performance_config, resource_mappings)
         self.bulk_ops = BulkOperations(client, performance_config)
         self._inventory_has_sources_cache: dict[int, bool] = {}
+        self._bulk_host_max_create: int | None = None
 
     async def import_hosts_bulk(
         self,
@@ -3193,13 +3414,35 @@ class HostImporter(ResourceImporter):
         Returns:
             Bulk operation result with total_created, total_failed, total_skipped
         """
-        batch_size = self.performance_config.batch_sizes.get("hosts", 200)
+        if self._bulk_host_max_create is None:
+            self._bulk_host_max_create = await fetch_bulk_host_max_create(self.client)
+
+        configured_batch_size = self.performance_config.batch_sizes.get(
+            "hosts", BULK_HOST_MAX_CREATE_DEFAULT
+        )
+        batch_size = effective_host_batch_size(
+            configured_batch_size,
+            target_bulk_max=self._bulk_host_max_create,
+        )
+        if batch_size < configured_batch_size:
+            logger.warning(
+                "host_batch_size_capped",
+                configured=configured_batch_size,
+                effective=batch_size,
+                target_bulk_host_max_create=self._bulk_host_max_create,
+                message=(
+                    "Configured host batch size exceeds target BULK_HOST_MAX_CREATE; "
+                    "using effective batch size for bulk import"
+                ),
+            )
 
         logger.info(
             "bulk_import_hosts_starting",
             inventory_id=inventory_id,
             host_count=len(hosts),
             batch_size=batch_size,
+            configured_batch_size=configured_batch_size,
+            target_bulk_host_max_create=self._bulk_host_max_create,
         )
 
         try:
@@ -3387,9 +3630,7 @@ class HostImporter(ResourceImporter):
                         source_group_ids = source_group_ids_by_source_id.get(source_id, [])
 
                         for source_group_id in source_group_ids:
-                            target_group_id = self.state.get_mapped_id(
-                                "groups", source_group_id
-                            )
+                            target_group_id = self.state.get_mapped_id("groups", source_group_id)
                             if not target_group_id:
                                 logger.debug(
                                     "host_group_association_skipped_unmapped",
@@ -3643,9 +3884,7 @@ class CredentialImporter(ResourceImporter):
                         f"organization, and type (source id: {source_id})."
                     )
                     data["name"] = renamed
-                    data["description"] = (
-                        f"{original_description}\n{rename_note}".strip()
-                    )
+                    data["description"] = f"{original_description}\n{rename_note}".strip()
                     logger.warning(
                         "credential_duplicate_renamed",
                         original_name=original_name,
@@ -4131,6 +4370,7 @@ class JobTemplateImporter(ResourceImporter):
         nt_ids: dict[str, list[int]] = {}
         for trigger in ("started", "success", "error"):
             nt_ids[trigger] = data.pop(f"_nt_{trigger}_ids", []) or []
+        instance_group_names = data.pop("_instance_group_names", []) or []
         template_name = data.get("name")
 
         # Call base import_resource
@@ -4160,6 +4400,13 @@ class JobTemplateImporter(ResourceImporter):
                     await self._associate_notification_templates(
                         "job_templates", result["id"], ids, trigger, template_name
                     )
+            if instance_group_names:
+                await self._associate_instance_groups(
+                    "job_templates",
+                    result["id"],
+                    instance_group_names,
+                    resource_name=template_name,
+                )
 
         return result
 
@@ -4293,7 +4540,6 @@ class JobTemplateImporter(ResourceImporter):
                 )
 
 
-
 class WorkflowImporter(ResourceImporter):
     """Importer for workflow job template resources."""
 
@@ -4367,21 +4613,31 @@ class WorkflowImporter(ResourceImporter):
             # Extract nodes for separate import
             nodes = workflow.pop("_workflow_job_template_nodes", None)
 
-            result = await self.import_resource(
-                resource_type="workflow_job_templates",
-                source_id=source_id,
-                data=workflow,
-            )
+            try:
+                result = await self.import_resource(
+                    resource_type="workflow_job_templates",
+                    source_id=source_id,
+                    data=workflow,
+                )
 
-            if result:
-                if nodes:
-                    for node in nodes:
-                        if isinstance(node, dict):
-                            pending_nodes.append(dict(node))
-                results.append(result)
-                success_count += 1
-            else:
+                if result:
+                    if nodes:
+                        for node in nodes:
+                            if isinstance(node, dict):
+                                pending_nodes.append(dict(node))
+                    results.append(result)
+                    success_count += 1
+                else:
+                    failed_count += 1
+
+            except Exception as e:
                 failed_count += 1
+                logger.error(
+                    "workflow_import_failed",
+                    source_id=source_id,
+                    name=workflow.get("name"),
+                    error=str(e),
+                )
 
             # Update progress after each workflow
             if progress_callback:
@@ -5146,9 +5402,9 @@ def _resource_type_for_rbac_content_type(content_type: str | None) -> str | None
     """Map RBAC content_type to migrated resource_type, including gateway aliases."""
     if not content_type:
         return None
-    return _CONTENT_TYPE_TO_RESOURCE_TYPE.get(
-        content_type
-    ) or _CONTENT_TYPE_TO_RESOURCE_TYPE.get(normalize_rbac_content_type(content_type) or "")
+    return _CONTENT_TYPE_TO_RESOURCE_TYPE.get(content_type) or _CONTENT_TYPE_TO_RESOURCE_TYPE.get(
+        normalize_rbac_content_type(content_type) or ""
+    )
 
 
 async def _resolve_content_object_target_id(
@@ -5254,18 +5510,14 @@ async def _resolve_organization_id_for_controller(
     org_name = state.get_mapping_source_name("organizations", source_id)
 
     if org_name:
-        resolved = await _lookup_organization_id_on_base(
-            client, controller_api_base, org_name
-        )
+        resolved = await _lookup_organization_id_on_base(client, controller_api_base, org_name)
         if resolved is not None:
             return resolved
 
     mapped_id = state.get_mapped_id("organizations", source_id)
     if mapped_id is not None:
         try:
-            await client.get_on_base(
-                controller_api_base, f"organizations/{mapped_id}/"
-            )
+            await client.get_on_base(controller_api_base, f"organizations/{mapped_id}/")
             return mapped_id
         except Exception:
             pass
@@ -5327,9 +5579,7 @@ async def _resolve_rbac_principal_id_for_assignment(
 
     if mapped_id is not None:
         try:
-            await client.get_on_base(
-                assignment_api_base, f"{principal_type}/{mapped_id}/"
-            )
+            await client.get_on_base(assignment_api_base, f"{principal_type}/{mapped_id}/")
             return mapped_id
         except Exception:
             pass
@@ -5436,15 +5686,11 @@ async def _resolve_assignment_user_id(
 
     username = assignment.get("user_username")
     if username and client.api_layout.mode is ApiMode.GATEWAY:
-        resolved = await _lookup_principal_id_on_base(
-            client, api_base, "users", str(username)
-        )
+        resolved = await _lookup_principal_id_on_base(client, api_base, "users", str(username))
         if resolved is not None:
             return resolved
 
-    target_user_id = _resolve_user_target_id_for_assignment(
-        state, assignment, user_source_id
-    )
+    target_user_id = _resolve_user_target_id_for_assignment(state, assignment, user_source_id)
     if user_source_id is not None:
         resolved_on_base = await _resolve_rbac_principal_id_for_assignment(
             state, client, "users", int(user_source_id), api_base
@@ -5466,15 +5712,11 @@ async def _resolve_assignment_team_id(
 
     team_name = assignment.get("team_name")
     if team_name and client.api_layout.mode is ApiMode.GATEWAY:
-        resolved = await _lookup_principal_id_on_base(
-            client, api_base, "teams", str(team_name)
-        )
+        resolved = await _lookup_principal_id_on_base(client, api_base, "teams", str(team_name))
         if resolved is not None:
             return resolved
 
-    target_team_id = _resolve_team_target_id_for_assignment(
-        state, assignment, team_source_id
-    )
+    target_team_id = _resolve_team_target_id_for_assignment(state, assignment, team_source_id)
     if team_source_id is not None:
         resolved_on_base = await _resolve_rbac_principal_id_for_assignment(
             state, client, "teams", int(team_source_id), api_base
@@ -5571,8 +5813,12 @@ class RoleUserAssignmentImporter(ResourceImporter):
                 continue
 
             target_resource_id = await _resolve_content_object_target_id(
-                self.state, self.client, resource_type, int(object_source_id),
-                content_object_name, source_id,
+                self.state,
+                self.client,
+                resource_type,
+                int(object_source_id),
+                content_object_name,
+                source_id,
             )
             if not target_resource_id:
                 logger.warning(
@@ -5689,8 +5935,12 @@ class RoleTeamAssignmentImporter(ResourceImporter):
                 continue
 
             target_resource_id = await _resolve_content_object_target_id(
-                self.state, self.client, resource_type, int(object_source_id),
-                content_object_name, source_id,
+                self.state,
+                self.client,
+                resource_type,
+                int(object_source_id),
+                content_object_name,
+                source_id,
             )
             if not target_resource_id:
                 logger.warning(

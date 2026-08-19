@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from aap_migration.client.aap_target_client import AAPTargetClient
-from aap_migration.client.exceptions import APIError, ConflictError
+from aap_migration.client.exceptions import APIError, AuthorizationError, ConflictError
 from aap_migration.config import PerformanceConfig
 from aap_migration.migration.importer import (
     CredentialImporter,
@@ -21,6 +21,7 @@ from aap_migration.migration.importer import (
     OrganizationImporter,
     ProjectImporter,
     ResourceImporter,
+    ScheduleImporter,
     WorkflowImporter,
     _fetch_target_inventory_has_inventory_sources,
     create_importer,
@@ -280,6 +281,136 @@ class TestOrganizationImporter:
         """Test that organizations have no dependencies."""
         assert org_importer.DEPENDENCIES == {}
 
+    @pytest.mark.asyncio
+    async def test_import_organization_associates_instance_groups_in_order(
+        self, org_importer, mock_client
+    ):
+        """Instance groups are POSTed in export order after org create."""
+        mock_client.create_resource.return_value = {"id": 100, "name": "Org With IG"}
+        mock_client.post = AsyncMock(return_value={})
+
+        async def get_side_effect(endpoint, params=None):
+            name = (params or {}).get("name")
+            mapping = {
+                "Custom Instance Group 1": 3,
+                "Custom Instance Group 2": 4,
+                "Container Group 1": 5,
+            }
+            if name in mapping:
+                return {"count": 1, "results": [{"id": mapping[name], "name": name}]}
+            return {"count": 0, "results": []}
+
+        mock_client.get = AsyncMock(side_effect=get_side_effect)
+
+        orgs = [
+            {
+                "_source_id": 1,
+                "name": "Org With IG",
+                "_instance_group_names": [
+                    "Custom Instance Group 1",
+                    "Custom Instance Group 2",
+                    "Container Group 1",
+                ],
+            }
+        ]
+
+        await org_importer.import_organizations(orgs)
+
+        assert mock_client.post.call_count == 3
+        posted_ids = [c.kwargs["json_data"]["id"] for c in mock_client.post.call_args_list]
+        assert posted_ids == [3, 4, 5]
+        for call in mock_client.post.call_args_list:
+            assert "organizations/100/instance_groups/" in call.args[0]
+
+    @pytest.mark.asyncio
+    async def test_import_organization_skips_missing_instance_group(
+        self, org_importer, mock_client
+    ):
+        """Missing target IG is skipped; remaining names still associate."""
+        mock_client.create_resource.return_value = {"id": 100, "name": "Org With IG"}
+        mock_client.post = AsyncMock(return_value={})
+
+        async def get_side_effect(endpoint, params=None):
+            name = (params or {}).get("name")
+            if name == "Present IG":
+                return {"count": 1, "results": [{"id": 10, "name": name}]}
+            return {"count": 0, "results": []}
+
+        mock_client.get = AsyncMock(side_effect=get_side_effect)
+
+        orgs = [
+            {
+                "_source_id": 1,
+                "name": "Org With IG",
+                "_instance_group_names": ["Missing IG", "Present IG"],
+            }
+        ]
+
+        await org_importer.import_organizations(orgs)
+
+        mock_client.post.assert_called_once()
+        assert mock_client.post.call_args.kwargs["json_data"] == {"id": 10}
+
+    @pytest.mark.asyncio
+    async def test_import_organization_empty_instance_groups_no_post(
+        self, org_importer, mock_client
+    ):
+        """Empty _instance_group_names does not POST associations."""
+        mock_client.create_resource.return_value = {"id": 100, "name": "Org"}
+        mock_client.post = AsyncMock(return_value={})
+
+        orgs = [{"_source_id": 1, "name": "Org", "_instance_group_names": []}]
+        await org_importer.import_organizations(orgs)
+
+        mock_client.post.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_import_organization_associates_via_controller_on_gateway(
+        self, org_importer, mock_client
+    ):
+        """On gateway topology, org IG associations POST to the controller base."""
+        from aap_migration.client.api_layout import ApiLayout, ApiMode
+
+        mock_client.api_layout = ApiLayout(
+            host_url="https://aap.example.com",
+            mode=ApiMode.GATEWAY,
+            aap_version="2.6",
+            gateway_base="https://aap.example.com/api/gateway/v1",
+            controller_base="https://aap.example.com/api/controller/v2",
+        )
+        # Gateway create returns gateway org id 100; controller org id is 2
+        mock_client.create_resource.return_value = {"id": 100, "name": "Org With IG"}
+        mock_client.post = AsyncMock(return_value={})
+        mock_client.post_on_base = AsyncMock(return_value={})
+
+        async def get_side_effect(endpoint, params=None):
+            name = (params or {}).get("name")
+            if name == "Custom Instance Group 1":
+                return {"count": 1, "results": [{"id": 3, "name": name}]}
+            return {"count": 0, "results": []}
+
+        mock_client.get = AsyncMock(side_effect=get_side_effect)
+        mock_client.get_on_base = AsyncMock(
+            return_value={"count": 1, "results": [{"id": 2, "name": "Org With IG"}]}
+        )
+
+        orgs = [
+            {
+                "_source_id": 1,
+                "name": "Org With IG",
+                "_instance_group_names": ["Custom Instance Group 1"],
+            }
+        ]
+
+        await org_importer.import_organizations(orgs)
+
+        mock_client.post.assert_not_called()
+        mock_client.post_on_base.assert_called_once_with(
+            "https://aap.example.com/api/controller/v2",
+            "organizations/2/instance_groups/",
+            json_data={"id": 3},
+        )
+
 
 class TestInventoryImporter:
     """Tests for InventoryImporter."""
@@ -308,6 +439,33 @@ class TestInventoryImporter:
         assert "organization" in inventory_importer.DEPENDENCIES
         assert inventory_importer.DEPENDENCIES["organization"] == "organizations"
 
+    @pytest.mark.asyncio
+    async def test_import_inventory_associates_instance_groups(
+        self, inventory_importer, mock_client, mock_state
+    ):
+        """Inventory import POSTs instance group associations after create."""
+        mock_client.create_resource.return_value = {"id": 200, "name": "Instance Group Inventory"}
+        mock_state.get_mapped_id.return_value = 50
+        mock_client.post = AsyncMock(return_value={})
+        mock_client.get = AsyncMock(
+            return_value={"count": 1, "results": [{"id": 3, "name": "Custom Instance Group 1"}]}
+        )
+
+        inventories = [
+            {
+                "_source_id": 1,
+                "name": "Instance Group Inventory",
+                "organization": 5,
+                "_instance_group_names": ["Custom Instance Group 1"],
+            }
+        ]
+
+        await inventory_importer.import_inventories(inventories)
+
+        mock_client.post.assert_called_once()
+        assert mock_client.post.call_args.kwargs["json_data"] == {"id": 3}
+        assert "inventories/200/instance_groups/" in mock_client.post.call_args.args[0]
+
 
 class TestHostImporter:
     """Tests for HostImporter."""
@@ -315,6 +473,13 @@ class TestHostImporter:
     @pytest.fixture
     def host_importer(self, mock_client, mock_state, performance_config):
         """Create HostImporter instance."""
+
+        async def mock_get(endpoint, params=None, **kwargs):
+            if endpoint == "settings/bulk/":
+                return {"BULK_HOST_MAX_CREATE": 200}
+            return {"count": 0, "results": []}
+
+        mock_client.get = AsyncMock(side_effect=mock_get)
         return HostImporter(mock_client, mock_state, performance_config)
 
     @pytest.mark.asyncio
@@ -376,8 +541,31 @@ class TestHostImporter:
 
         await host_importer.import_hosts_bulk(inventory_id=100, hosts=hosts)
 
-        # Should be called twice (200 + 50)
+        # Should be called twice (200 + 50) when target allows 200 per bulk request
         assert host_importer.bulk_ops.bulk_create_hosts.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_import_hosts_bulk_caps_to_target_bulk_max(
+        self, mock_client, mock_state, performance_config
+    ):
+        """Configured batch size above BULK_HOST_MAX_CREATE is capped at import time."""
+
+        async def mock_get(endpoint, params=None, **kwargs):
+            if endpoint == "settings/bulk/":
+                return {"BULK_HOST_MAX_CREATE": 100}
+            return {"count": 0, "results": []}
+
+        mock_client.get = AsyncMock(side_effect=mock_get)
+        host_importer = HostImporter(mock_client, mock_state, performance_config)
+        host_importer.bulk_ops.bulk_create_hosts = AsyncMock(
+            return_value={"hosts": [], "failed": []}
+        )
+
+        hosts = [{"_source_id": i, "name": f"host-{i}", "enabled": True} for i in range(250)]
+
+        await host_importer.import_hosts_bulk(inventory_id=100, hosts=hosts)
+
+        assert host_importer.bulk_ops.bulk_create_hosts.call_count == 3
 
     @pytest.mark.asyncio
     async def test_import_hosts_skips_already_migrated(self, host_importer, mock_state):
@@ -401,7 +589,9 @@ class TestHostImporter:
         """Mapped hosts should be treated as already imported on rerun."""
         mock_state.is_migrated.return_value = False
         mock_state.get_mapped_id.return_value = 777
-        host_importer.bulk_ops.bulk_create_hosts = AsyncMock(return_value={"hosts": [], "failed": []})
+        host_importer.bulk_ops.bulk_create_hosts = AsyncMock(
+            return_value={"hosts": [], "failed": []}
+        )
 
         hosts = [{"_source_id": 1, "name": "host-1", "enabled": True}]
 
@@ -425,7 +615,9 @@ class TestHostImporter:
         host_importer.bulk_ops.bulk_create_hosts.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_import_hosts_bulk_skips_when_inventory_has_sources(self, host_importer, mock_client):
+    async def test_import_hosts_bulk_skips_when_inventory_has_sources(
+        self, host_importer, mock_client
+    ):
         """Hosts from sync-managed inventories should come from inventory update, not bulk import."""
         mock_client.get_resource = AsyncMock(return_value={"kind": "", "id": 10})
         mock_client.get = AsyncMock(return_value={"count": 1, "results": [{"id": 1}]})
@@ -447,7 +639,9 @@ class TestInventoryGroupImporter:
         return InventoryGroupImporter(mock_client, mock_state, performance_config)
 
     @pytest.mark.asyncio
-    async def test_import_group_skips_smart_inventory(self, group_importer, mock_client, mock_state):
+    async def test_import_group_skips_smart_inventory(
+        self, group_importer, mock_client, mock_state
+    ):
         mock_state.is_migrated.return_value = False
         mock_state.get_mapped_id.return_value = 99
         mock_client.get_resource = AsyncMock(return_value={"kind": "smart", "id": 99})
@@ -463,7 +657,9 @@ class TestInventoryGroupImporter:
         mock_state.mark_skipped.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_import_group_skips_sourced_inventory(self, group_importer, mock_client, mock_state):
+    async def test_import_group_skips_sourced_inventory(
+        self, group_importer, mock_client, mock_state
+    ):
         mock_state.is_migrated.return_value = False
         mock_state.get_mapped_id.return_value = 99
         mock_client.get_resource = AsyncMock(return_value={"kind": "", "id": 99})
@@ -687,6 +883,48 @@ class TestJobTemplateImporter:
         assert call_kw["json_data"] == {"name": "", "description": "", "spec": []}
         assert "job_templates/500/survey_spec/" in mock_client.post.call_args[0][0]
 
+    @pytest.mark.asyncio
+    async def test_import_job_template_associates_instance_groups(
+        self, job_template_importer, mock_client
+    ):
+        """Job template import POSTs instance group associations after create."""
+        mock_client.create_resource.return_value = {
+            "id": 500,
+            "name": "Demo Job Template Custom Instance Group",
+        }
+        mock_client.post = AsyncMock(return_value={})
+
+        async def get_side_effect(endpoint, params=None):
+            name = (params or {}).get("name")
+            mapping = {"Custom Instance Group 1": 3, "Custom Instance Group 2": 4}
+            if name in mapping:
+                return {"count": 1, "results": [{"id": mapping[name], "name": name}]}
+            return {"count": 0, "results": []}
+
+        mock_client.get = AsyncMock(side_effect=get_side_effect)
+
+        templates = [
+            {
+                "_source_id": 1,
+                "name": "Demo Job Template Custom Instance Group",
+                "inventory": 1,
+                "project": 1,
+                "playbook": "hello_world.yml",
+                "_instance_group_names": [
+                    "Custom Instance Group 1",
+                    "Missing IG",
+                    "Custom Instance Group 2",
+                ],
+            }
+        ]
+
+        await job_template_importer.import_job_templates(templates)
+
+        posted_ids = [c.kwargs["json_data"]["id"] for c in mock_client.post.call_args_list]
+        assert posted_ids == [3, 4]
+        for call in mock_client.post.call_args_list:
+            assert "job_templates/500/instance_groups/" in call.args[0]
+
 
 class TestWorkflowImporter:
     """Tests for WorkflowImporter."""
@@ -734,6 +972,31 @@ class TestWorkflowImporter:
         # Nodes should not be in the create call
         call_args = mock_client.create_resource.call_args_list[0][1]["data"]
         assert "_workflow_job_template_nodes" not in call_args
+
+    @pytest.mark.asyncio
+    async def test_import_workflows_continues_after_api_error(self, workflow_importer, mock_client):
+        """A single workflow failure must not abort the remaining imports."""
+        mock_client.create_resource = AsyncMock(
+            side_effect=[
+                AuthorizationError(
+                    message="Authorization failed",
+                    status_code=403,
+                    response={"detail": "Forbidden"},
+                ),
+                {"id": 601, "name": "Workflow Two"},
+            ]
+        )
+
+        workflows = [
+            {"_source_id": 1, "name": "Workflow One", "organization": 1},
+            {"_source_id": 2, "name": "Workflow Two", "organization": 1},
+        ]
+
+        results = await workflow_importer.import_workflows(workflows)
+
+        assert len(results) == 1
+        assert results[0]["id"] == 601
+        assert mock_client.create_resource.call_count == 2
 
     @pytest.mark.asyncio
     async def test_import_workflow_posts_survey_spec(self, workflow_importer, mock_client):
@@ -801,9 +1064,109 @@ class TestCreateImporter:
         )
         assert isinstance(importer, WorkflowImporter)
 
+    def test_create_schedule_importer(self, mock_client, mock_state, performance_config):
+        """Test creating ScheduleImporter."""
+        importer = create_importer("schedules", mock_client, mock_state, performance_config)
+        assert isinstance(importer, ScheduleImporter)
+
     def test_create_importer_invalid_type(self, mock_client, mock_state, performance_config):
         """Test creating importer with invalid resource type."""
         with pytest.raises(NotImplementedError) as excinfo:
             create_importer("invalid_type", mock_client, mock_state, performance_config)
 
         assert "No importer implemented" in str(excinfo.value)
+
+
+class TestScheduleImporter:
+    """Tests for ScheduleImporter enabled policy."""
+
+    @pytest.fixture
+    def schedule_importer(self, mock_client, mock_state, performance_config):
+        return ScheduleImporter(mock_client, mock_state, performance_config)
+
+    @pytest.mark.asyncio
+    async def test_import_forces_enabled_false(self, schedule_importer, mock_client, mock_state):
+        """Schedules are created disabled even when the source was enabled."""
+        mock_state.get_mapped_id = MagicMock(return_value=55)
+        mock_client.create_resource = AsyncMock(
+            return_value={"id": 900, "name": "Nightly Job", "enabled": False}
+        )
+
+        result = await schedule_importer.import_resource(
+            resource_type="schedules",
+            source_id=10,
+            data={
+                "_source_id": 10,
+                "name": "Nightly Job",
+                "enabled": True,
+                "rrule": "DTSTART:20240101T000000Z RRULE:FREQ=DAILY;INTERVAL=1",
+                "unified_job_template": 7,
+                "_ujt_resource_type": "job_templates",
+            },
+        )
+
+        assert result is not None
+        assert result["id"] == 900
+        mock_client.create_resource.assert_awaited_once()
+        create_kwargs = mock_client.create_resource.await_args.kwargs
+        assert create_kwargs["data"]["enabled"] is False
+        assert create_kwargs["data"]["unified_job_template"] == 55
+        assert "_ujt_resource_type" not in create_kwargs["data"]
+
+    @pytest.mark.asyncio
+    async def test_import_patches_when_create_returns_enabled(
+        self, schedule_importer, mock_client, mock_state
+    ):
+        """Target APIs may ignore enabled on POST; PATCH if the schedule is still enabled."""
+        mock_state.get_mapped_id = MagicMock(return_value=55)
+        mock_client.create_resource = AsyncMock(
+            return_value={"id": 900, "name": "Nightly Job", "enabled": True}
+        )
+        mock_client.update_resource = AsyncMock(
+            return_value={"id": 900, "name": "Nightly Job", "enabled": False}
+        )
+
+        result = await schedule_importer.import_resource(
+            resource_type="schedules",
+            source_id=10,
+            data={
+                "_source_id": 10,
+                "name": "Nightly Job",
+                "enabled": True,
+                "rrule": "DTSTART:20240101T000000Z RRULE:FREQ=DAILY;INTERVAL=1",
+                "unified_job_template": 7,
+                "_ujt_resource_type": "job_templates",
+            },
+        )
+
+        assert result is not None
+        assert result["enabled"] is False
+        mock_client.update_resource.assert_awaited_once_with("schedules", 900, {"enabled": False})
+
+    @pytest.mark.asyncio
+    async def test_ensure_schedule_disabled_on_target_patches_enabled_schedule(
+        self, schedule_importer, mock_client
+    ):
+        mock_client.update_resource = AsyncMock(
+            return_value={"id": 42, "name": "Nightly Job", "enabled": False}
+        )
+
+        result = await schedule_importer.ensure_schedule_disabled_on_target(
+            {"id": 42, "name": "Nightly Job", "enabled": True}
+        )
+
+        assert result["enabled"] is False
+        mock_client.update_resource.assert_awaited_once_with("schedules", 42, {"enabled": False})
+
+    @pytest.mark.asyncio
+    async def test_ensure_schedule_disabled_on_target_skips_when_already_disabled(
+        self, schedule_importer, mock_client
+    ):
+        mock_client.update_resource = AsyncMock()
+
+        result = await schedule_importer.ensure_schedule_disabled_on_target(
+            {"id": 42, "name": "Nightly Job", "enabled": False}
+        )
+
+        assert result["enabled"] is False
+        mock_client.update_resource.assert_not_awaited()

@@ -84,9 +84,7 @@ def is_builtin_credential_type(credential_type: dict) -> bool:
     return bool(credential_type.get("namespace"))
 
 
-async def seed_skipped_execution_environments(
-    ctx: MigrationContext, state: MigrationState
-) -> int:
+async def seed_skipped_execution_environments(ctx: MigrationContext, state: MigrationState) -> int:
     """Seed id_mappings for execution environments that are skipped during export.
 
     Built-in EEs (Control Plane, Default, Hub, etc.) are omitted from the
@@ -486,9 +484,12 @@ def transform(
             )
 
             # Log transformer config to file
+            src_ver = ctx.config.source.version or "?"
+            tgt_ver = ctx.config.target.version or "?"
+            migration_label = f"AAP {src_ver} → {tgt_ver}"
             logger.info(
                 "transformer_config",
-                mode="AAP 2.3 → 2.6",
+                mode=migration_label,
                 schema_file=schema_file_path,
                 auto_apply=schema_file_path is not None,
                 defer_project_sync=defer_project_sync,
@@ -538,7 +539,8 @@ def transform(
             src_ver = ctx.config.source.version or "source"
             tgt_ver = ctx.config.target.version or "target"
             with MigrationProgressDisplay(
-                title=f"🔄 AAP Transform Progress ({src_ver} → {tgt_ver})", enabled=progress_enabled
+                title=f"🔄 AAP Transform Progress ({src_ver} → {tgt_ver})",
+                enabled=progress_enabled,
             ) as progress:
                 if progress_enabled:
                     # Set total phases BEFORE initialize_phases to avoid jitter
@@ -1096,9 +1098,9 @@ def transform(
                     }
                     for rtype, stats in transform_stats.items()
                 },
-                "schema_comparison_file": str(schema_file)
-                if schema_file and Path(schema_file).exists()
-                else None,
+                "schema_comparison_file": (
+                    str(schema_file) if schema_file and Path(schema_file).exists() else None
+                ),
             }
 
             with open(output_dir / "metadata.json", "w") as f:

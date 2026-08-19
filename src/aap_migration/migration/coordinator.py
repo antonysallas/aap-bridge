@@ -20,10 +20,7 @@ from aap_migration.migration.transformer import SkipResourceError, create_transf
 from aap_migration.reporting.live_progress import MigrationProgressDisplay
 from aap_migration.reporting.progress import ProgressTracker
 from aap_migration.reporting.report import generate_migration_report
-from aap_migration.resources import (
-    ORGANIZATION_SCOPED_RESOURCES,
-    PARENT_SCOPED_RESOURCES,
-)
+from aap_migration.resources import ORGANIZATION_SCOPED_RESOURCES, PARENT_SCOPED_RESOURCES
 from aap_migration.schema.comparator import SchemaComparator
 from aap_migration.schema.models import ComparisonResult
 from aap_migration.utils.logging import get_logger
@@ -418,6 +415,10 @@ class MigrationCoordinator:
 
             if lookup_key in existing_by_identifier:
                 existing = existing_by_identifier[lookup_key]
+                if resource_type == "schedules" and hasattr(
+                    importer, "ensure_schedule_disabled_on_target"
+                ):
+                    existing = await importer.ensure_schedule_disabled_on_target(existing)
                 self.state.save_id_mapping(
                     resource_type=mapping_resource_type,
                     source_id=source_id,
@@ -1328,12 +1329,12 @@ class MigrationCoordinator:
 
         summary = {
             "migration_id": self.state.migration_id,
-            "status": "completed"
-            if self.metrics["phases_failed"] == 0
-            else "completed_with_errors",
-            "start_time": self.metrics["start_time"].isoformat()
-            if self.metrics["start_time"]
-            else None,
+            "status": (
+                "completed" if self.metrics["phases_failed"] == 0 else "completed_with_errors"
+            ),
+            "start_time": (
+                self.metrics["start_time"].isoformat() if self.metrics["start_time"] else None
+            ),
             "end_time": self.metrics["end_time"].isoformat() if self.metrics["end_time"] else None,
             "duration_seconds": duration,
             "phases_completed": self.metrics["phases_completed"],

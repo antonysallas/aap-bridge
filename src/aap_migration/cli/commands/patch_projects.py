@@ -15,13 +15,7 @@ import click
 
 from aap_migration.cli.context import MigrationContext
 from aap_migration.cli.decorators import handle_errors, pass_context, requires_config
-from aap_migration.cli.utils import (
-    echo_error,
-    echo_info,
-    echo_success,
-    echo_warning,
-    step_progress,
-)
+from aap_migration.cli.utils import echo_error, echo_info, echo_success, echo_warning, step_progress
 from aap_migration.migration.importer import (
     project_sync_failed,
     project_sync_in_progress,
@@ -260,13 +254,18 @@ async def _retry_project_sync(
     return still_unfinished, recovered
 
 
+def _empty_patch_stats() -> dict[str, int]:
+    """Return zeroed patch stats compatible with import run_stats."""
+    return {"imported": 0, "skipped": 0, "failed": 0, "total": 0}
+
+
 async def patch_project_scm_details(
     ctx: MigrationContext,
     input_dir: Path,
     batch_size: int = 100,
     interval: int = 600,
     progress_display: MigrationProgressDisplay | None = None,
-) -> None:
+) -> dict[str, int]:
     """Execute Phase 2: Patch projects with SCM details.
 
     1. Reads transformed project files.
@@ -285,6 +284,10 @@ async def patch_project_scm_details(
         batch_size: Number of projects to patch at once (default 100)
         interval: Seconds to pause between batches (default from config)
         progress_display: Optional existing progress display to use
+
+    Returns:
+        Stats dict with keys imported (patched count), skipped, failed, and total
+        for the import summary. Early exits return zeros.
     """
     projects_with_deferred = load_projects_with_deferred_scm(input_dir)
     if not projects_with_deferred:
@@ -292,7 +295,7 @@ async def patch_project_scm_details(
             echo_warning("No projects directory found in transformed output. Skipping Phase 2.")
         elif not progress_display:
             echo_info("No projects found with deferred SCM details. Phase 2 not required.")
-        return
+        return _empty_patch_stats()
 
     # If progress_display is active, suppress step_progress to avoid Live display conflicts
     scan_ctx = (
@@ -334,7 +337,12 @@ async def patch_project_scm_details(
                 f"All {skipped_already_configured} project(s) already have SCM configured. "
                 "Skipping Phase 2 patching."
             )
-        return
+        return {
+            "imported": 0,
+            "skipped": skipped_already_configured,
+            "failed": 0,
+            "total": skipped_already_configured,
+        }
 
     total_projects = len(work_items)
     max_retries = ctx.config.performance.project_sync_max_retries
@@ -375,6 +383,7 @@ async def patch_project_scm_details(
 
         patched_count = 0
         failed_patch_count = 0
+        skipped_count = 0
         all_target_ids = []
         # Maps target_id → project name for human-readable error messages
         target_id_to_name: dict[int, str] = {}
@@ -408,20 +417,26 @@ async def patch_project_scm_details(
                         name=name,
                         message="Project not found in map (not imported?)",
                     )
-                    failed_patch_count += 1
-                    progress.update_phase("patching", patched_count, failed_patch_count)
+                    skipped_count += 1
+                    progress.update_phase(
+                        "patching", patched_count, failed_patch_count, skipped_count
+                    )
                     continue
 
                 target_id_to_name[target_id] = name or f"project_{target_id}"
 
                 if action == "wait_sync":
                     batch_target_ids.append(target_id)
-                    progress.update_phase("patching", patched_count, failed_patch_count)
+                    progress.update_phase(
+                        "patching", patched_count, failed_patch_count, skipped_count
+                    )
                     continue
 
                 if action == "retry_sync":
                     batch_retry_ids.append(target_id)
-                    progress.update_phase("patching", patched_count, failed_patch_count)
+                    progress.update_phase(
+                        "patching", patched_count, failed_patch_count, skipped_count
+                    )
                     continue
 
                 try:
@@ -475,13 +490,11 @@ async def patch_project_scm_details(
                         error=str(e),
                     )
 
-                progress.update_phase("patching", patched_count, failed_patch_count)
+                progress.update_phase("patching", patched_count, failed_patch_count, skipped_count)
 
             for project_id in batch_retry_ids:
                 # Always enqueue IDs returned for wait (triggered or already syncing).
-                batch_target_ids.extend(
-                    await _trigger_project_sync_updates(ctx, [project_id])
-                )
+                batch_target_ids.extend(await _trigger_project_sync_updates(ctx, [project_id]))
 
             # After batch is patched, wait for SCM sync and retry failures
             if batch_target_ids:
@@ -510,9 +523,7 @@ async def patch_project_scm_details(
                 )
 
                 # Retry failed syncs (and keep waiting on in-progress syncs)
-                still_failed_ids = list(
-                    dict.fromkeys(batch_failed_ids + batch_in_progress_ids)
-                )
+                still_failed_ids = list(dict.fromkeys(batch_failed_ids + batch_in_progress_ids))
                 for attempt in range(1, max_retries + 1):
                     if not still_failed_ids:
                         break
@@ -566,9 +577,7 @@ async def patch_project_scm_details(
 
         # Abort if any projects permanently failed and fail_on_failure is set
         if permanently_failed_ids and fail_on_failure:
-            failed_names = [
-                target_id_to_name.get(pid, str(pid)) for pid in permanently_failed_ids
-            ]
+            failed_names = [target_id_to_name.get(pid, str(pid)) for pid in permanently_failed_ids]
             # Only echo_error when running standalone (no Live display active).
             # When called from run_import(), the Live display is active and a raw
             # stderr write here races with the auto-refresh cycle, leaving an orphan
@@ -583,15 +592,20 @@ async def patch_project_scm_details(
                 )
             raise ProjectSyncFailedError(failed_names)
         elif permanently_failed_ids:
-            failed_names = [
-                target_id_to_name.get(pid, str(pid)) for pid in permanently_failed_ids
-            ]
+            failed_names = [target_id_to_name.get(pid, str(pid)) for pid in permanently_failed_ids]
             if not progress_display:
                 echo_warning(
                     f"{len(permanently_failed_ids)} project(s) failed to sync after "
                     f"{max_retries} retries. Downstream resources that depend on these "
                     "projects may fail to import."
                 )
+
+        return {
+            "imported": patched_count,
+            "skipped": skipped_count + skipped_already_configured,
+            "failed": failed_patch_count,
+            "total": len(work_items) + skipped_already_configured,
+        }
 
 
 @click.command(name="patch-projects")

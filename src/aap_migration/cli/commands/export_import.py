@@ -265,9 +265,7 @@ def _validate_export_resume_context(
                     "Use --force to override, or run without --resume for a fresh export."
                 )
                 raise click.ClickException("Resume context mismatch")
-            echo_warning(
-                "Resume mismatch detected but --force is set. Proceeding with caution."
-            )
+            echo_warning("Resume mismatch detected but --force is set. Proceeding with caution.")
     except (OSError, json.JSONDecodeError) as e:
         logger.warning("failed_to_load_existing_metadata", error=str(e))
 
@@ -394,9 +392,7 @@ def export(
 
     # Sort by migration_order so export display matches transform and import order
     types_to_export.sort(
-        key=lambda rt: RESOURCE_REGISTRY[rt].migration_order
-        if rt in RESOURCE_REGISTRY
-        else 999
+        key=lambda rt: RESOURCE_REGISTRY[rt].migration_order if rt in RESOURCE_REGISTRY else 999
     )
 
     # Check if parallel resource type export is enabled
@@ -815,12 +811,16 @@ def export(
                     rtype: {
                         "count": stats["count"],
                         "files": stats["files"],
-                        "skipped": parallel_results.get(rtype, {}).get("skipped", 0)
-                        if parallel_types_enabled
-                        else stats.get("skipped", 0),
-                        "failed": parallel_results.get(rtype, {}).get("failed", 0)
-                        if parallel_types_enabled
-                        else stats.get("failed", 0),
+                        "skipped": (
+                            parallel_results.get(rtype, {}).get("skipped", 0)
+                            if parallel_types_enabled
+                            else stats.get("skipped", 0)
+                        ),
+                        "failed": (
+                            parallel_results.get(rtype, {}).get("failed", 0)
+                            if parallel_types_enabled
+                            else stats.get("failed", 0)
+                        ),
                     }
                     for rtype, stats in export_stats.items()
                 },
@@ -1151,9 +1151,9 @@ def import_cmd(
         # This is critical for credential_types to be imported before credentials, etc.
         types_to_import = sorted(
             requested_types,
-            key=lambda t: RESOURCE_REGISTRY.get(t).migration_order
-            if t in RESOURCE_REGISTRY
-            else 999,
+            key=lambda t: (
+                RESOURCE_REGISTRY.get(t).migration_order if t in RESOURCE_REGISTRY else 999
+            ),
         )
 
     # Filter by phase if specified
@@ -1314,9 +1314,7 @@ def import_cmd(
         # Step 1: Clear target_ids only for this batch's source rows so we do not wipe
         # id_mappings for other resources of the same type imported in a prior step
         # (e.g. static inventories vs. later smart_inventories both use resource_type inventory).
-        source_ids_for_reset = [
-            sid for r in resources if (sid := r.get("_source_id")) is not None
-        ]
+        source_ids_for_reset = [sid for r in resources if (sid := r.get("_source_id")) is not None]
         cleared_count = state.reset_target_ids_for_source_ids(
             mapping_resource_type, source_ids_for_reset
         )
@@ -1537,9 +1535,7 @@ def import_cmd(
                     if source_parent_id is not None
                     else None
                 )
-                lookup_key = (
-                    (name, target_parent_id) if target_parent_id is not None else name
-                )
+                lookup_key = (name, target_parent_id) if target_parent_id is not None else name
             else:
                 # Globally unique resources — identifier is the plain name/username/etc.
                 lookup_key = identifier
@@ -1556,6 +1552,11 @@ def import_cmd(
             if lookup_key in existing_by_identifier:
                 # Resource exists in target - create/update id_mapping
                 existing = existing_by_identifier[lookup_key]
+
+                if resource_type == "schedules" and hasattr(
+                    importer, "ensure_schedule_disabled_on_target"
+                ):
+                    existing = await importer.ensure_schedule_disabled_on_target(existing)
 
                 state.save_id_mapping(
                     resource_type=mapping_resource_type,
@@ -1658,13 +1659,15 @@ def import_cmd(
                     if rtype == "patching":
                         # Call patch logic using existing progress display
                         # Note: patch_project_scm_details handles start_phase/update/complete internally
-                        await patch_project_scm_details(
+                        patch_stats = await patch_project_scm_details(
                             ctx,
                             input_dir,
                             batch_size=ctx.config.performance.project_patch_batch_size,
                             interval=ctx.config.performance.project_patch_batch_interval,
                             progress_display=progress,
                         )
+                        run_stats["patching"] = patch_stats
+                        total_failed += patch_stats.get("failed", 0)
                         continue
 
                     # Start phase
@@ -1685,7 +1688,9 @@ def import_cmd(
                             )
 
                     # Load all files for this resource type
-                    resource_dir = input_dir / ("inventory" if rtype == "smart_inventories" else rtype)
+                    resource_dir = input_dir / (
+                        "inventory" if rtype == "smart_inventories" else rtype
+                    )
                     if not resource_dir.exists():
                         echo_warning(f"No directory for {rtype}, skipping")
                         progress.complete_phase(phase_id)
@@ -1760,7 +1765,9 @@ def import_cmd(
                     if not dry_run:
                         # Create appropriate importer using factory
                         try:
-                            importer_resource_type = "inventory" if rtype == "smart_inventories" else rtype
+                            importer_resource_type = (
+                                "inventory" if rtype == "smart_inventories" else rtype
+                            )
                             importer = create_importer(
                                 importer_resource_type,
                                 ctx.target_client,
@@ -1860,9 +1867,15 @@ def import_cmd(
                                 # Use importer stats deltas instead of inferring from `results`.
                                 # Some rerun skips return None (already migrated), which should be
                                 # counted as skipped, not failed.
-                                imported_count = int(importer.stats.get("imported_count", 0)) - base_imported
-                                skipped_in_import = int(importer.stats.get("skipped_count", 0)) - base_skipped
-                                failed_count = int(importer.stats.get("error_count", 0)) - base_errors
+                                imported_count = (
+                                    int(importer.stats.get("imported_count", 0)) - base_imported
+                                )
+                                skipped_in_import = (
+                                    int(importer.stats.get("skipped_count", 0)) - base_skipped
+                                )
+                                failed_count = (
+                                    int(importer.stats.get("error_count", 0)) - base_errors
+                                )
 
                                 # Final progress update
                                 progress.update_phase(
@@ -1888,7 +1901,9 @@ def import_cmd(
                                 rtype == "constructed_inventories"
                                 and not dry_run
                                 and transformed_resources
-                                and hasattr(importer, "sync_input_inventories_for_constructed_resources")
+                                and hasattr(
+                                    importer, "sync_input_inventories_for_constructed_resources"
+                                )
                             ):
                                 await importer.sync_input_inventories_for_constructed_resources(
                                     transformed_resources
@@ -1944,11 +1959,7 @@ def import_cmd(
                             # Teams: users are imported in the same phase immediately before teams,
                             # but team id_mappings aren't set until now. Reconcile any memberships
                             # that were skipped during user import due to unmapped team IDs.
-                            if (
-                                rtype == "teams"
-                                and not dry_run
-                                and hasattr(importer, "stats")
-                            ):
+                            if rtype == "teams" and not dry_run and hasattr(importer, "stats"):
                                 users_dir = input_dir / "users"
                                 users_for_resync: list[dict] = []
                                 if users_dir.exists():
@@ -1972,7 +1983,9 @@ def import_cmd(
                                         skip_execution_environment_names=ctx.config.export.skip_execution_environment_names,
                                         skip_credential_names=ctx.config.export.skip_credential_names,
                                     )
-                                    if hasattr(user_importer, "sync_team_memberships_for_existing_users"):
+                                    if hasattr(
+                                        user_importer, "sync_team_memberships_for_existing_users"
+                                    ):
                                         await user_importer.sync_team_memberships_for_existing_users(
                                             users_for_resync
                                         )
@@ -2230,7 +2243,9 @@ def import_cmd(
 
                 status_parts = []
                 if imported > 0:
-                    status_parts.append(f"{format_count(imported)} imported")
+                    # Patching is not a create/import — use accurate wording (#116)
+                    verb = "patched" if rtype == "patching" else "imported"
+                    status_parts.append(f"{format_count(imported)} {verb}")
                 if skipped > 0:
                     status_parts.append(f"{format_count(skipped)} skipped")
                 if failed > 0:

@@ -1,6 +1,7 @@
 site_name: AAP Bridge
 site_description: Production-grade migration tool for Ansible Automation Platform
 site_author: Antony Sallas
+site_url: https://redhat-cop.github.io/aap-bridge/
 repo_url: https://github.com/redhat-cop/aap-bridge
 repo_name: redhat-cop/aap-bridge
 
@@ -38,6 +39,7 @@ nav:
   - User Guide:
       - CLI Reference: user-guide/cli-reference.md
       - Web UI: user-guide/web-ui.md
+      - Disconnected Environment: user-guide/disconnected-environment.md
       - Migration Workflow: user-guide/migration-workflow.md
       - Filtering and Skipping: user-guide/filtering-and-skipping.md
       - Troubleshooting: user-guide/troubleshooting.md
@@ -48,6 +50,7 @@ nav:
       - Architecture: developer-guide/architecture.md
   - Reference:
       - Compatibility Matrix: reference/compatibility-matrix.md
+      - Resource Support Matrix: reference/support-matrix.md
       - AWX Migration: reference/awx-migration.md
       - Changelog: reference/changelog.md
 
