@@ -101,6 +101,7 @@ async def classify_project_patch_action(
             target_id=target_id,
             error=str(e),
         )
+        # Fail open to patch: skip/wait/retry all assume SCM is already on the target.
         return "patch"
 
     if not _scm_fields_match(target, deferred, ctx):
@@ -115,22 +116,6 @@ async def classify_project_patch_action(
         return "skip"
     # "never updated", empty, or unknown — SCM matches but no successful sync yet.
     return "retry_sync"
-
-
-async def count_projects_needing_scm_patch(ctx: MigrationContext, input_dir: Path) -> int:
-    """Count projects that still require Phase 2 patching or sync follow-up."""
-    count = 0
-    for project in load_projects_with_deferred_scm(input_dir):
-        source_id = project.get("_source_id")
-        target_id = ctx.migration_state.get_mapped_id("projects", source_id)
-        deferred = project.get("_deferred_scm_details", {})
-        if not target_id:
-            count += 1
-            continue
-        action = await classify_project_patch_action(ctx, target_id, deferred)
-        if action != "skip":
-            count += 1
-    return count
 
 
 class ProjectSyncFailedError(Exception):

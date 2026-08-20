@@ -168,3 +168,18 @@ async def test_classify_project_patch_action_waits_for_in_progress_sync() -> Non
     action = await classify_project_patch_action(ctx, 42, deferred)
 
     assert action == "wait_sync"
+
+
+@pytest.mark.asyncio
+async def test_classify_project_patch_action_patches_when_get_fails() -> None:
+    ctx = _ctx_with_mappings()
+    ctx.target_client.get.side_effect = RuntimeError("connection reset")
+    deferred = {
+        "scm_type": "git",
+        "scm_url": "https://example.com/repo.git",
+        "scm_branch": "main",
+    }
+
+    action = await classify_project_patch_action(ctx, 42, deferred)
+
+    assert action == "patch"
