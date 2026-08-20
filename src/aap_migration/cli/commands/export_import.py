@@ -18,7 +18,10 @@ from aap_migration.cli.commands.migrate import (
     PHASE1_RESOURCE_TYPES,
     PHASE2_RESOURCE_TYPES,
 )
-from aap_migration.cli.commands.patch_projects import patch_project_scm_details
+from aap_migration.cli.commands.patch_projects import (
+    load_projects_with_deferred_scm,
+    patch_project_scm_details,
+)
 from aap_migration.cli.context import MigrationContext
 from aap_migration.cli.decorators import handle_errors, pass_context, requires_config
 from aap_migration.cli.utils import (
@@ -1603,26 +1606,11 @@ def import_cmd(
         # Initialize phases
         phases = []
 
-        # If Phase 2, check for projects to patch and add as first phase
+        # If Phase 2, add patching phase when transformed projects have deferred SCM
         if phase == "phase2" and not dry_run:
-            # Duplicate scanning logic to get count for progress bar
-            projects_dir = input_dir / "projects"
-            patch_count = 0
-            if projects_dir.exists():
-                json_files = sorted(projects_dir.glob("projects_*.json"))
-                # Silent scan (no step_progress)
-                for json_file in json_files:
-                    try:
-                        with open(json_file) as f:
-                            resources = json.load(f)
-                            for resource in resources:
-                                if "_deferred_scm_details" in resource:
-                                    patch_count += 1
-                    except Exception:
-                        pass
-
-            if patch_count > 0:
-                phases.append(("patching", "Patching Projects", patch_count))
+            deferred_patch_count = len(load_projects_with_deferred_scm(input_dir))
+            if deferred_patch_count > 0:
+                phases.append(("patching", "Patching Projects", deferred_patch_count))
 
         for rtype in types_to_import:
             stats = metadata.get("resource_types", {}).get(rtype, {})
