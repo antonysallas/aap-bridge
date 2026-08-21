@@ -652,6 +652,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user-guide/disconnected-environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Disconnected Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user-guide/migration-workflow/" class="md-nav__link">
         
   
@@ -1220,15 +1248,19 @@ in the repository.</p>
 <h3 id="unreleased-since-v010">Unreleased (since v0.1.0)<a class="headerlink" href="#unreleased-since-v010" title="Permanent link">&para;</a></h3>
 <p><strong>New Features:</strong></p>
 <ul>
-<li>AAP 2.7 supported as a migration source and target.</li>
+<li>AAP 2.7 supported as a migration source and target (same-or-forward paths only;
+  see compatibility matrix).</li>
 <li>Optional container CLI workflow: Podman Compose stack with bundled PostgreSQL and
   bridge images (<code>make build</code>, <code>make up-dev</code>, <code>make shell</code>, etc.).</li>
 <li>Web UI: React/PatternFly browser interface with connection management, migration
   preview, TUI-matching phased migration controls, job history, and live log streaming.</li>
+<li>Disconnected environment user guide: connected-build / disconnected-run for the
+  Web UI, exclude <code>.env</code> from the transfer tarball, runtime nginx port mount.</li>
 <li>Integration testing infrastructure: Ansible playbooks and roles under
   <code>tests/integration/</code> for golden-image builds (AAP 1.0–2.7), pair orchestration,
   and bridge connectivity checks (<code>make build-aap</code>, <code>run-pair</code>, <code>reset-pair</code>, etc.).</li>
-<li>Source version support expanded to AAP 1.0 through 2.7 (sources) and AAP 2.6 and 2.7 (targets).</li>
+<li>Source version support expanded to AAP 1.0 through 2.7 on same-or-forward paths to
+  AAP 2.6 or 2.7 targets per the compatibility matrix.</li>
 <li>Survey spec migration for job templates and workflow job templates.</li>
 <li>Notification template association migration (started/success/error/approvals).</li>
 <li>Nested inventory group hierarchy export and import.</li>
@@ -1250,10 +1282,15 @@ in the repository.</p>
 </ul>
 <p><strong>Improvements:</strong></p>
 <ul>
+<li>Schedules: export enabled and disabled non-system schedules; import with
+  <code>enabled=false</code> (system-job schedules still excluded).</li>
 <li><code>make setup</code> auto-detects uv or falls back to stdlib venv + pip.</li>
 <li>Export and transform phase order now matches the import dependency order (credential
   types and credentials before projects; users and teams after all content objects).
   Export progress display reflects this order even with parallel export enabled.</li>
+<li>Compatibility matrix messaging clarifies same-or-forward migration rules and
+  distinguishes integration-tested 2.6 paths from 2.7 paths where batch integration
+  coverage is still pending.</li>
 <li>Documentation overhaul (#108): README is a front door into MkDocs; PostgreSQL and
   install detail live in Installation; Quick Start defers to Installation/Configuration;
   canonical resource order is only in Migration Workflow; <code>migrate full</code> examples
@@ -1266,6 +1303,8 @@ in the repository.</p>
 </ul>
 <p><strong>Bug Fixes:</strong></p>
 <ul>
+<li>Phase 2 import summary reports patched project count instead of always
+  <code>0 resources processed</code> (#116).</li>
 <li>Inventory source sync wait no longer hangs after a 405 on <code>update/</code> (removed GET
   launch fallback that used the source id as the expected job id); wait matches
   current/last update job fields and recovers from expected-job mismatches.</li>
@@ -1281,6 +1320,10 @@ in the repository.</p>
 <li>Batch precheck scoping fixed for org-scoped, parent-scoped, notification template, and
   schedule resources.</li>
 <li>Project sync failure detection with retry and configurable abort.</li>
+<li>Phase 2 import re-run skips project patching and sync polling when target projects
+  already have SCM configured.</li>
+<li>Phase 2 import no longer triggers duplicate project SCM syncs when GitHub is slow;
+  in-progress syncs are polled instead of re-triggered after a batch wait timeout.</li>
 <li>System-job schedules excluded from export/import/cleanup.</li>
 <li>Managed credential types matched by namespace when name differs between versions.</li>
 <li>User team memberships exported and re-applied on import.</li>
